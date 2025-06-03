@@ -1,0 +1,30 @@
+@import "tailwindcss";
+/* npx @tailwindcss/cli -i ./frontend/styles/tailwind_input.css -o ./frontend/styles/tailwind_output.css --watch */
+
+@layer utilities {
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: left center;
+    }
+    50% {
+      background-position: right center;
+    }
+  }
+
+  .bg-animated {
+    background-size: 300% 300%;
+    animation: gradient-x 6s ease infinite;
+  }
+}
+
+@layer components {
+    .btn-gamemode {
+      @apply bg-white text-black text-2xl font-mono font-bold py-4 px-6 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.85)] hover:bg-gray-400 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.9)] transition w-48;
+    }
+    .header_custom {
+        @apply text-6xl sm:text-3xl md:text-5xl font-mono mb-40 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)];
+    }
+    .bg-custom {
+        @apply flex-grow bg-gradient-to-r from-indigo-800 via-purple-400 to-pink-400 flex flex-col items-center justify-center text-white text-center px-4 py-10 ;
+    }
+  }

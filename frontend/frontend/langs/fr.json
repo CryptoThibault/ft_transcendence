@@ -1,0 +1,31 @@
+{
+    "nav_home": "Accueil",
+    "nav_signup": "S'inscrire",
+    "nav_signin": "Connexion",
+    "nav_language": "Langue",
+    "single_player": "Joueur seul",
+    "multiplayer": "Multijoueur",
+    "tournament": "Tournoi",
+    "nav_search": "Recherche",
+    "nav_profile": "Profil",
+    "nav_logout": "Déconnexion",
+
+    "welcome": "Bienvenue sur Pong 42",
+    
+    "create_new_ac": "Créer un nouveau compte :",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "cf_password": "Confirmer le mot de passe",
+    "register": "S'inscrire",
+
+    "login_pong_42": "Connexion à Pong 42",
+    "login": "Connexion",
+    "login_gg": "Se connecter avec Google",
+
+    "edit_profile": "Modifier le profil",
+    "total": "Total",
+    "win": "Victoire",
+    "lose": "Défaite",
+    "history": "Historique",
+    "no_history_yet": "Pas encore d'historique"
+}
