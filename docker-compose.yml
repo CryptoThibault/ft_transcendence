@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  #auth-service:
+  #  build:
+  #    context: ./backend/auth-service
+  #  container_name: auth-service
+  #  ports:
+  #    - "5500:5500"
+  #  volumes:
+  #    - auth-db:/app/database
+
+  #user-service:
+  #  build:
+  #    context: ./backend/user-service
+  #  container_name: user-service
+  #  ports:
+  #    - "5501:5501"
+  #  volumes:
+  #    - user-db:/app/database
+  #  depends_on:
+  #    - auth-service
+  
+  tournament-service:
+    build:
+      context: ./backend/tournament-service
+    container_name: tournament-service
+    ports:
+      - "5600:5600"
+    volumes:
+      - tournament-db:/app/database
+    #depends_on:
+    #  - auth-service
+    #  - user-service
+
+  #nginx:
+  #  build:
+  #    context: ./nginx
+  #  container_name: nginx
+  #  ports:
+  #    - "443:443"
+  #  depends_on:
+  #    - auth-service
+  #    - user-service
+  #    - tournament-service
+    #command: ["/wait-for-service.sh", "auth-service:3000", "user-service:3001", "frontend:80"]
+  #  restart: always
+
+volumes:
+  #auth-db:
+  #user-db:
+  tournament-db:
