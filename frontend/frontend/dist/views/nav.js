@@ -15,38 +15,56 @@ export function setupNavbar() {
     const loggedIn = localStorage.getItem("loggedIn") === "true";
     nav.innerHTML = loggedIn
         ? `
-        <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>
-        <a href="/search" class="hover:underline" data-i18n="nav_search" data-link>Search</a>
-        <a href="/profile" class="hover:underline" data-i18n="nav_profile" data-link>Profile</a>
-        <a href="#" id="logoutBtn" class="hover:underline" data-i18n="nav_signout">Sign out</a>
-         ${languageDropdownHTML()}
-      `
+      <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>
+      <a href="/search" class="hover:underline" data-i18n="nav_search" data-link>Search</a>
+      <a href="/profile" class="hover:underline" data-i18n="nav_profile" data-link>Profile</a>
+      <a href="#" id="logoutBtn" class="hover:underline" data-i18n="nav_signout">Sign out</a>
+      ${languageDropdownHTML()}
+    `
         : `
-        <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>
-        <a href="/signup" class="hover:underline" data-link data-i18n="nav_signup">Sign-up</a>
-        <a href="/login" class="hover:underline" data-i18n="nav_signin" data-link>Login</a>
-         ${languageDropdownHTML()}
-      `;
-    attachLanguageButtonEvent();
-}
-function attachLanguageButtonEvent() {
-    const btn = document.getElementById("langDropdownBtn");
-    const menu = document.getElementById("langDropdownMenu");
-    btn === null || btn === void 0 ? void 0 : btn.addEventListener("click", () => {
-        menu === null || menu === void 0 ? void 0 : menu.classList.toggle("hidden");
-    });
+      <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>
+      <a href="/signup" class="hover:underline" data-link data-i18n="nav_signup">Sign-up</a>
+      <a href="/login" class="hover:underline" data-i18n="nav_signin" data-link>Login</a>
+      ${languageDropdownHTML()}
+    `;
+    attachLanguageDropdownEvents();
 }
 function languageDropdownHTML() {
     return `
     <div class="relative inline-block text-left">
-      <button id="langDropdownBtn" class=" hover:underline text-md focus:outline-none">
+      <button id="langDropdownBtn" class="hover:underline text-md focus:outline-none">
         Language
       </button>
       <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-lg z-50">
-        <button onclick="loadLanguage('en')" class="block w-full text-left px-4 py-2 hover:bg-gray-200">English</button>
-        <button onclick="loadLanguage('fr')" class="block w-full text-left px-4 py-2 hover:bg-gray-200">Français</button>
+        <button data-lang="en" class="lang-option block w-full text-left px-4 py-2 hover:bg-gray-200">English</button>
+        <button data-lang="fr" class="lang-option block w-full text-left px-4 py-2 hover:bg-gray-200">Français</button>
       </div>
     </div>`;
+}
+function attachLanguageDropdownEvents() {
+    const btn = document.getElementById("langDropdownBtn");
+    const menu = document.getElementById("langDropdownMenu");
+    const langButtons = document.querySelectorAll(".lang-option");
+    if (!btn || !menu)
+        return;
+    btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.classList.toggle("hidden");
+    });
+    document.addEventListener("click", (e) => {
+        const target = e.target;
+        if (!menu.contains(target) && !btn.contains(target)) {
+            menu.classList.add("hidden");
+        }
+    });
+    langButtons.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            const lang = e.currentTarget.getAttribute("data-lang");
+            if (lang)
+                loadLanguage(lang);
+            menu.classList.add("hidden");
+        });
+    });
 }
 export function loadLanguage(lang) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -55,6 +73,7 @@ export function loadLanguage(lang) {
             const translations = yield response.json();
             applyTranslations(translations);
             setLanguage(lang);
+            // setLastLang(lang);
         }
         catch (err) {
             console.error("Failed to load language:", err);

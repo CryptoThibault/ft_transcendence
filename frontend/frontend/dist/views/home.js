@@ -45,7 +45,7 @@ export class HomeView {
 	  </div>
 
 	  <!-- Tournament Popup -->
-	  <div id="tournamentPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+	  <div id="tournamentPopup" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden z-50">
 		<div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
 			<h3 class=" text-black text-lg font-semibold mb-4">Number player</h3>
 			<select id="playerCount" class=" text-black w-full p-2 border rounded mb-4">

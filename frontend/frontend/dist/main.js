@@ -19,9 +19,13 @@ import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/single_player.js";
 import { Multiplayer } from "./views/multiplayer.js";
 let currentLanguage = "en";
+// let lastLoadedLanguage: string | null = null;
 export const setLanguage = (lang) => {
     currentLanguage = lang;
 };
+// export const setLastLang = (lang: string) => {
+// 	lastLoadedLanguage = lang;
+// };
 const routes = [
     { path: "/", view: HomeView },
     { path: "/login", view: LoginView },
@@ -32,6 +36,7 @@ const routes = [
     { path: "/multiplayer", view: Multiplayer },
     { path: "/tournament", view: TournamentView },
 ];
+//using for test logged in interface
 const isLoggedIn = () => {
     return localStorage.getItem("loggedIn") === "true";
 };
@@ -48,8 +53,6 @@ const router = () => __awaiter(void 0, void 0, void 0, function* () {
     if (!match) {
         const view = new PageNotFoundView();
         document.querySelector("body").innerHTML = yield view.getHtml();
-        setupNavbar();
-        setupLogoutHandler();
         return;
     }
     if (match.route.protected && !isLoggedIn()) {
@@ -66,7 +69,6 @@ const router = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     setupNavbar();
     setupLogoutHandler();
-    //   const lang = localStorage.getItem("language") || "en";
     loadLanguage(currentLanguage);
 });
 const setupLogoutHandler = () => {
@@ -83,8 +85,6 @@ window.addEventListener("popstate", router);
 window.loadLanguage = loadLanguage;
 document.addEventListener("DOMContentLoaded", () => {
     //   localStorage.setItem("loggedIn", "false");
-    // localStorage.setItem("language", "default");
-    //   const lang = localStorage.getItem("language") || "en";
     loadLanguage(currentLanguage);
     document.body.addEventListener("click", e => {
         const target = e.target;

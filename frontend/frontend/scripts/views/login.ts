@@ -1,7 +1,7 @@
 export class LoginView {
     async getHtml() {
 		return `
-      <h2 class="header_custom" data-i18n="login_pong_42">Login Pong 42</h2>
+      <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
         <form class="flex flex-col space-y-8 w-80">
             <label class="text-black font-semibold text-left" data-i18n="username">Username:</label>
             <input type="text" placeholder="abc123" class="px-3 py-2 rounded bg-gray-200 text-gray-700" />

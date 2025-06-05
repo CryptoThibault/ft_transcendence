@@ -17,9 +17,16 @@ type Route = {
 };
 
 let currentLanguage = "en";
+
+// let lastLoadedLanguage: string | null = null;
+
 export const setLanguage = (lang: string) => {
 	currentLanguage = lang;
 };
+
+// export const setLastLang = (lang: string) => {
+// 	lastLoadedLanguage = lang;
+// };
 
 const routes: Route[] = [
 	{ path: "/", view: HomeView },
@@ -33,6 +40,7 @@ const routes: Route[] = [
 
 ];
 
+//using for test logged in interface
 const isLoggedIn = (): boolean => {
 	return localStorage.getItem("loggedIn") === "true";
 };
@@ -53,8 +61,6 @@ const router = async () => {
 	if (!match) {
 		const view = new PageNotFoundView();
 		document.querySelector("body")!.innerHTML = await view.getHtml();
-		setupNavbar();
-		setupLogoutHandler();
 		return;
 	}
 
@@ -77,8 +83,7 @@ const router = async () => {
 	setupNavbar();
 	setupLogoutHandler();
 
-//   const lang = localStorage.getItem("language") || "en";
-  loadLanguage(currentLanguage);
+	loadLanguage(currentLanguage);
 };
 
 const setupLogoutHandler = () => {
@@ -99,9 +104,7 @@ window.addEventListener("popstate", router);
 
 document.addEventListener("DOMContentLoaded", () => {
 //   localStorage.setItem("loggedIn", "false");
-  // localStorage.setItem("language", "default");
-//   const lang = localStorage.getItem("language") || "en";
-  loadLanguage(currentLanguage);
+	loadLanguage(currentLanguage);
 
 	document.body.addEventListener("click", e => {
 

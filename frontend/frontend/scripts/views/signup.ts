@@ -1,8 +1,8 @@
 export class SignupView {
     async getHtml() {
 		return `
-      <h2 class="header_custom" data-i18n="welcome">Welcome to Pong42</h2>
-        <p class="text-lg font-semibold text-black" data-i18n="create_new_ac">Create new account:</p>
+      <h2 class="header_custom mb-20 mt-20" data-i18n="welcome">Welcome to Pong42</h2>
+        <p class="text-lg mb-10 font-semibold text-black" data-i18n="create_new_ac">Create new account:</p>
 
     <form class="flex flex-col space-y-4 w-80">
       <div>

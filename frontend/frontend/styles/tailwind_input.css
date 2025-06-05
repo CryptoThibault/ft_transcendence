@@ -19,7 +19,7 @@
 
 @layer components {
     .btn-gamemode {
-      @apply bg-white text-black text-2xl font-mono font-bold py-4 px-6 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.85)] hover:bg-gray-400 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.9)] transition w-48;
+      @apply bg-white text-black text-2xl font-mono font-bold py-4 px-6 rounded-2xl hover:bg-gray-400 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.9)] transition w-48 flex items-center justify-center; 
     }
     .header_custom {
         @apply text-6xl sm:text-3xl md:text-5xl font-mono mb-40 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)];
