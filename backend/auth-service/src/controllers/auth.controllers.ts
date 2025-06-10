@@ -67,6 +67,72 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 };
 
 export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
+    try {
+        const { email, password } = req.body as {
+            email: string;
+            password: string;
+        };
+        const user = await AuthUser.findOne({ where: { email } });
+        if (!user) {
+            const error = new Error('User not found');
+            (error as any).statusCode = 404;
+            throw error;
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            const error = new Error('Invalid password');
+            (error as any).statusCode = 401;
+            throw error;
+        }
+        if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined');
+        const userResponse = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            twoFactorEnabled: user.twoFactorEnabled,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+        if (user.twoFactorEnabled) {
+            const tempToken = jwt.sign(
+                { userId: user.id, twoFactor: true },
+                JWT_SECRET!,
+                { expiresIn: '5m' }
+            );
+            return res.send({
+                success: true,
+                message: '2FA code required',
+                twoFactor: true,
+                tempToken
+            });
+        }
+        // "2FA not required" - issue final access token
+        const signOptions: SignOptions = {
+            expiresIn: '1h',
+        };
+        const token = jwt.sign(
+            { userId: user.id },
+            JWT_SECRET as string,
+            signOptions
+        );        
+        return res.status(200).send({
+            success: true,
+            message: 'User signed in successfully',
+            data: {
+                token,
+                user: userResponse,
+            }
+        });
+    } catch (error) {
+        return res.status((error as any).statusCode || 500).send({
+            success: false,
+            message: (error as Error).message || 'Internal error',
+        });
+    }
+};
+
+
+/*export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
 		const { email, password } = req.body as {
 			email: string;
@@ -85,7 +151,7 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 			throw error;
 		}
 		if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined');
-		/* -------- adding this -------- */
+		// -------- adding this -------- 
 		if (user.twoFactorEnabled) {
 			const tempToken = jwt.sign(
 				{ userId: user.id, twoFactor: true },
@@ -99,10 +165,10 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
     			tempToken
   			});
 		}
-		/* ------------------------------*/
+		// ------------------------------
 		// "FA not required"
 		const signOptions: SignOptions = {
-			expiresIn: '1h'/*JWT_EXPIRES_IN*/,
+			expiresIn: '1h', //JWT_EXPIRES_IN,
 		};
 		const token = jwt.sign(
 			{ userId: user.id },
@@ -124,4 +190,4 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 			message: (error as Error).message || 'Internal error',
 		});
 	}
-};
+};*/

@@ -1,17 +1,27 @@
-import { canvas, ctx, scoreGoal } from "./state.js";
+import { ITEMS_COLOR, MIN_SPEED } from "./config.js";
+import { canvas, ctx } from "./state.js";
+import { scoreGoal } from "./update.js";
 
 export class Ball {
-    constructor(
-        public x: number,
-        public y: number,
-        public radius: number,
-        public dx: number,
-        public dy: number,
-        public speed: number,
-        public color: string
-    ) {}
+    x!: number;
+    y!: number;
+    radius!: number;
+    dx!: number;
+    dy!: number;
+    speed!: number;
+    color!: string;
 
-    move(): void {
+    init() {
+        this.x = canvas.width / 2;
+        this.y = canvas.height / 2;
+        this.radius = 5;
+        this.dx = Math.floor(Math.random() * 2) ? -1 : 1;
+        this.dy = 0;
+        this.speed = MIN_SPEED;
+        this.color = ITEMS_COLOR;
+    }
+
+    move() {
         this.x += this.dx * this.speed;
         this.y += this.dy * this.speed;
         
@@ -23,7 +33,7 @@ export class Ball {
             this.dy = -this.dy;
     }
 
-    draw(): void {
+    draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
@@ -31,7 +41,7 @@ export class Ball {
         ctx.closePath();
     }
 
-    logPosition(): void {
-        console.log(`Position de la balle : x = ${this.x}, y = ${this.y}`);
+    logPosition() {
+        console.log(`Ball position: x = ${this.x}, y = ${this.y}`);
     }
 }

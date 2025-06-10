@@ -5,8 +5,11 @@ import { PlayerTournament } from '../models/playerTournament.models'
 import * as svc from '../service/tournaments.service';
 
 // Casual match result
-interface CreateCasualMatchRoute {
-	Body: { player1_id: number; player2_id: number };
+export interface CreateCasualMatchRoute extends RouteGenericInterface {
+    Body: {
+        player1_id: number;
+        player2_id: number;
+    };
 }
 // For /matches/:id/result
 interface SubmitCasualMatchResultRoute extends RouteGenericInterface {
@@ -27,6 +30,14 @@ interface SubmitTournamentMatchResultRoute extends RouteGenericInterface {
 	Params: { matchId: number; };
 	Body: { winner_id: number; score: string; };
 }
+
+export interface CreateTournamentRoute extends RouteGenericInterface {
+  Body: {
+    name: string;
+    players?: number[];
+  };
+}
+
 
 export async function createCasualMatch(request: FastifyRequest<CreateCasualMatchRoute>,
 reply: FastifyReply) {
@@ -62,8 +73,7 @@ export async function submitCasualMatchResult(req: FastifyRequest<SubmitCasualMa
   	}
 }
 
-export async function createTournament(request: FastifyRequest<{ Body: { name: string; players?: number[] } }>,
-  reply: FastifyReply) {
+export async function createTournament(request: FastifyRequest<CreateTournamentRoute>, reply: FastifyReply) {
 	try {
     	const tournament = await svc.createTournament(request.body);
     	reply.status(201).send({
@@ -132,6 +142,61 @@ export async function getTournamentBracket(req: FastifyRequest<TournamentIdParam
 
 export async function submitTournamentResult(req: FastifyRequest<SubmitTournamentMatchResultRoute>,
   reply: FastifyReply) {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.split(' ')[1];
+        if (!token) throw new Error('Missing token'); // debug: This would return 500 with "Missing token"
+        const result = await svc.submitTournamentResult(+req.params.matchId, req.body, token);
+        reply.status(200).send({
+            success: true,
+            message: 'Tournament match result submitted successfully',
+            data: result,
+        });
+    } catch (error) {
+        // ADD FOR DEBUG
+        console.error('Error in submitTournamentResult controller:', error);
+        // Make the error message more descriptive if it's an Error object
+        let errorMessage = 'Internal server error';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+            if (errorMessage.includes('Match with ID') ||
+                errorMessage.includes('Match already completed') ||
+                errorMessage.includes('This match cannot be submitted yet') ||
+                errorMessage.includes('Invalid score format') ||
+                errorMessage.includes('User service error')) { // If it's an error from user-service, it would be caught here
+                reply.status(400); // Or 502 for user service error
+            }
+        }
+        reply.status(reply.statusCode === 200 ? 500 : reply.statusCode).send({
+            success: false,
+            message: errorMessage,
+        });
+    }
+}
+
+/*export async function submitTournamentResult(req: FastifyRequest<SubmitTournamentMatchResultRoute>,
+  reply: FastifyReply) {
+	try {
+		const authHeader = req.headers.authorization;
+    	const token = authHeader?.split(' ')[1];
+    	if (!token) throw new Error('Missing token');
+
+    	const result = await svc.submitTournamentResult(+req.params.matchId, req.body, token);
+    	reply.status(200).send({
+      		success: true,
+      		message: 'Tournament match result submitted successfully',
+      		data: result,
+    	});
+  	} catch (error) {
+    	reply.status(500).send({
+      		success: false,
+      		message: (error as Error).message || 'Internal server error',
+    	});
+  	}
+}*/
+
+/*export async function submitTournamentResult(req: FastifyRequest<SubmitTournamentMatchResultRoute>,
+  reply: FastifyReply) {
 	try {
     	const result = await svc.submitTournamentResult(+req.params.matchId, req.body);
     	reply.status(200).send({
@@ -145,4 +210,5 @@ export async function submitTournamentResult(req: FastifyRequest<SubmitTournamen
       		message: (error as Error).message || 'Internal server error',
     	});
   	}
-}
+}*/
+

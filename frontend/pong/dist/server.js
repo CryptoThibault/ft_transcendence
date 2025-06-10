@@ -21,3 +21,19 @@
 // app.listen(PORT, () => {
 //   console.log(`Serveur lancé sur http://localhost:${PORT}`);
 // });
+// if (gameStates.isRemote) {
+//     window.addEventListener("keydown", (event) => {
+//         fetch(`http://localhost:3000/update/`, {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify({ action: "keydown", key: event, player:"left" })
+//         });
+//     });
+//     window.addEventListener("keyup", (event) => {
+//         fetch(`http://localhost:3000/update/`, {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify({ action: "keyup", key: event, player: "left" })
+//         });
+//     });
+// }

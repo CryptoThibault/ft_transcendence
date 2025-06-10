@@ -1,3 +1,7 @@
+export const CANVAS_WIDTH = 800;
+export const CANVAS_HEIGHT = 500;
+export const BACKGROUND_COLOR = "black";
+export const ITEMS_COLOR = "white";
 export const MIN_SPEED = 7;
 export const MAX_SPEED = 14;
 export const SPEED_INC = 1.1;
@@ -6,4 +10,4 @@ export const BORDER = 5;
 export const MAX_SCORE = 5;
 export const REACT_TIME = 1000;
 export const TRESHOLD = 5;
-export const IMPRECISION = 100;
+export const IMPRECISION = 10;

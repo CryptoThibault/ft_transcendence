@@ -1,0 +1,81 @@
+// sign in
+POST http://localhost:5500/api/v1/auth/sign-in
+{
+  "email":"alice@example.com",
+  "password":"pongpass123"
+}
+
+// 2FA/setup
+POST http://localhost:5500/api/v1/auth/2fa/setup
+// plus token
+
+//2fa/verify
+
+
+//createUser
+POST http://localhost:5501/api/v1/user
+{
+  "name": "bob",
+  "email":"bob@example.com"
+}
+
+//user/me
+GET http://localhost:5501/api/v1/user/me
+
+//Update username
+PUT http://localhost:5501/api/v1/user/me
+{
+  "name": "John Doe"
+}
+
+// addFriend
+POST http://localhost:5501/api/v1/user/me/friends
+{
+  "friendId": 5
+}
+
+// getFriendsList
+GET http://localhost:5501/api/v1/user/me/friends
+
+//createCasualMatch
+http://localhost:5600/api/v1/player/matches/challenge
+{
+  "player1_id": 1,
+  "player2_id": 2,
+  "score": "10-5"
+}
+
+//submitCasualMatchResult
+POST http://localhost:5600/api/v1/player/matches/123/result
+
+{
+  "winner_id": 1,
+  "score": "21-17"
+}
+
+// createTournament
+POST http://localhost:5600/api/v1/player/tournament 
+{
+  "name": "Pong Cup"
+}
+
+// joinTournament
+POST http://localhost:5600/api/v1/player/tournament/1/join
+{
+  "player_id": 2
+}
+
+//startTournament 
+POST http://localhost:5600/api/v1/player/tournament/7/start
+
+// getTournamentBracket
+GET http://localhost:5600/api/v1/player/tournament/1/bracket
+
+
+// submitTournamentResult
+POST http://localhost:5600/api/v1/player/tournament/matches/456/result
+{
+  "winner_id": 1,
+  "score": "21-17"
+}
+// token

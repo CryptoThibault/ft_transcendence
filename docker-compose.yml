@@ -1,25 +1,25 @@
 version: '3.9'
 
 services:
-  #auth-service:
-  #  build:
-  #    context: ./backend/auth-service
-  #  container_name: auth-service
-  #  ports:
-  #    - "5500:5500"
-  #  volumes:
-  #    - auth-db:/app/database
+  auth-service:
+    build:
+      context: ./backend/auth-service
+    container_name: auth-service
+    ports:
+      - "5500:5500"
+    volumes:
+      - auth-db:/app/database
 
-  #user-service:
-  #  build:
-  #    context: ./backend/user-service
-  #  container_name: user-service
-  #  ports:
-  #    - "5501:5501"
-  #  volumes:
-  #    - user-db:/app/database
-  #  depends_on:
-  #    - auth-service
+  user-service:
+    build:
+      context: ./backend/user-service
+    container_name: user-service
+    ports:
+      - "5501:5501"
+    volumes:
+      - user-db:/app/database
+    depends_on:
+      - auth-service
   
   tournament-service:
     build:
@@ -29,24 +29,27 @@ services:
       - "5600:5600"
     volumes:
       - tournament-db:/app/database
-    #depends_on:
-    #  - auth-service
-    #  - user-service
+    depends_on:
+      - auth-service
+      - user-service
 
-  #nginx:
-  #  build:
-  #    context: ./nginx
-  #  container_name: nginx
-  #  ports:
-  #    - "443:443"
-  #  depends_on:
-  #    - auth-service
-  #    - user-service
-  #    - tournament-service
-    #command: ["/wait-for-service.sh", "auth-service:3000", "user-service:3001", "frontend:80"]
-  #  restart: always
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    ports:
+      - "8443:443"
+    #volumes:
+    #  - ./certs/ft_transcendence.crt:/etc/nginx/ssl/ft_transcendence.crt
+    #  - ./certs/ft_transcendence.key:/etc/nginx/ssl/ft_transcendence.key
+    depends_on:
+      - auth-service
+      - user-service
+      - tournament-service
+    command: ["/wait-for-service.sh", "auth-service:5500", "user-service:5501", "tournament-service:5600"]
+    restart: always
 
 volumes:
-  #auth-db:
-  #user-db:
+  auth-db:
+  user-db:
   tournament-db:

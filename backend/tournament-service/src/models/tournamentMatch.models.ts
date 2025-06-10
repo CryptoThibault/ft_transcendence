@@ -12,8 +12,8 @@ export class TournamentMatch extends Model {
 	public id!: number;
 	public tournamentId!: number;
 	public player1Id!: number;
-	public player2Id!: number;
-	public winnerId!: number;
+	public player2Id!: number | null;
+	public winnerId!: number | null;
 	public roundNumber!: number;
 	public matchNumberInRound!: number;
 	public score!: string;
@@ -28,11 +28,11 @@ export const initTournamentMatchModel = () => {
 		tournamentId: { type: DataTypes.INTEGER, allowNull: false, references: { model: Tournament, key: 'id' },
 			onDelete: 'CASCADE' },
 		player1Id: { type: DataTypes.INTEGER, allowNull: false },
-		player2Id: { type: DataTypes.INTEGER, allowNull: false },
+		player2Id: { type: DataTypes.INTEGER, allowNull: true },
 		winnerId: { type: DataTypes.INTEGER, allowNull: true },
 		roundNumber: { type: DataTypes.INTEGER, allowNull: false },
 		matchNumberInRound: { type: DataTypes.INTEGER, allowNull: false },
-		score: { type: DataTypes.STRING },
+		score: { type: DataTypes.STRING, allowNull: true },
 		state: { type: DataTypes.ENUM(...Object.values(TournamentMatchState)), defaultValue: TournamentMatchState.PENDING,
 		},
 	}, {

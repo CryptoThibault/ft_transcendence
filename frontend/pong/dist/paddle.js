@@ -1,29 +1,25 @@
-import { BORDER } from "./config.js";
+import { BORDER, ITEMS_COLOR, PADDLE_SPEED } from "./config.js";
 import { canvas, ctx } from "./state.js";
 export class Paddle {
-    constructor(x, y, width, height, speed, color) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.speed = speed;
-        this.color = color;
+    init(isLeft) {
+        this.width = canvas.width * 0.01;
+        this.height = canvas.height * 0.15;
+        this.x = isLeft ? BORDER : canvas.width - this.width - BORDER;
+        this.y = canvas.height / 2 - this.height / 2;
+        this.speed = PADDLE_SPEED;
+        this.color = ITEMS_COLOR;
     }
     moveUp() {
-        if (this.y - this.speed >= BORDER) {
+        if (this.y - this.speed >= BORDER)
             this.y -= this.speed;
-        }
-        else {
+        else
             this.y = BORDER;
-        }
     }
     moveDown() {
-        if (this.y + this.height + this.speed <= canvas.height - BORDER) {
+        if (this.y + this.height + this.speed <= canvas.height - BORDER)
             this.y += this.speed;
-        }
-        else {
+        else
             this.y = canvas.height - this.height - BORDER;
-        }
     }
     draw() {
         ctx.fillStyle = this.color;

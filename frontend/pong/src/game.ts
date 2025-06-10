@@ -1,45 +1,24 @@
-import { gameStates, keys, match } from "./state.js";
+import { match, setAnimationId, gameStates, keys, ball, leftPaddle, rightPaddle, animationId } from "./state.js";
 import { updateGame } from "./update.js";
-import { renderGame, renderPauseMenu, renderEndMenu } from "./render.js";
-
-function togglePause() {
-    gameStates.isRunning = !gameStates.isRunning;
-    gameStates.isRunning ? requestAnimationFrame(gameLoop) : renderPauseMenu();
-}
-
-function restartGame() {
-    window.location.reload();
-}
+import { renderGame } from "./render.js";
 
 function quitGame() {
     window.location.reload();
 }
-// if (gameStates.isRemote) {
-//     window.addEventListener("keydown", (event) => {
-//         fetch(`http://localhost:3000/update/`, {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({ action: "keydown", key: event, player:"left" })
-//         });
-//     });
 
-//     window.addEventListener("keyup", (event) => {
-//         fetch(`http://localhost:3000/update/`, {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({ action: "keyup", key: event, player: "left" })
-//         });
-//     });
-// } else {
 window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") quitGame();
-    if (!gameStates.isEnd && event.key === "p") togglePause();
-    if (event.key === "r") restartGame();
+    if (!gameStates.isIntro && !gameStates.isEnd && event.key === "p") match?.pause();
+    if (!gameStates.isIntro && event.key === "r") match?.restart();
+    if (gameStates.isIntro && event.key === "Enter") {
+        gameStates.isIntro = false;
+        setAnimationId(requestAnimationFrame(gameLoop));
+    }
     if (gameStates.isRunning) {
         if (event.key === "w") keys.w = true;
         if (event.key === "s") keys.s = true;
-        if (!gameStates.isSinglePlayer && event.key === "ArrowUp") keys.Up = true;
-        if (!gameStates.isSinglePlayer && event.key === "ArrowDown") keys.Down = true;
+        if (match?.gameMode && event.key === "ArrowUp") keys.Up = true;
+        if (match?.gameMode && event.key === "ArrowDown") keys.Down = true;
     }
 });
 
@@ -47,22 +26,27 @@ window.addEventListener("keyup", (event) => {
     if (gameStates.isRunning) {
         if (event.key === "w") keys.w = false;
         if (event.key === "s") keys.s = false;
-        if (!gameStates.isSinglePlayer && event.key === "ArrowUp") keys.Up = false;
-        if (!gameStates.isSinglePlayer && event.key === "ArrowDown") keys.Down = false;
+        if (match?.gameMode && event.key === "ArrowUp") keys.Up = false;
+        if (match?.gameMode && event.key === "ArrowDown") keys.Down = false;
     }
 });
-//}
 
 export function gameLoop() {
-    if (gameStates.isEnd) {
-        gameStates.isRunning = false;
-        renderEndMenu();
-        match.setWinner();
+    if (!gameStates.isRunning || gameStates.isEnd) {
+        setAnimationId(null);
+        return;
     }
-    if (!gameStates.isRunning) return;
     updateGame();
     renderGame();
-    requestAnimationFrame(gameLoop);
+    setAnimationId(requestAnimationFrame(gameLoop));
 }
 
-gameLoop();
+export function initGame() {
+    if (match?.gameMode === 2) gameStates.isIntro = true;
+    gameStates.isRunning = true;
+    gameStates.isEnd = false;
+    gameStates.isFirstUpdate = true;
+    ball.init();
+    leftPaddle.init(true);
+    rightPaddle.init(false);
+}

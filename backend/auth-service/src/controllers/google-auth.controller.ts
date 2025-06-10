@@ -24,9 +24,9 @@ export const googleAuth = async (req: FastifyRequest, res: FastifyReply) => {
         let user = await AuthUser.findOne({ where: { email } });
         if (!user) {
             user = await AuthUser.create({
-                name: String,
-                email: String,
-                password: String,
+                name,
+                email,
+                password: '',
                 twoFactorEnabled: false,
                 twoFactorSecret: null
             });

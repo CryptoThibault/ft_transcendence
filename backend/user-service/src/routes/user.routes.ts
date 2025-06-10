@@ -11,10 +11,17 @@ import { createUser } from '../controllers/user.controllers';
 import { authorize } from '../middleware/auth.middleware';
 import { deleteCurrentUser } from '../controllers/session.controller';
 
+interface UpdateUserRoute {
+  Body: {
+    name: string;
+  };
+}
+
 async function userRoutes(fastify: FastifyInstance) {
     fastify.post('/', createUser);    
     fastify.get('/me', { preHandler: authorize }, currentUser);
-    fastify.put('/me',  { preHandler: authorize }, updateCurrentUserName);
+    //fastify.put('/me',  { preHandler: authorize }, updateCurrentUserName);
+    fastify.put<UpdateUserRoute>('/me', { preHandler: authorize }, updateCurrentUserName);
     fastify.post('/me/avatar', { preHandler: authorize }, uploadAvatar);
     fastify.get('/me/status', { preHandler: authorize }, onlineStatus);  
     fastify.post('/me/friends', { preHandler: authorize }, addFriend);

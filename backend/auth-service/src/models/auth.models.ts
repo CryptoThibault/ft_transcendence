@@ -13,6 +13,15 @@ export class AuthUser extends Model {
 	/* ------------------------- */
 	public readonly createdAt!: Date;
 	public readonly updatedAt!: Date;
+
+	// Exclude sensitive fields when converting the model instance to JSON.
+	// This method is automatically called by Sequelize when serializing.
+	toJSON() {
+	const values = Object.assign({}, this.get()); // Get raw data values
+    delete values.password; // Remove password hash
+    delete values.twoFactorSecret; // Remove 2FA secret
+    return values;
+    }
 }
 
 AuthUser.init({

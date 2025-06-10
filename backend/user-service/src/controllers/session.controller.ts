@@ -10,6 +10,10 @@ import { Op } from 'sequelize';
 import fs from 'fs';
 import path from 'path';
 
+interface UpdateUserRequestBody {
+  name: string;
+}
+
 export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
     const transaction = await sequelize.transaction();
     try {
@@ -40,7 +44,9 @@ export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
     }
 };
 
-export const updateCurrentUserName = async (req: FastifyRequest, res: FastifyReply) => {
+//export const updateCurrentUserName = async (req: FastifyRequest, res: FastifyReply) => {
+export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUserRequestBody }>,
+  res: FastifyReply) => {
     const transaction = await sequelize.transaction();
     try {
         if (!req.user) {
@@ -54,6 +60,9 @@ export const updateCurrentUserName = async (req: FastifyRequest, res: FastifyRep
             await transaction.rollback();
             return res.status(404).send({ success: false, message: 'User not found in DB' });
         }
+        const { name } = req.body; // adding this
+        user.name = name; // adding this
+        await user.save({ transaction }) // adding this
         await transaction.commit();
         return res.status(200).send({
             success: true,
@@ -210,6 +219,8 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 };
 
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
+     // ADD OR CONFIRM THIS LINE:
+    console.log('User service: Incoming request body for recordMatch:', req.body);
     const transaction = await sequelize.transaction();
     try {
         const player1Id = req.user.id;
