@@ -19,7 +19,7 @@ export class SinglePlayer {
         if (existing) existing.remove();
         const script = document.createElement("script");
         script.type = "module";
-        script.src = "/dist/pong/src/main.js";
+        script.src = "/dist/game/main.js";
 
         script.setAttribute("data-game-script", "true"); 
 
