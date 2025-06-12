@@ -18,15 +18,9 @@ type Route = {
 
 let currentLanguage = "en";
 
-// let lastLoadedLanguage: string | null = null;
-
 export const setLanguage = (lang: string) => {
 	currentLanguage = lang;
 };
-
-// export const setLastLang = (lang: string) => {
-// 	lastLoadedLanguage = lang;
-// };
 
 const routes: Route[] = [
 	{ path: "/", view: HomeView },
@@ -103,7 +97,7 @@ window.addEventListener("popstate", router);
 
 
 document.addEventListener("DOMContentLoaded", () => {
-//   localStorage.setItem("loggedIn", "false");
+  localStorage.setItem("loggedIn", "true");
 	loadLanguage(currentLanguage);
 
 	document.body.addEventListener("click", e => {

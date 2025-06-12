@@ -8,7 +8,7 @@
     "tournament": "Tournoi",
     "nav_search": "Recherche",
     "nav_profile": "Profil",
-    "nav_logout": "Déconnexion",
+    "nav_signout": "Déconnexion",
 
     "welcome": "Bienvenue sur Pong 42",
     
@@ -27,5 +27,14 @@
     "win": "Victoire",
     "lose": "Défaite",
     "history": "Historique",
-    "no_history_yet": "Pas encore d'historique"
+    "no_history_yet": "Pas encore d'historique",
+
+    "tournament_players": "Joueurs du tournoi",
+    "cancel": "Annuler",
+    "start": "Démarrer",
+
+    "add_friend": "Ajouter un ami",
+    "remove_friend": "Retirer l'ami",
+    "block": "Bloquer"
+
 }

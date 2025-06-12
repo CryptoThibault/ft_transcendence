@@ -8,7 +8,7 @@
     "tournament": "Tournament",
     "nav_search": "Search",
     "nav_profile": "Profile",
-    "nav_logout": "Logout",
+    "nav_signout": "Sign out",
 
     "welcome": "Welcome to Pong 42",
 
@@ -27,7 +27,13 @@
     "win": "Win",
     "lose": "Lose",
     "history": "History",
-    "no_history_yet": "No history yet"
+    "no_history_yet": "No history yet",
     
-    
+    "tournament_players": "Tournament players",
+    "cancel": "Cancel",
+    "start": "Start",
+
+    "add_friend": "Add Friend",
+    "remove_friend": "Remove friend",
+    "block" : "Block"
 }

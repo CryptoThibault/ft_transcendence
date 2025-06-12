@@ -27,12 +27,14 @@ export function setupNavbar() {
 function languageDropdownHTML(): string {
 	return `
     <div class="relative inline-block text-left">
-      <button id="langDropdownBtn" class="hover:underline text-md focus:outline-none">
+      <button data-i18n="nav_language" id="langDropdownBtn" class="hover:underline text-md focus:outline-none">
         Language
       </button>
       <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-lg z-50">
         <button data-lang="en" class="lang-option block w-full text-left px-4 py-2 hover:bg-gray-200">English</button>
         <button data-lang="fr" class="lang-option block w-full text-left px-4 py-2 hover:bg-gray-200">Français</button>
+		<button data-lang="es" class="lang-option block w-full text-left px-4 py-2 hover:bg-gray-200">Español</button>
+
       </div>
     </div>`;
 }
