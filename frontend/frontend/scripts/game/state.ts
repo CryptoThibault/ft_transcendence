@@ -3,10 +3,17 @@ import { Match } from "./match.js";
 import { Ball } from "./ball.js";
 import { Paddle } from "./paddle.js";
 
-export let canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-canvas.width = CANVAS_WIDTH;
-canvas.height = CANVAS_HEIGHT;
-export let ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+export let canvas: HTMLCanvasElement;
+export let ctx: CanvasRenderingContext2D;
+
+export function initCanvas() {
+	const el = document.getElementById("gameCanvas") as HTMLCanvasElement;
+	if (!el) throw new Error("Canvas not found");
+	canvas = el;
+	ctx = el.getContext("2d")!;
+	canvas.width = CANVAS_WIDTH;
+	canvas.height = CANVAS_HEIGHT;
+}
 
 export let match: Match | null = null;
 export function setMatch(currentMatch: Match) {

@@ -1,12 +1,12 @@
 //import { Match } from "../game/match";
 
-export class SinglePlayer {
-    async getHtml() {
-        return `
-            <h1 class="title">Single Player</h1>
-            <canvas id="gameCanvas"></canvas>
-        `;
-    }
+// export class SinglePlayer {
+//     async getHtml() {
+//         return `
+//             <h1 class="title">Single Player</h1>
+//             <canvas id="gameCanvas"></canvas>
+//         `;
+//     }
 
 // import { initGameSinglePlayer } from "../game/main.js
 
@@ -14,19 +14,19 @@ export class SinglePlayer {
     //     await new Promise((resolve) => requestAnimationFrame(resolve));
     //     initGameSinglePlayer();
     // }
-    async onMounted() {
-        const existing = document.querySelector("script[data-game-script]");
-        if (existing) existing.remove();
-        const script = document.createElement("script");
-        script.type = "module";
-        script.src = "/dist/game/main.js";
+//     async onMounted() {
+//         const existing = document.querySelector("script[data-game-script]");
+//         if (existing) existing.remove();
+//         const script = document.createElement("script");
+//         script.type = "module";
+//         script.src = "/dist/game/main.js";
 
-        script.setAttribute("data-game-script", "true"); 
+//         script.setAttribute("data-game-script", "true"); 
 
-        document.body.appendChild(script);
-    }
+//         document.body.appendChild(script);
+//     }
 
-}
+// }
 
 // function initGameSinglePlayer() {
 //     const match: Match = new Match(0, "ME", "AI");

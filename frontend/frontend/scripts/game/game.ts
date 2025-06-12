@@ -1,4 +1,4 @@
-import { match, setAnimationId, gameStates, keys, ball, leftPaddle, rightPaddle, animationId } from "./state.js";
+import { initCanvas, match, setAnimationId, gameStates, keys, ball, leftPaddle, rightPaddle } from "./state.js";
 import { updateGame } from "./update.js";
 import { renderGame } from "./render.js";
 
@@ -42,6 +42,7 @@ export function gameLoop() {
 }
 
 export function initGame() {
+    initCanvas();
     if (match?.gameMode === 2) gameStates.isIntro = true;
     gameStates.isRunning = true;
     gameStates.isEnd = false;

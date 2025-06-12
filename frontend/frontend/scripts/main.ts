@@ -7,7 +7,7 @@ import { ProfileView } from "./views/profile.js";
 import { SearchView } from "./views/search.js";
 import { SignupView } from "./views/signup.js";
 import { TournamentView } from "./views/tournament.js";
-import { SinglePlayer } from "./views/single_player.js";
+import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
 
 type Route = {

@@ -1,10 +1,17 @@
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./config.js";
 import { Ball } from "./ball.js";
 import { Paddle } from "./paddle.js";
-export let canvas = document.getElementById("gameCanvas");
-canvas.width = CANVAS_WIDTH;
-canvas.height = CANVAS_HEIGHT;
-export let ctx = canvas.getContext("2d");
+export let canvas;
+export let ctx;
+export function initCanvas() {
+    const el = document.getElementById("gameCanvas");
+    if (!el)
+        throw new Error("Canvas not found");
+    canvas = el;
+    ctx = el.getContext("2d");
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+}
 export let match = null;
 export function setMatch(currentMatch) {
     match = currentMatch;
