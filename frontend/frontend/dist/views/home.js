@@ -17,7 +17,7 @@ export class HomeView {
       <h2 class="header_custom" data-i18n="welcome">Welcome to Pong42</h2>
 
 	  <div class="flex flex-col sm:flex-row gap-10">
-		<a href="/single_player" data-link class="btn-gamemode" data-i18n="single_player">
+		<a href="/singleplayer" data-link class="btn-gamemode" data-i18n="singleplayer">
 			Single player
 		</a>
 		<button id="multiPlayerBtn" class="btn-gamemode" data-i18n="multiplayer"">

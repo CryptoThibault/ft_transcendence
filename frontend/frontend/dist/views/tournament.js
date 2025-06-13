@@ -27,7 +27,7 @@ export class TournamentView {
         });
     }
     onMounted() {
-        const tournament = new Tournament([tournamentNicknames[0], tournamentNicknames[1], tournamentNicknames[2], tournamentNicknames[3]]);
+        const tournament = new Tournament(tournamentNicknames);
         tournament.startNextMatch();
     }
 }

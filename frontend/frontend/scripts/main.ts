@@ -10,6 +10,8 @@ import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
 
+document.fonts.load("16px 'Press Start 2P'");
+
 type Route = {
 	path: string;
 	view: any;
@@ -28,7 +30,7 @@ const routes: Route[] = [
 	{ path: "/signup", view: SignupView },
 	{ path: "/profile", view: ProfileView, protected: true },
 	{ path: "/search", view: SearchView, protected: true },
-	{path: "/single_player", view: SinglePlayer},
+	{path: "/singleplayer", view: SinglePlayer},
 	{path: "/multiplayer", view: Multiplayer},
 	{path: "/tournament", view: TournamentView},
 
@@ -97,7 +99,7 @@ window.addEventListener("popstate", router);
 
 
 document.addEventListener("DOMContentLoaded", () => {
-//   localStorage.setItem("loggedIn", "true");
+	//localStorage.setItem("loggedIn", "true");
 	loadLanguage(currentLanguage);
 
 	document.body.addEventListener("click", e => {

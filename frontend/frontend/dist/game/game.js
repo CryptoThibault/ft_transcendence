@@ -1,12 +1,10 @@
 import { initCanvas, match, setAnimationId, gameStates, keys, ball, leftPaddle, rightPaddle } from "./state.js";
 import { updateGame } from "./update.js";
 import { renderGame } from "./render.js";
-function quitGame() {
-    window.location.reload();
-}
+import { navigateTo } from "../main.js";
 window.addEventListener("keydown", (event) => {
     if (event.key === "Escape")
-        quitGame();
+        navigateTo("/");
     if (!gameStates.isIntro && !gameStates.isEnd && event.key === "p")
         match === null || match === void 0 ? void 0 : match.pause();
     if (!gameStates.isIntro && event.key === "r")
@@ -49,11 +47,14 @@ export function gameLoop() {
 }
 export function initGame() {
     initCanvas();
-    if ((match === null || match === void 0 ? void 0 : match.gameMode) === 2)
-        gameStates.isIntro = true;
+    gameStates.isIntro = true;
     gameStates.isRunning = true;
     gameStates.isEnd = false;
     gameStates.isFirstUpdate = true;
+    keys.w = false;
+    keys.s = false;
+    keys.Up = false;
+    keys.Down = false;
     ball.init();
     leftPaddle.init(true);
     rightPaddle.init(false);

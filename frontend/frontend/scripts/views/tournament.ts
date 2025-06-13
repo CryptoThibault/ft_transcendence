@@ -1,5 +1,4 @@
-import {tournamentNicknames} from "./home.js"
-
+import { tournamentNicknames } from "./home.js"
 import { Tournament } from "../game/tournament.js";
 
 export class TournamentView {
@@ -19,7 +18,7 @@ export class TournamentView {
     }
 
     onMounted() {
-		const tournament: Tournament = new Tournament([tournamentNicknames[0], tournamentNicknames[1], tournamentNicknames[2], tournamentNicknames[3]]);
+		const tournament: Tournament = new Tournament(tournamentNicknames);
 		tournament.startNextMatch();
     }
 

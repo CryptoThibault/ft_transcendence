@@ -18,6 +18,7 @@ import { SignupView } from "./views/signup.js";
 import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
+document.fonts.load("16px 'Press Start 2P'");
 let currentLanguage = "en";
 export const setLanguage = (lang) => {
     currentLanguage = lang;
@@ -28,7 +29,7 @@ const routes = [
     { path: "/signup", view: SignupView },
     { path: "/profile", view: ProfileView, protected: true },
     { path: "/search", view: SearchView, protected: true },
-    { path: "/single_player", view: SinglePlayer },
+    { path: "/singleplayer", view: SinglePlayer },
     { path: "/multiplayer", view: Multiplayer },
     { path: "/tournament", view: TournamentView },
 ];
@@ -80,7 +81,7 @@ const setupLogoutHandler = () => {
 window.addEventListener("popstate", router);
 window.loadLanguage = loadLanguage;
 document.addEventListener("DOMContentLoaded", () => {
-    //   localStorage.setItem("loggedIn", "true");
+    //localStorage.setItem("loggedIn", "true");
     loadLanguage(currentLanguage);
     document.body.addEventListener("click", e => {
         const target = e.target;

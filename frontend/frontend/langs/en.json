@@ -3,7 +3,7 @@
     "nav_signup": "Sign-up",
     "nav_signin": "Login",
     "nav_language": "Language",
-    "single_player": "Single player",
+    "singleplayer": "Singleplayer",
     "multiplayer": "Multiplayer",
     "tournament": "Tournament",
     "nav_search": "Search",
@@ -39,5 +39,6 @@
 
     "multi_players": "Players",
     "single_title": "Play against the AI!",
-    "multi_title": "Play against your friends in real-time!"
+    "multi_title": "Play against your friends in real-time!",
+    "tournament_title": "Play against other players in a tournament!"
 }
