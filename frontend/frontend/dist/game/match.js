@@ -20,6 +20,7 @@ export class Match {
         this.score = [0, 0];
     }
     start() {
+        this.stop();
         setMatch(this);
         initGame();
         gameStates.isIntro ? renderMatchIntro() : setAnimationId(requestAnimationFrame(gameLoop));
