@@ -29,6 +29,35 @@ export class ProfileView {
       </div>
     </section>
 
+    <!-- Friend Section -->
+    <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
+      <h2 class="text-lg text-black font-bold mb-2">Friends</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+        <div data-username="Alex" class="user-card">
+          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <div class="user-name">Alex </div>
+          <div class="user-actions">
+              <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
+              <button data-i18n="block" class="btn-block">Block</button>
+              <button data-i18n="chat" class="btn-send-message">Chat</button>
+          </div>          
+        </div>
+
+        <div data-username="Dodo" class="user-card">
+          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <div class="user-name">Dodo </div>
+          <div class="user-actions">
+              <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
+              <button data-i18n="block" class="btn-block">Block</button>
+              <button data-i18n="chat" class="btn-send-message">Chat</button>
+          </div>          
+        </div>
+
+      </div>
+    </section>
+
     <!-- Stats Section -->
     <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
       <h2 class="text-lg text-black font-bold mb-2">Stats</h2>

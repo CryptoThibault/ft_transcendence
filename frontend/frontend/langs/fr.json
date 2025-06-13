@@ -35,6 +35,10 @@
 
     "add_friend": "Ajouter un ami",
     "remove_friend": "Retirer l'ami",
-    "block": "Bloquer"
+    "block": "Bloquer",
+
+    "multi_players": "Joueurs",
+    "single_title": "Jouez contre l'IA !",
+    "multi_title": "Jouez contre vos amis en temps réel !"
 
 }

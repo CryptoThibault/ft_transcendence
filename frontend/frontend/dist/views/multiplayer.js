@@ -7,16 +7,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { multiNicknames } from "./home.js";
+import { Match } from "../game/match.js";
 export class Multiplayer {
     getHtml() {
         return __awaiter(this, void 0, void 0, function* () {
             return `
-        <h2 class="header_custom" data-i18n="single_player">Single Player</h2>
-        <div class="flex flex-col items-center">
-            <button class="btn-gamemode" id="startGameButton" data-i18n="start_game">Start Game</button>
-            <div id="gameStatus" class="mt-4 text-gray-700"></div>
-        </div>
+            <h2 class="text-3xl sm:text-xl md:text-2xl font-mono mb-20 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)]" data-i18n="multi_title">Play against your friends in real-time!</h2>
+            <h2 class="text-black text-2xl mb-14 font-bold">
+            ${multiNicknames[0]}
+            <span class="text-xl font-normal mx-4">vs</span>
+            ${multiNicknames[1]}
+            </h2>            
+            <canvas id="gameCanvas"></canvas>
         `;
         });
+    }
+    onMounted() {
+        const match = new Match(1, multiNicknames[0], multiNicknames[1]);
+        ;
+        match.start();
     }
 }

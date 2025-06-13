@@ -35,5 +35,9 @@
 
     "add_friend": "Add Friend",
     "remove_friend": "Remove friend",
-    "block" : "Block"
+    "block" : "Block",
+
+    "multi_players": "Players",
+    "single_title": "Play against the AI!",
+    "multi_title": "Play against your friends in real-time!"
 }

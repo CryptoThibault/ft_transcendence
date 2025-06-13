@@ -97,7 +97,7 @@ window.addEventListener("popstate", router);
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  localStorage.setItem("loggedIn", "true");
+//   localStorage.setItem("loggedIn", "true");
 	loadLanguage(currentLanguage);
 
 	document.body.addEventListener("click", e => {

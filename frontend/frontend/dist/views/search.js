@@ -25,30 +25,30 @@ export class SearchView {
       <!-- User Cards example -->
       <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">
         <!-- User 1 -->
-        <div data-username="Alex" class="bg-white w-full h-40 rounded p-2 shadow text-center cursor-pointer flex flex-col items-center justify-center">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="w-16 h-16 object-cover rounded-full mb-2" />
-          <div class="text-black text-md font-semibold">Alex </div>
+        <div data-username="Alex" class="user-card">
+          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <div class="text-black  font-semibold">Alex </div>
           <div class="flex space-x-3 mt-2">
-              <button data-i18n="add_friend" class="text-md px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-950">Add Friend</button>
-              <button data-i18n="block" class="text-md px-4 py-2 bg-gray-500 rounded hover:bg-gray-800">Block</button>
+              <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>
+              <button data-i18n="block" class="btn-block">Block</button>
           </div>          
         </div>
         <!-- User 2 -->
-        <div data-username="Paul" class="bg-white w-full h-40 rounded p-2 shadow text-center cursor-pointer flex flex-col items-center justify-center">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="w-16 h-16 object-cover rounded-full mb-2" />
-          <div class="text-black text-md font-semibold">Paul </div>
+        <div data-username="Paul" class="user-card">
+          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <div class="text-black  font-semibold">Paul </div>
           <div class="flex space-x-3 mt-2">
-              <button data-i18n="remove_friend" class="text-md px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-950">Remove Friend</button>
-              <button data-i18n="block" class="text-md px-4 py-2 bg-gray-500 rounded hover:bg-gray-800">Block</button>
+              <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
+              <button data-i18n="block" class="btn-block">Block</button>
           </div>          
         </div>
         <!-- User 3 -->
-        <div data-username="Marie" class="bg-white w-full h-40 rounded p-2 shadow text-center cursor-pointer flex flex-col items-center justify-center">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="w-16 h-16 object-cover rounded-full mb-2" />
-          <div class="text-black text-md font-semibold">Marie </div>
+        <div data-username="Marie" class="user-card">
+          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <div class="text-black  font-semibold">Marie </div>
           <div class="flex space-x-3 mt-2">
-              <button data-i18n="add_friend" class="text-md px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-950">Add Friend</button>
-              <button data-i18n="block" class="text-md px-4 py-2 bg-gray-500 rounded hover:bg-gray-800">Block</button>
+              <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>
+              <button data-i18n="block" class="btn-block">Block</button>
           </div>          
         </div>
       </div>
