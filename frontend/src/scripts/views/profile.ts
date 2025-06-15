@@ -3,7 +3,7 @@ export class ProfileView {
     return `
     <section class="bg-gray-100 max-w-5xl w-full mx-auto rounded-lg shadow-md p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
-      <div class="flex flex-col items-center h-56">
+      <div class="font-mono flex flex-col items-center h-56">
           <div class="flex-grow"></div> 
           <img id="profileAvatar" src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
           <div class="flex-grow"></div>
@@ -13,7 +13,7 @@ export class ProfileView {
       </div>
       
       <!-- Info -->
-      <div class="flex-1 bg-white rounded p-4 shadow space-y-4">
+      <div class="font-mono flex-1 bg-white rounded p-4 shadow space-y-4">
         <div>
           <label data-i18n="username" class="text-black text-left block font-semibold">Username</label>
           <input id="usernameInput" type="text" disabled value="abc123" class="w-full mt-1 p-2 rounded bg-gray-200 text-gray-600"/>
@@ -31,7 +31,7 @@ export class ProfileView {
 
     <!-- Friend Section -->
     <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-      <h2 class="text-lg text-black font-bold mb-2">Friends</h2>
+      <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
@@ -39,7 +39,7 @@ export class ProfileView {
           <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
           <div class="user-name">Alex </div>
           <div class="user-actions">
-              <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
+              <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
               <button data-i18n="block" class="btn-block">Block</button>
               <button data-i18n="chat" class="btn-send-message">Chat</button>
           </div>          
@@ -59,8 +59,8 @@ export class ProfileView {
     </section>
 
     <!-- Stats Section -->
-    <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-      <h2 class="text-lg text-black font-bold mb-2">Stats</h2>
+    <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
+      <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
         <div data-i18n="total">Total: 0</div>
         <div data-i18n="win">Win: 0</div>
@@ -69,13 +69,13 @@ export class ProfileView {
     </section>
 
     <!-- History Section -->
-    <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
+    <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
       <h2 data-i18n="history" class="text-lg font-bold mb-2 text-black">History</h2>
       <p data-i18n="no_history_yet" class="text-gray-600 italic">No history yet.</p>
     </section>
 
     <!-- Edit Profile Popup -->
-    <div id="editProfilePopup" class="text-black fixed inset-0 hidden items-center justify-center  bg-black/50 backdrop-blur-sm  z-50">
+    <div id="editProfilePopup" class="text-black font-mono fixed inset-0 hidden items-center justify-center  bg-black/50 backdrop-blur-sm  z-50">
       <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
         <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
         <form id="editProfileForm" class="space-y-4">

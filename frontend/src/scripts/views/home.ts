@@ -9,7 +9,7 @@ export class HomeView {
 		return `
       <h2 class="header_custom" data-i18n="welcome">Welcome to Pong42</h2>
 
-	  <div class="flex flex-col sm:flex-row gap-10">
+	  <div class="flex flex-col sm:flex-row gap-8">
 		<a href="/singleplayer" data-link class="btn-gamemode" data-i18n="singleplayer">
 			Single player
 		</a>
@@ -24,7 +24,7 @@ export class HomeView {
 	  <!-- Tournament Popup -->
 	  <div id="tournamentPopup" class="fixed inset-0 items-center justify-center bg-black/50 backdrop-blur-sm hidden z-50">
 		<div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-			<h3 data-i18n="tournament_players" class=" text-black text-lg font-semibold mb-4">Tournament Players</h3>
+			<h3 data-i18n="tournament_players" class=" text-black text-lg mb-4">Tournament Players</h3>
 
 			
 			<div id="nicknameInputs" class="flex flex-col gap-2 mb-4"></div>
@@ -39,7 +39,7 @@ export class HomeView {
 	  <!-- Multiplayer Popup -->
 		<div id="multiPlayerPopup" class="fixed inset-0 items-center justify-center bg-black/50 backdrop-blur-sm hidden z-50">
 		<div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-			<h3 data-i18n="multi_players" class=" text-black text-lg font-semibold mb-4">Players</h3>
+			<h3 data-i18n="multi_players" class=" text-black text-lg mb-4">Players</h3>
 
 			
 			<div id="nicknameMultiInputs" class="flex flex-col gap-2 mb-4"></div>
@@ -69,7 +69,7 @@ export class HomeView {
 			Array.from({ length: 4 }).forEach((_, i) => {
 				const label = document.createElement("label");
 				label.textContent = `Player ${i + 1}`;
-				label.className = "text-black text-left font-semibold mb-1 block";
+				label.className = "text-black text-left mb-1 block text-md leading-snug";
 
 				const input = document.createElement("input");
 				input.type = "text";
@@ -124,7 +124,7 @@ export class HomeView {
 			for (let i = 0; i < 2; i++) {
 				const label = document.createElement("label");
 				label.textContent = `Player ${i + 1}`;
-				label.className = "text-black text-left font-semibold mb-1 block";
+				label.className = "text-black text-left mb-1 block text-md leading-snug";
 
 				const input = document.createElement("input");
 				input.type = "text";

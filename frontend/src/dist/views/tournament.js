@@ -14,13 +14,13 @@ export class TournamentView {
         return __awaiter(this, void 0, void 0, function* () {
             return `
 			<h1 class="header_custom mb-15" data-i18n="tournament">Tournament</h1>
-			<h2 class="text-3xl sm:text-xl md:text-2xl font-mono mb-15 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)]" data-i18n="tournament_title">Play against other players in a tournament!</h2> 
-			<h2 class="text-gray-800 text-xl mb-14">
+			<h2 class="text-lg mb-15 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)]" data-i18n="tournament_title">Play against other players in a tournament!</h2> 
+			<h2 class="text-gray-800 text-lg mb-14">
 			Players:
-			<span class="font-bold text-2xl mx-1">${tournamentNicknames[0]}</span>,
-			<span class="font-bold text-2xl mx-1">${tournamentNicknames[1]}</span>,
-			<span class="font-bold text-2xl mx-1">${tournamentNicknames[2]}</span>,
-			<span class="font-bold text-2xl mx-1">${tournamentNicknames[3]}</span>
+			<span class="font-bold text-lg mx-1">${tournamentNicknames[0]}</span>,
+			<span class="font-bold text-lg mx-1">${tournamentNicknames[1]}</span>,
+			<span class="font-bold text-lg mx-1">${tournamentNicknames[2]}</span>,
+			<span class="font-bold text-lg mx-1">${tournamentNicknames[3]}</span>
 			</h2>
             <canvas id="gameCanvas"></canvas>
         `;

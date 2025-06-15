@@ -81,7 +81,7 @@ const setupLogoutHandler = () => {
 window.addEventListener("popstate", router);
 window.loadLanguage = loadLanguage;
 document.addEventListener("DOMContentLoaded", () => {
-    //localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("loggedIn", "true");
     loadLanguage(currentLanguage);
     document.body.addEventListener("click", e => {
         const target = e.target;
