@@ -4,6 +4,8 @@ import { renderGame } from "./render.js";
 import { navigateTo } from "../main.js";
 
 window.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowUp" || event.key === "ArrowDown")
+        event.preventDefault();
     if (event.key === "Escape") navigateTo("/");
     if (!gameStates.isIntro && !gameStates.isEnd && event.key === "p") match?.pause();
     if (!gameStates.isIntro && event.key === "r") match?.restart();
