@@ -1,7 +1,7 @@
 import { setupNavbar } from "./views/nav.js";
 import { loadLanguage } from "./views/nav.js";
 import { HomeView } from "./views/home.js";
-import { LoginView } from "./views/login.js";
+import { LoginView, setUserData, userData } from "./views/login.js";
 import { PageNotFoundView } from "./views/PageNotFound.js";
 import { ProfileView } from "./views/profile.js";
 import { SearchView } from "./views/search.js";
@@ -36,10 +36,7 @@ const routes: Route[] = [
 
 ];
 
-//using for test logged in interface
-const isLoggedIn = (): boolean => {
-	return localStorage.getItem("loggedIn") === "true";
-};
+
 
 export const navigateTo = (url: string) => {
 	history.pushState(null, "", url);
@@ -60,7 +57,7 @@ const router = async () => {
 		return;
 	}
 
-	if (match.route.protected && !isLoggedIn()) {
+	if (match.route.protected && !userData) {
 		navigateTo("/login");
 		return;
 	}
@@ -87,19 +84,18 @@ const setupLogoutHandler = () => {
 	if (logoutBtn) {
 		logoutBtn.addEventListener("click", (e) => {
 			e.preventDefault();
-			localStorage.setItem("loggedIn", "false");
-			navigateTo("/login");
+			setUserData(null);
+			navigateTo("/");
 		});
 	}
 };
 
 window.addEventListener("popstate", router);
-
+localStorage.setItem("loggedIn", "false");
 (window as any).loadLanguage = loadLanguage;
 
 
 document.addEventListener("DOMContentLoaded", () => {
-	// localStorage.setItem("loggedIn", "true");
 	loadLanguage(currentLanguage);
 
 	document.body.addEventListener("click", e => {

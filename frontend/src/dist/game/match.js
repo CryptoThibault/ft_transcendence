@@ -11,6 +11,7 @@ import { MAX_SCORE } from "./config.js";
 import { setMatch, gameStates, animationId, setAnimationId } from "./state.js";
 import { gameLoop, initGame } from "./game.js";
 import { renderEndMenu, renderMatchIntro, renderPauseMenu } from "./render.js";
+import { userData } from "../views/login.js";
 export class Match {
     constructor(gameMode, player1, player2) {
         this.gameMode = gameMode;
@@ -49,9 +50,8 @@ export class Match {
             setTimeout(() => {
                 renderEndMenu();
             }, 50);
-        console.log(`Send to DB: player ${this.winner} win, score ${this.score}`);
-        //if (isLogin)
-        //    this.sendResult();
+        if (userData)
+            this.sendResult();
         if (this.onEnd)
             this.onEnd();
     }
@@ -73,6 +73,7 @@ export class Match {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        id: userData.id,
                         gameMode: this.gameMode,
                         player1: this.player1,
                         player2: this.player2,

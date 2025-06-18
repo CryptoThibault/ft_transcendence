@@ -1,4 +1,16 @@
 import { navigateTo } from "../main.js";
+
+export let userData: { id: number, name: string, email: string } | null = null;
+/* {
+  id: 0,
+  name: "",
+  email: ""
+};*/
+
+export function setUserData(data: { id: number, name: string, email: string } | null) {
+  userData = data;
+}
+
 export class LoginView {
   async getHtml() {
     return `
@@ -68,6 +80,11 @@ export class LoginView {
         messageDiv.style.color = "green";
         messageDiv.textContent = "Login successful!";
 
+        userData = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email
+        };
         //set login state
         setTimeout(() => {
           navigateTo("/");

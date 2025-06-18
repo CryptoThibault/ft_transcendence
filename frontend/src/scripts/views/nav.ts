@@ -1,10 +1,11 @@
 import { setLanguage } from "../main.js";
+import { userData } from "./login.js";
 
 export function setupNavbar() {
 	const nav = document.getElementById("mainNav");
 	if (!nav) return;
 
-	const loggedIn = localStorage.getItem("loggedIn") === "true";
+	const loggedIn: boolean = !!userData;
 
 	nav.innerHTML = loggedIn
 		? `

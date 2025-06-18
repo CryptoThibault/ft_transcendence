@@ -8,11 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { setLanguage } from "../main.js";
+import { userData } from "./login.js";
 export function setupNavbar() {
     const nav = document.getElementById("mainNav");
     if (!nav)
         return;
-    const loggedIn = localStorage.getItem("loggedIn") === "true";
+    const loggedIn = !!userData;
     nav.innerHTML = loggedIn
         ? `
       <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>

@@ -8,6 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { navigateTo } from "../main.js";
+export let userData = null;
+/* {
+  id: 0,
+  name: "",
+  email: ""
+};*/
+export function setUserData(data) {
+    userData = data;
+}
 export class LoginView {
     getHtml() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -72,6 +81,11 @@ export class LoginView {
                     const data = yield response.json();
                     messageDiv.style.color = "green";
                     messageDiv.textContent = "Login successful!";
+                    userData = {
+                        id: data.user.id,
+                        name: data.user.name,
+                        email: data.user.email
+                    };
                     //set login state
                     setTimeout(() => {
                         navigateTo("/");

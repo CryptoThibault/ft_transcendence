@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { setupNavbar } from "./views/nav.js";
 import { loadLanguage } from "./views/nav.js";
 import { HomeView } from "./views/home.js";
-import { LoginView } from "./views/login.js";
+import { LoginView, setUserData, userData } from "./views/login.js";
 import { PageNotFoundView } from "./views/PageNotFound.js";
 import { ProfileView } from "./views/profile.js";
 import { SearchView } from "./views/search.js";
@@ -33,10 +33,6 @@ const routes = [
     { path: "/multiplayer", view: Multiplayer },
     { path: "/tournament", view: TournamentView },
 ];
-//using for test logged in interface
-const isLoggedIn = () => {
-    return localStorage.getItem("loggedIn") === "true";
-};
 export const navigateTo = (url) => {
     history.pushState(null, "", url);
     router();
@@ -52,7 +48,7 @@ const router = () => __awaiter(void 0, void 0, void 0, function* () {
         document.querySelector("body").innerHTML = yield view.getHtml();
         return;
     }
-    if (match.route.protected && !isLoggedIn()) {
+    if (match.route.protected && !userData) {
         navigateTo("/login");
         return;
     }
@@ -73,15 +69,15 @@ const setupLogoutHandler = () => {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            localStorage.setItem("loggedIn", "false");
-            navigateTo("/login");
+            setUserData(null);
+            navigateTo("/");
         });
     }
 };
 window.addEventListener("popstate", router);
+localStorage.setItem("loggedIn", "false");
 window.loadLanguage = loadLanguage;
 document.addEventListener("DOMContentLoaded", () => {
-    // localStorage.setItem("loggedIn", "true");
     loadLanguage(currentLanguage);
     document.body.addEventListener("click", e => {
         const target = e.target;
