@@ -13,9 +13,9 @@ export class TournamentView {
     getHtml() {
         return __awaiter(this, void 0, void 0, function* () {
             return `
-			<h1 class="header_custom mb-15" data-i18n="tournament">Tournament</h1>
-			<h2 class="text-lg mb-15 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)]" data-i18n="tournament_title">Play against other players in a tournament!</h2> 
-			<h2 class="text-gray-800 text-lg mb-14">
+			<h1 class="header_custom mb-10" data-i18n="tournament">Tournament</h1>
+			<h2 class="text-lg mb-10 drop-shadow-[2px_2px_0_gris] [text-shadow:_2px_2px_0_rgba(0,0,0,0.8)]" data-i18n="tournament_title">Play against other players in a tournament!</h2> 
+			<h2 class="text-gray-800 text-lg mb-5">
 			Players:
 			<span class="font-bold text-lg mx-1">${tournamentNicknames[0]}</span>,
 			<span class="font-bold text-lg mx-1">${tournamentNicknames[1]}</span>,
