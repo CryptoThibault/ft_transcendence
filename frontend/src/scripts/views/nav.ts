@@ -1,13 +1,10 @@
 import { setLanguage } from "../main.js";
-import { userData } from "./login.js";
 
 export function setupNavbar() {
 	const nav = document.getElementById("mainNav");
 	if (!nav) return;
 
-	const loggedIn: boolean = !!userData;
-
-	nav.innerHTML = loggedIn
+	nav.innerHTML = !!localStorage.getItem("token")
 		? `
       <a href="/" class="hover:underline" data-i18n="nav_home" data-link>Home</a>
       <a href="/search" class="hover:underline" data-i18n="nav_search" data-link>Search</a>

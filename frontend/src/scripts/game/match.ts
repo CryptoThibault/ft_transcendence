@@ -2,7 +2,6 @@ import { MAX_SCORE } from "./config.js";
 import { setMatch, gameStates, animationId, setAnimationId } from "./state.js";
 import { gameLoop, initGame } from "./game.js";
 import { renderEndMenu, renderMatchIntro, renderPauseMenu } from "./render.js";
-import { userData } from "../views/login.js";
 
 export class Match {
     winner: string | null = null;
@@ -50,7 +49,7 @@ export class Match {
                 renderEndMenu();
             }, 50);
         
-        if (userData)
+        if (!!localStorage.getItem("token"))
             this.sendResult();
     
         if (this.onEnd) this.onEnd();
@@ -75,7 +74,7 @@ export class Match {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    id: userData!.id,
+                    token: localStorage.getItem("token"),
                     gameMode: this.gameMode,
                     player1: this.player1,
                     player2: this.player2,

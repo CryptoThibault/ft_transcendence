@@ -1,5 +1,4 @@
 import { navigateTo } from "../main.js";
-import { setUserData } from "./login.js";
 
 export class SignupView {
     async getHtml() {
@@ -40,46 +39,52 @@ export class SignupView {
 	}
 
   async onMounted() {
-      const form = document.getElementById("signup-form") as HTMLFormElement;
-      const messageDiv = document.getElementById("signup-message") as HTMLElement;
-      
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const username = (form.querySelector("#username") as HTMLInputElement).value.trim();
-        const email = (form.querySelector("#email") as HTMLInputElement).value.trim();
-        const password = (form.querySelector("#password") as HTMLInputElement).value;
+    const form = document.getElementById("signup-form") as HTMLFormElement;
+    const messageDiv = document.getElementById("signup-message") as HTMLElement;
+    
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = (form.querySelector("#username") as HTMLInputElement).value.trim();
+      const email = (form.querySelector("#email") as HTMLInputElement).value.trim();
+      const password = (form.querySelector("#password") as HTMLInputElement).value;
+      const confirm = (form.querySelector("#confirm") as HTMLInputElement).value;
 
-        try {
-          const response = await fetch("http://localhost:5500/api/v1/auth/sign-up", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password }),
-          });
-  
-          if (!response.ok) {
-            const errorData = await response.json();
-            messageDiv.textContent = errorData.message;
-            return;
-          }
-  
-          const data = await response.json();
-          messageDiv.style.color = "green";
-          messageDiv.textContent = "Login successful!";
-  
-          setUserData({
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email
-          });
-          
-          setTimeout(() => {
-            navigateTo("/");
-          }, 1500);
-  
-        } catch (error) {
-          messageDiv.style.color = "red";
-          messageDiv.textContent = "Network error, please try again.";
+      if (!username || !email || !password || !confirm) {
+        alert("All fields are required.");
+        return;
+      }
+      if (password !== confirm) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5500/api/v1/auth/sign-up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          messageDiv.textContent = errorData.message;
+          return;
         }
+
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        navigateTo("/");
+
+        // messageDiv.style.color = "green";
+        // messageDiv.textContent = "Sign-up successful!";
+        // setTimeout(() => {
+        //   navigateTo("/");
+        // }, 1500);
+
+      } catch (error) {
+        messageDiv.style.color = "red";
+        messageDiv.textContent = "Sign-up failed!";
+      }
       });
     }
 }

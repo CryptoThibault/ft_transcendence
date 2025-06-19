@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { setupNavbar } from "./views/nav.js";
 import { loadLanguage } from "./views/nav.js";
 import { HomeView } from "./views/home.js";
-import { LoginView, setUserData, userData } from "./views/login.js";
+import { LoginView } from "./views/login.js";
 import { PageNotFoundView } from "./views/PageNotFound.js";
 import { ProfileView } from "./views/profile.js";
 import { SearchView } from "./views/search.js";
@@ -18,7 +18,6 @@ import { SignupView } from "./views/signup.js";
 import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
-document.fonts.load("16px 'Press Start 2P'");
 let currentLanguage = "en";
 export const setLanguage = (lang) => {
     currentLanguage = lang;
@@ -48,13 +47,10 @@ const router = () => __awaiter(void 0, void 0, void 0, function* () {
         document.querySelector("body").innerHTML = yield view.getHtml();
         return;
     }
-    if (match.route.protected && !userData) {
+    if (match.route.protected && !localStorage.getItem("token")) {
         navigateTo("/login");
         return;
     }
-    // if (isLoggedIn() && ["/login", "/signup"].includes(match.route.path)) {
-    //   localStorage.setItem("loggedIn", "false");
-    // }
     const view = new match.route.view();
     document.querySelector("#mainContent").innerHTML = yield view.getHtml();
     if (typeof view.onMounted === "function") {
@@ -69,13 +65,12 @@ const setupLogoutHandler = () => {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            setUserData(null);
+            localStorage.removeItem("token");
             navigateTo("/");
         });
     }
 };
 window.addEventListener("popstate", router);
-localStorage.setItem("loggedIn", "false");
 window.loadLanguage = loadLanguage;
 document.addEventListener("DOMContentLoaded", () => {
     loadLanguage(currentLanguage);

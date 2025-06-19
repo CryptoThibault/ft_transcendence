@@ -1,5 +1,5 @@
-export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 500;
+export const CANVAS_WIDTH = 1000;
+export const CANVAS_HEIGHT = 600;
 export const BACKGROUND_COLOR = "black";
 export const ITEMS_COLOR = "white";
 export const MIN_SPEED = 7;

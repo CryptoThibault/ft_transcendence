@@ -8,7 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { navigateTo } from "../main.js";
-import { setUserData } from "./login.js";
 export class SignupView {
     getHtml() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -57,6 +56,15 @@ export class SignupView {
                 const username = form.querySelector("#username").value.trim();
                 const email = form.querySelector("#email").value.trim();
                 const password = form.querySelector("#password").value;
+                const confirm = form.querySelector("#confirm").value;
+                if (!username || !email || !password || !confirm) {
+                    alert("All fields are required.");
+                    return;
+                }
+                if (password !== confirm) {
+                    alert("Passwords do not match.");
+                    return;
+                }
                 try {
                     const response = yield fetch("http://localhost:5500/api/v1/auth/sign-up", {
                         method: "POST",
@@ -69,20 +77,17 @@ export class SignupView {
                         return;
                     }
                     const data = yield response.json();
-                    messageDiv.style.color = "green";
-                    messageDiv.textContent = "Login successful!";
-                    setUserData({
-                        id: data.user.id,
-                        name: data.user.name,
-                        email: data.user.email
-                    });
-                    setTimeout(() => {
-                        navigateTo("/");
-                    }, 1500);
+                    localStorage.setItem("token", data.token);
+                    navigateTo("/");
+                    // messageDiv.style.color = "green";
+                    // messageDiv.textContent = "Sign-up successful!";
+                    // setTimeout(() => {
+                    //   navigateTo("/");
+                    // }, 1500);
                 }
                 catch (error) {
                     messageDiv.style.color = "red";
-                    messageDiv.textContent = "Network error, please try again.";
+                    messageDiv.textContent = "Sign-up failed!";
                 }
             }));
         });

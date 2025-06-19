@@ -1,16 +1,5 @@
 import { navigateTo } from "../main.js";
 
-export let userData: { id: number, name: string, email: string } | null = null;
-/* {
-  id: 0,
-  name: "",
-  email: ""
-};*/
-
-export function setUserData(data: { id: number, name: string, email: string } | null) {
-  userData = data;
-}
-
 export class LoginView {
   async getHtml() {
     return `
@@ -77,29 +66,18 @@ export class LoginView {
         }
 
         const data = await response.json();
-        messageDiv.style.color = "green";
-        messageDiv.textContent = "Login successful!";
+        localStorage.setItem("token", data.token);
+        navigateTo("/");
 
-        userData = {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email
-        };
-        //set login state
-        setTimeout(() => {
-          navigateTo("/");
-        }, 1500);
-
-      } catch (error) {
-        messageDiv.style.color = "red";
-        messageDiv.textContent = "Network error, please try again.";
-
-        //Using for test login success
         // messageDiv.style.color = "green";
-        // messageDiv.textContent = "Login successful test!";
+        // messageDiv.textContent = "Login successful!";
         // setTimeout(() => {
         //   navigateTo("/");
         // }, 1500);
+
+      } catch (error) {
+        messageDiv.style.color = "red";
+        messageDiv.textContent = "Login failed!";
       }
     });
   }
