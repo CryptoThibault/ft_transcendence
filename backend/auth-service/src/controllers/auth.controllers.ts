@@ -1,55 +1,74 @@
 //backend/auth-service/src/controllers/auth.controllets.ts
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { AuthUser } from '../models/auth.models';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { sequelize } from '../plugins/sequelize';
-import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/env';
-import { userServiceClient } from '../utils/userServiceClient';
+
+import { createUser, findUserByEmail, findUserByEmailWithSensitiveData } from '../services/user.service.js';
+import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/env.js';
+import { userServiceClient } from '../utils/userServiceClient.js';
+import { AuthUser, NewAuthUser, SafeAuthUser } from '../models/auth.models.js';
+
+const getJwtSecret = (): string => {
+	if (!JWT_SECRET)
+		throw new Error('JWT_SECRET is not defined in environment variables');
+	return JWT_SECRET;
+};
 
 export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
-	const transaction = await sequelize.transaction();
 	try {
 		const { name, email, password } = req.body as {
 			name: string;
 			email: string;
 			password: string;
 		};
-		const existingUser = await AuthUser.findOne({ where: { email }, transaction });
-		if (existingUser) {
-			const error = new Error('User already exists');
-			(error as any).statusCode = 409;
-			throw error;
-		}
-		const salt = await bcrypt.genSalt(10);
-		const hashedPassword = await bcrypt.hash(password, salt);
-		const newUser = await AuthUser.create(
-			{ name, email, password: hashedPassword },
-			{ transaction }
-		);
-		// Sync with user-service
-		try {
-			await userServiceClient.post('/', {
-				id: newUser.id,
-				name: newUser.name,
-				email: newUser.email,
+		if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 20) {
+			return res.status(400).send({
+				success: false,
+				message: 'Name must be a string between 2 and 20 characters.',
 			});
-		} catch (syncError) {
-			console.error('Failed to sync with user-service:', (syncError as Error).message);
-			const error = new Error('Failed to sync with user-service');
-			(error as any).statusCode = 502; // Bad Gateway - service communication error
-			throw error;
 		}
-		if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined');
-		const signOptions: SignOptions = {
-			expiresIn: '1h',
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+			return res.status(400).send({
+				success: false,
+				message: 'Invalid email format.',
+			});
+		}
+		const passwordValid = typeof password === 'string' && password.length >= 8 && /[a-z]/.test(password) &&
+			/[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+		if (!passwordValid) {
+			return res.status(400).send({
+				success: false,
+				message:
+					'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+			});
+		}
+		const existingUser = await findUserByEmail(email);
+		if (existingUser) {
+			return res.status(409).send({
+				success: false,
+				message: 'User already exists',
+			});
+		}
+		const newUserInput: NewAuthUser = {
+			name: name.trim(),
+			email: email.toLowerCase(),
+			password,
+			twoFactorEnabled: false,
+			twoFactorSecret: null,
 		};
+		const newUser = await createUser(newUserInput);
+		if (!newUser) throw new Error('Failed to create user during database operation.');
+		await userServiceClient.post('/', {
+			id: newUser.id,
+			name: newUser.name,
+			email: newUser.email,
+		});
 		const token = jwt.sign(
 			{ userId: newUser.id },
-			JWT_SECRET as string,
-			signOptions
+			getJwtSecret(),
+			{ expiresIn: '1h' }
 		);
-		await transaction.commit();
 		return res.status(201).send({
 			success: true,
 			message: 'User created successfully',
@@ -58,136 +77,73 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 				user: newUser,
 			},
 		});
-	} catch (error) {
-		await transaction.rollback();
-		res.status((error as any).statusCode || 500).send({
-			message: (error as any).message || 'Internal server error',
+	} catch (error: any) {
+		console.error('SignUp error:', error);
+		return res.status(error.statusCode || 500).send({
+			success: false,
+			message: error.message || 'Internal server error',
 		});
 	}
 };
 
+
 export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-        const { email, password } = req.body as {
-            email: string;
-            password: string;
-        };
-        const user = await AuthUser.findOne({ where: { email } });
-        if (!user) {
-            const error = new Error('User not found');
-            (error as any).statusCode = 404;
-            throw error;
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            const error = new Error('Invalid password');
-            (error as any).statusCode = 401;
-            throw error;
-        }
-        if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined');
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            twoFactorEnabled: user.twoFactorEnabled,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-        };
-        if (user.twoFactorEnabled) {
-            const tempToken = jwt.sign(
-                { userId: user.id, twoFactor: true },
-                JWT_SECRET!,
-                { expiresIn: '5m' }
-            );
-            return res.send({
-                success: true,
-                message: '2FA code required',
-                twoFactor: true,
-                tempToken
-            });
-        }
-        // "2FA not required" - issue final access token
-        const signOptions: SignOptions = {
-            expiresIn: '1h',
-        };
-        const token = jwt.sign(
-            { userId: user.id },
-            JWT_SECRET as string,
-            signOptions
-        );        
-        return res.status(200).send({
-            success: true,
-            message: 'User signed in successfully',
-            data: {
-                token,
-                user: userResponse,
-            }
-        });
-    } catch (error) {
-        return res.status((error as any).statusCode || 500).send({
-            success: false,
-            message: (error as Error).message || 'Internal error',
-        });
-    }
-};
-
-
-/*export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
+		console.debug('[signIn] Incoming request body:', req.body); //Debug log
 		const { email, password } = req.body as {
 			email: string;
 			password: string;
 		};
-		const user = await AuthUser.findOne({ where: { email } });
+		const user = await findUserByEmailWithSensitiveData(email);
 		if (!user) {
-			const error = new Error('User not found');
-			(error as any).statusCode = 404;
-			throw error;
+			return res.status(404).send({
+				success: false,
+				message: 'User not found',
+			});
 		}
-		const isPasswordValid = await bcrypt.compare(password, user.password);
+		const isPasswordValid = await bcrypt.compare(password, user.password!);
 		if (!isPasswordValid) {
-			const error = new Error('Invalid password');
-			(error as any).statusCode = 401;
-			throw error;
+			return res.status(401).send({
+				success: false,
+				message: 'Invalid email or password',
+			});
 		}
-		if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined');
-		// -------- adding this -------- 
+		const secret = getJwtSecret();
+		const { password: _, twoFactorSecret: __, ...userResponse } = user;
 		if (user.twoFactorEnabled) {
 			const tempToken = jwt.sign(
 				{ userId: user.id, twoFactor: true },
-    			JWT_SECRET!,
-    			{ expiresIn: '5m' }
+				secret,
+				{ expiresIn: '5m' }
 			);
 			return res.send({
 				success: true,
-    			message: '2FA code required',
-    			twoFactor: true,
-    			tempToken
-  			});
+				message: '2FA code required',
+				twoFactor: true,
+				tempToken
+			});
 		}
-		// ------------------------------
-		// "FA not required"
 		const signOptions: SignOptions = {
-			expiresIn: '1h', //JWT_EXPIRES_IN,
+			expiresIn: '1h',//JWT_EXPIRES_IN || '1h',
 		};
 		const token = jwt.sign(
 			{ userId: user.id },
-			JWT_SECRET as string,
+			secret,
 			signOptions
 		);
-		
 		return res.status(200).send({
 			success: true,
 			message: 'User signed in successfully',
 			data: {
 				token,
-				user,
+				user: userResponse,
 			}
 		});
-	} catch (error) {
-		return res.status(500).send({
+	} catch (error: any) {
+		console.error('SignIn error:', error);
+		return res.status(error.statusCode || 500).send({
 			success: false,
-			message: (error as Error).message || 'Internal error',
+			message: error.message || 'Internal server error',
 		});
 	}
-};*/
+};

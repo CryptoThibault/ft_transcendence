@@ -5,11 +5,11 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:55
 
 export const verifyToken = async (token: string) => {
 	try {
-    	const res = await axios.post(`${AUTH_SERVICE_URL}/verify-token`, { token });
-	    return res.data; // contains userId, email, etc.
-  	} catch (err: any) {
-    	const error = new Error('Unauthorized');
-    	(error as any).statusCode = 401;
-    	throw error;
-  	}
+		const res = await axios.post(`${AUTH_SERVICE_URL}/verify-token`, { token });
+		return res.data;
+	} catch (err: any) {
+		const error = new Error('Unauthorized');
+		(error as any).statusCode = 401;
+		throw error;
+	}
 };

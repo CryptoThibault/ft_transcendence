@@ -18,6 +18,7 @@ services:
       - "5501:5501"
     volumes:
       - user-db:/app/database
+      - /app/node_modules
     depends_on:
       - auth-service
   
@@ -33,19 +34,27 @@ services:
       - auth-service
       - user-service
 
+  frontend-builder:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-builder
+    volumes:
+      - frontend-build:/app/dist
+      - ./frontend/src:/app/src
+
   nginx:
     build:
-      context: ./nginx
+      context: .
+      dockerfile: nginx/Dockerfile
     container_name: nginx
     ports:
       - "8443:443"
-    #volumes:
-    #  - ./certs/ft_transcendence.crt:/etc/nginx/ssl/ft_transcendence.crt
-    #  - ./certs/ft_transcendence.key:/etc/nginx/ssl/ft_transcendence.key
     depends_on:
       - auth-service
       - user-service
       - tournament-service
+      - frontend-builder
     command: ["/wait-for-service.sh", "auth-service:5500", "user-service:5501", "tournament-service:5600"]
     restart: always
 
@@ -53,3 +62,4 @@ volumes:
   auth-db:
   user-db:
   tournament-db:
+  frontend-build:

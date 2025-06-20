@@ -1,12 +1,9 @@
 //backend/user-service/src/controllers/session.controller.ts
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { verifyToken } from '../utils/verify.token';
-import { MultipartFile } from '@fastify/multipart';
-import { User } from '../models/user.models';
-import { sequelize } from '../plugins/sequelize';
-import { Friendship } from '../models/friendship.models';
-import { Match } from '../models/match.models';
-import { Op } from 'sequelize';
+import { User } from '../models/user.models.js';
+import { Friendship } from '../models/friendship.models.js';
+import { Match } from '../models/match.models.js';
+import { getDb } from '../plugins/sqlite.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -15,28 +12,22 @@ interface UpdateUserRequestBody {
 }
 
 export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
-    const transaction = await sequelize.transaction();
     try {
         console.log('User from token:', req.user);
-        if (!req.user) {
-            await transaction.rollback();
-            return res.status(401).send({ success: false, message: 'Unauthorized: No user on request' });
+        if (!req.user || !req.user.id) {
+            return res.status(401).send({ success: false, message: 'Unauthorized: No user ID on request' });
         }
         const userId = req.user.id;
         console.log('Extracted userId from req.user:', userId);
-        const user = await User.findByPk(userId, { transaction });
-        if (!user) {
-            await transaction.rollback();
+        const user = await User.findById(userId);
+        if (!user)
             return res.status(404).send({ success: false, message: 'User not found in DB' });
-        }
-        await transaction.commit();
         return res.status(200).send({
             success: true,
             message: 'User found successfully',
             data: { user },
         });
     } catch (error) {
-        await transaction.rollback();
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal error',
@@ -44,33 +35,26 @@ export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
     }
 };
 
-//export const updateCurrentUserName = async (req: FastifyRequest, res: FastifyReply) => {
 export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUserRequestBody }>,
   res: FastifyReply) => {
-    const transaction = await sequelize.transaction();
     try {
-        if (!req.user) {
-            await transaction.rollback();
+        if (!req.user || !req.user.id)
             return res.status(404).send({ success: false, message: 'User not found' });
-        }
         const userId = req.user.id;
         console.log('Extracted userId from req.user:', userId);
-        const user = await User.findByPk(userId, { transaction });
-        if (!user) {
-            await transaction.rollback();
-            return res.status(404).send({ success: false, message: 'User not found in DB' });
-        }
-        const { name } = req.body; // adding this
-        user.name = name; // adding this
-        await user.save({ transaction }) // adding this
-        await transaction.commit();
+        const { name } = req.body;
+        const updated = await User.update(userId, { name });
+        if (!updated)
+            return res.status(404).send({ success: false, message: 'User not found or name not changed in DB' });
+        const user = await User.findById(userId);
+        if (!user)
+            return res.status(500).send({ success: false, message: 'Failed to retrieve updated user' });
         return res.status(200).send({
             success: true,
             message: 'Name updated successfully',
             data: { user },
         });
     } catch (error) {
-        await transaction.rollback();
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -80,116 +64,116 @@ export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUs
 
 export const onlineStatus = async (req: FastifyRequest, res: FastifyReply) => {
     try {
-        const userId = req.user.id;
-        const user = await User.findByPk(userId);
-        if (!user) {
-            return res.status(404).send({
+        if (!req.user || !req.user.id) {
+            return res.status(401).send({
                 success: false,
-                message: 'User not found',
+                message: 'Unauthorized: User ID not available from token.',
             });
         }
-        user.onlineStatus = true;
-        await user.save();
+        const userId = req.user.id;
+        const updated = await User.update(userId, { onlineStatus: true });
+        if (!updated) {
+            return res.status(404).send({
+                success: false,
+                message: 'User not found or online status already set.',
+            });
+        }
+        const user = await User.findById(userId);
+        if (!user)
+            return res.status(500).send({ success: false, message: 'Failed to retrieve updated user data.' });
         return res.status(200).send({
             success: true,
             message: 'User is now online',
             data: { onlineStatus: user.onlineStatus },
         });
     } catch (error) {
+        console.error('Error setting online status:', error);
         return res.status(500).send({
             success: false,
-            message: (error as Error).message || 'Internal error',
+            message: (error as Error).message || 'Internal server error',
         });
     }
 };
 
 export const uploadAvatar = async (req: FastifyRequest, res: FastifyReply) => {
     try {
+        if (!req.user || !req.user.id)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const userId = req.user.id;
         const data = await req.file();
-        if (!data) {
-            return res.status(400).send({
-                success: false,
-                message: 'No file uploaded',
-            });
-        }
-        if (data.file.truncated) {
-            return res.status(400).send({
-                success: false,
-                message: 'File is too large. Maximum size is 5MB.',
-            });
-        }
+        if (!data)
+            return res.status(400).send({ success: false, message: 'No file uploaded' });
+        if (data.file.truncated)
+            return res.status(400).send({ success: false, message: 'File is too large. Maximum size is 5MB.' });
         const fileName = `${Date.now()}-${data.filename}`;
         const uploadDir = path.resolve('./uploads');
         const filePath = path.join(uploadDir, fileName);
         if (!fs.existsSync(uploadDir))
             fs.mkdirSync(uploadDir, { recursive: true });
         const writeStream = fs.createWriteStream(filePath);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => { 
             data.file.pipe(writeStream);
             data.file.on('end', resolve);
-            data.file.on('error', reject);
+            data.file.on('error', (err: Error) => {
+                console.error('File stream error:', err);
+                writeStream.destroy(err);
+                reject(err);
+            });
+            writeStream.on('error', (err: Error) => {
+                console.error('Write stream error:', err);
+                reject(err);
+            });
         });
-        const userId = req.user.id;
-        const user = await User.findByPk(userId);
-        if (!user)
-            return res.status(404).send({ success: false, message: 'User not found' });
-        user.avatar = fileName;
-        await user.save();
+        const updated = await User.update(userId, { avatar: fileName });
+
+        if (!updated)
+            return res.status(404).send({ success: false, message: 'User not found or avatar not changed.' });
         return res.status(200).send({
             success: true,
             message: 'Avatar uploaded successfully',
             data: { avatar: fileName },
         });
     } catch (error) {
+        console.error('Error uploading avatar:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
         });
     }
-}
+};
 
 export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
-    const transaction = await sequelize.transaction();
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
     try {
-        //console.log("Incoming body:", req.body);
-        const inviterId = req.user.id;
+        const inviterId = req.user?.id;
         const { friendId } = req.body as { friendId: number };
-        //console.log(`Inviter ID: ${inviterId}, Friend ID: ${friendId}`);
-        //console.log("Friendship Query Params:", { userId: inviterId, friendId });
-        if (!friendId || inviterId === friendId) {
-            //console.error("Invalid IDs: inviterId =", inviterId, ", friendId =", friendId);
-            return res.status(400).send({ success: false, message: 'Invalid friendId' });
+        if (!inviterId || !friendId || inviterId === friendId) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({ success: false, message: 'Invalid inviter or friend ID.' });
         }
-        const inviter = await User.findByPk(inviterId, { transaction });
-        const invitee = await User.findByPk(friendId, { transaction });
-        //console.log("Inviter:", inviter);
-        //console.log("Invitee:", invitee);
-        //console.log(`Debug - Inviter ID: ${inviterId}, Friend ID: ${friendId}`);
+        const inviter = await User.findById(inviterId);
+        const invitee = await User.findById(friendId);
         if (!inviter || !invitee) {
-            await transaction.rollback();
-            return res.status(404).send({ success: false, message: 'User(s) not found' });
+            await db.run('ROLLBACK;');
+            return res.status(404).send({ success: false, message: 'User(s) not found.' });
         }
-        const alreadyFriends = await Friendship.findOne({
-            where: { userId: inviterId, friendId },
-            transaction,
-        });
-        //console.log("Friendship Query Result:", alreadyFriends);
-        if (alreadyFriends) {
-            await transaction.rollback();
-            return res.status(400).send({ success: false, message: 'Users are already friends' });
+        const existingFriendship = await Friendship.findByUserAndFriend(inviterId, friendId);
+        if (existingFriendship) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({ success: false, message: 'Friendship already exists or is pending.' });
         }
-        await Friendship.bulkCreate([
-            { userId: inviterId, friendId },
-            { userId: friendId, friendId: inviterId },
-        ], { transaction });
-        await transaction.commit();
+        await Friendship.create({ userId: inviterId, friendId: friendId, status: 'pending' });
+        await Friendship.create({ userId: friendId, friendId: inviterId, status: 'pending' });
+        await db.run('COMMIT;');
         return res.status(200).send({
             success: true,
-            message: 'Friend added successfully',
+            message: 'Friend request sent successfully (or friendship established).',
             data: { inviterId, friendId },
         });
     } catch (error) {
-        await transaction.rollback();
+        await db.run('ROLLBACK;');
+        console.error('Error adding friend:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -199,18 +183,34 @@ export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
 
 export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
     try {
-        const userId = req.user.id;
-        const user = await User.findByPk(userId, {
-            include: [{ model: User, as: 'friends' }],
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const mainUser = await User.findById(userId);
+        if (!mainUser)
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        const friendships = await Friendship.findFriendsForUser(userId);
+        const friendIds: number[] = [];
+        friendships.forEach(f => {
+            if (f.status === 'accepted') {
+                if (f.userId === userId) {
+                    friendIds.push(f.friendId);
+                } else {
+                    friendIds.push(f.userId);
+                }
+            }
         });
-        if (!user)
-            return res.status(404).send({ success: false, message: 'User not found' });
+        const friendsDetails = await Promise.all(
+            friendIds.map(id => User.findById(id))
+        );
+        const actualFriends = friendsDetails.filter(Boolean);
         return res.status(200).send({
             success: true,
             message: 'Friends list retrieved successfully',
-            data: user.friends,
+            data: actualFriends,
         });
     } catch (error) {
+        console.error('Error getting friends list:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -219,10 +219,14 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 };
 
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
-     // ADD OR CONFIRM THIS LINE:
     console.log('User service: Incoming request body for recordMatch:', req.body);
-    const transaction = await sequelize.transaction();
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
     try {
+        if (!req.user?.id) {
+            await db.run('ROLLBACK;');
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        }
         const player1Id = req.user.id;
         const { player2Id, winnerId, score } = req.body as {
             player2Id: number;
@@ -230,15 +234,15 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             score: string;
         };
         if (!player2Id || !winnerId || !score) {
-            await transaction.rollback();
+            await db.run('ROLLBACK;');
             return res.status(400).send({
                 success: false,
-                message: 'Missing match data',
+                message: 'Missing match data: player2Id, winnerId, and score are required.',
             });
         }
         const scoreParts = score.split('-');
         if (scoreParts.length !== 2) {
-            await transaction.rollback();
+            await db.run('ROLLBACK;');
             return res.status(400).send({
                 success: false,
                 message: 'Invalid score format. Use "number-number", e.g., "10-8"',
@@ -246,80 +250,102 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
         }
         const [player1Score, player2Score] = scoreParts.map(Number);
         if (isNaN(player1Score) || isNaN(player2Score)) {
-            await transaction.rollback();
+            await db.run('ROLLBACK;');
             return res.status(400).send({
                 success: false,
-                message: 'Score must contain valid numbers',
+                message: 'Score must contain valid numbers.',
             });
         }
         if (![player1Id, player2Id].includes(winnerId)) {
-            await transaction.rollback();
+            await db.run('ROLLBACK;');
             return res.status(400).send({
                 success: false,
-                message: 'Winner ID must match one of the players',
+                message: 'Winner ID must match one of the players.',
             });
         }
+        const player1 = await User._findByIdRaw(player1Id);
+        const player2 = await User._findByIdRaw(player2Id);
+        if (!player1 || !player2) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({
+                success: false,
+                message: 'One or both players not found.',
+            });
+        }
+        // --- Create Match Record ---
         const match = await Match.create({
             player1Id,
             player2Id,
             winnerId,
-            score,
             player1Score,
             player2Score,
-            playedAt: new Date(),
-        }, { transaction });
-        const player1 = await User.findByPk(player1Id, { transaction });
-        const player2 = await User.findByPk(player2Id, { transaction });
-        if (!player1 || !player2) {
-            await transaction.rollback();
-            return res.status(404).send({
+            playedAt: new Date().toISOString(),
+        });
+        if (!match.id) {
+             await db.run('ROLLBACK;');
+             return res.status(500).send({
+                 success: false,
+                 message: 'Failed to record match due to database issue.',
+             });
+        }
+        // --- Update Player Stats ---
+        let updatedPlayer1Wins = player1.wins ?? 0;
+        let updatedPlayer1Losses = player1.losses ?? 0;
+        let updatedPlayer2Wins = player2.wins ?? 0;
+        let updatedPlayer2Losses = player2.losses ?? 0;
+        if (winnerId === player1Id) {
+            updatedPlayer1Wins += 1;
+            updatedPlayer2Losses += 1;
+        } else { 
+            updatedPlayer2Wins += 1;
+            updatedPlayer1Losses += 1;
+        }
+        // Use your custom User.update method for each player
+        const player1Updated = await User.update(player1Id, {
+            wins: updatedPlayer1Wins,
+            losses: updatedPlayer1Losses,
+        });
+        const player2Updated = await User.update(player2Id, {
+            wins: updatedPlayer2Wins,
+            losses: updatedPlayer2Losses,
+        });
+        if (!player1Updated || !player2Updated) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
                 success: false,
-                message: 'One or both players not found',
+                message: 'Failed to update player stats.',
             });
         }
-        if (winnerId === player1Id) {
-            player1.wins += 1;
-            player2.losses += 1;
-        } else {
-            player2.wins += 1;
-            player1.losses += 1;
-        }
-        await player1.save({ transaction });
-        await player2.save({ transaction });
-        await transaction.commit();
+        await db.run('COMMIT;');
         return res.status(201).send({
             success: true,
             message: 'Match recorded successfully',
             data: match,
         });
     } catch (error) {
-        await transaction.rollback();
+        await db.run('ROLLBACK;');
         console.error('Error recording match:', error);
         return res.status(500).send({
             success: false,
-            message: 'Internal server error',
+            message: (error as Error).message || 'Internal server error',
         });
     }
 };
 
 export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyReply) => {
     try {
+        if (!req.user?.id)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
         const userId = req.user.id;
-        const matches = await Match.findAll({
-            where: {
-                [Op.or]: [
-                    { player1Id: userId },
-                    { player2Id: userId },
-                ],
-            },
-        });
-        //console.log("Retrieved Matches:", matches);
+        const matches = await Match.findMatchesByPlayer(userId);
+        console.log("Retrieved Matches:", matches);
         return res.status(200).send({
             success: true,
             message: 'Match history fetched successfully',
             data: matches,
         });
     } catch (error) {
+        console.error('Error fetching current user matches:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -330,20 +356,21 @@ export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyRep
 export const getUserMatchHistory = async (req: FastifyRequest, res: FastifyReply) => {
     try {
         const { id } = req.params as { id: string };
-        const matches = await Match.findAll({
-            where: {
-                [Op.or]: [
-                    { player1Id: id },
-                    { player2Id: id },
-                ],
-            },
-        });
+        const userId = parseInt(id, 10);
+        if (isNaN(userId)) {
+            return res.status(400).send({
+                success: false,
+                message: 'Invalid user ID format.',
+            });
+        }
+        const matches = await Match.findMatchesByPlayer(userId);
         return res.status(200).send({
             success: true,
             message: 'Match history fetched successfully',
             data: matches,
         });
     } catch (error) {
+        console.error('Error fetching user match history:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -353,19 +380,14 @@ export const getUserMatchHistory = async (req: FastifyRequest, res: FastifyReply
 
 export const getLeaderboard = async (req: FastifyRequest, res: FastifyReply) => {
     try {
-        const users = await User.findAll({
-            attributes: ['id', 'name', 'avatar', 'wins', 'losses'],
-            order: [
-                ['wins', 'DESC'],
-                ['losses', 'ASC'],
-            ],
-        });
+        const users = await User.getLeaderboard();
         return res.status(200).send({
             success: true,
             message: 'Leaderboard fetched successfully',
             data: users,
         });
     } catch (error) {
+        console.error('Error fetching leaderboard:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -373,42 +395,38 @@ export const getLeaderboard = async (req: FastifyRequest, res: FastifyReply) => 
     }
 };
 
-
 export const deleteCurrentUser = async (req: FastifyRequest, res: FastifyReply) => {
-    const transaction = await sequelize.transaction();
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
     try {
-        if (!req.user) {
-            await transaction.rollback();
-            return res.status(401).send({ success: false, message: 'Unauthorized' });
+        if (!req.user || !req.user.id) {
+            await db.run('ROLLBACK;');
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available.' });
         }
         const userId = req.user.id;
-        const user = await User.findByPk(userId, { transaction });
-        if (!user) {
-            await transaction.rollback();
-            return res.status(404).send({ success: false, message: 'User not found' });
+        const userExists = await User._findByIdRaw(userId);
+        if (!userExists) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({ success: false, message: 'User not found.' });
         }
-        // clean up related data like friendships, matches, etc.
-        await Friendship.destroy({ where: { userId }, transaction });
-        await Friendship.destroy({ where: { friendId: userId }, transaction });
-        await Match.destroy({
-            where: {
-                [Op.or]: [{ player1Id: userId }, { player2Id: userId }],
-            },
-            transaction
-        });
-        await user.destroy({ transaction });
-        await transaction.commit();
+        await Friendship.deleteFriendshipsByUser(userId);
+        await Match.deleteMatchesByPlayer(userId);
+        const userDeleted = await User.delete(userId);
+        if (!userDeleted) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({ success: false, message: 'Failed to delete user account.' });
+        }
+        await db.run('COMMIT;');
         return res.status(200).send({
             success: true,
             message: 'User account deleted successfully',
         });
     } catch (error) {
-        await transaction.rollback();
+        await db.run('ROLLBACK;');
+        console.error('Error deleting current user:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
         });
     }
 };
-
-

@@ -44,12 +44,12 @@ export class SignupView {
     
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = (form.querySelector("#username") as HTMLInputElement).value.trim();
+      const name = (form.querySelector("#username") as HTMLInputElement).value.trim();
       const email = (form.querySelector("#email") as HTMLInputElement).value.trim();
       const password = (form.querySelector("#password") as HTMLInputElement).value;
       const confirm = (form.querySelector("#confirm") as HTMLInputElement).value;
 
-      if (!username || !email || !password || !confirm) {
+      if (!name || !email || !password || !confirm) {
         alert("All fields are required.");
         return;
       }
@@ -59,10 +59,10 @@ export class SignupView {
       }
 
       try {
-        const response = await fetch("http://localhost:5500/api/v1/auth/sign-up", {
+        const response = await fetch("/api/v1/auth/sign-up", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({ name, email, password }),
         });
 
         if (!response.ok) {

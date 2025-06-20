@@ -19,41 +19,17 @@ export class LoginView {
       `;
     }
     
-  //   <div id="modal-message" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
-  //   <div class="bg-white rounded p-6 max-w-xs text-center">
-  //     <p id="modal-text" class="text-red-600 mb-4"></p>
-  //     <button id="modal-close" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 transition">Close</button>
-  //   </div>
-  // </div>
+
   async onMounted() {
     const form = document.getElementById("login-form") as HTMLFormElement;
     const messageDiv = document.getElementById("login-message") as HTMLElement;
-    // const modal = document.getElementById("modal-message") as HTMLElement;
-    // const modalText = document.getElementById("modal-text") as HTMLElement;
-    // const modalClose = document.getElementById("modal-close") as HTMLElement;
-
-    // modalClose.addEventListener("click", () => {
-    //   modal.classList.add("hidden");
-    // });
-
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      // if (!form.checkValidity()) {
-      //   form.reportValidity();
-      //   return;
-      // }
+
       const email = (form.querySelector("#user-mail") as HTMLInputElement).value.trim();
       const password = (form.querySelector("#user-pw") as HTMLInputElement).value;
-
-      // if (!email || !password) {
-      //   modalText.textContent = "Please fill in all fields.";
-      //   modal.classList.remove("hidden");
-      //   modal.classList.add("flex");
-      //   return;
-      // }
-
       try {
-        const response = await fetch("http://localhost:5500/api/v1/auth/sign-in", {
+        const response = await fetch("/api/v1/auth/sign-in", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -68,12 +44,6 @@ export class LoginView {
         const data = await response.json();
         localStorage.setItem("token", data.token);
         navigateTo("/");
-
-        // messageDiv.style.color = "green";
-        // messageDiv.textContent = "Login successful!";
-        // setTimeout(() => {
-        //   navigateTo("/");
-        // }, 1500);
 
       } catch (error) {
         messageDiv.style.color = "red";

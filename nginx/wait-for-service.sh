@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# Usage: wait-for-service.sh host:port [host:port]...
-
 # Loop through all arguments as host:port pairs
 for service in "$@"; do
   host=$(echo "$service" | cut -d: -f1)

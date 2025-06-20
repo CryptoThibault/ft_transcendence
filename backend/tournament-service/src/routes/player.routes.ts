@@ -1,9 +1,9 @@
 //backend/tournament-service/src/routes/player.routes.ts
-import { authorize } from '../middleware/auth.middleware';
+import { authorize } from '../middleware/auth.middleware.js';
 import { FastifyInstance, preHandlerHookHandler } from 'fastify';
-import { createCasualMatch, submitCasualMatchResult } from '../controllers/tournament.controller';
+import { createCasualMatch, submitCasualMatchResult } from '../controllers/tournament.controller.js';
 import { createTournament, joinTournament, startTournament, getTournamentBracket,
-         submitTournamentResult } from '../controllers/tournament.controller';
+         submitTournamentResult } from '../controllers/tournament.controller.js';
 
 export default async function playerRoutes(fastify: FastifyInstance) {
 	// Casual Match routes

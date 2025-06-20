@@ -1,50 +1,19 @@
-// backend/auth-service/src/models/user.models.ts
-import { DataTypes, Model, Sequelize } from 'sequelize';
-import sequelize from '../plugins/sequelize.js';
-
-export class AuthUser extends Model {
-	public id!: number;
-	public name!: string;
-	public email!: string;
-	public password!: string;
-	/* -------- adding here ----*/
-	public twoFactorEnabled!: boolean;
-  	public twoFactorSecret!: string | null;
-	/* ------------------------- */
-	public readonly createdAt!: Date;
-	public readonly updatedAt!: Date;
-
-	// Exclude sensitive fields when converting the model instance to JSON.
-	// This method is automatically called by Sequelize when serializing.
-	toJSON() {
-	const values = Object.assign({}, this.get()); // Get raw data values
-    delete values.password; // Remove password hash
-    delete values.twoFactorSecret; // Remove 2FA secret
-    return values;
-    }
+// backend/auth-service/src/models/auth.models.ts
+export interface AuthUser {
+	id: number;
+	name: string;
+	email: string;
+	password?: string;
+	twoFactorEnabled: boolean;
+	twoFactorSecret?: string | null;
+	createdAt: number; 
+	updatedAt: number;
 }
 
-AuthUser.init({
-	id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  	name: { type: DataTypes.STRING(20), allowNull: false, validate: { len: {
-		args: [2, 20], msg: 'Name must be between 2 and 20 characters', },
-		notEmpty: { msg: 'User Name is required', }
-    	},
-  	},
-  	email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: {
-		isEmail: { msg: 'Please fill a valid email address' }
-    	}
-  	},
-  	password: { type: DataTypes.STRING, allowNull: false, validate: { len: { 
-		args: [6, 255], msg: 'Password must be at least 6 characters long' }
-    	}
-  	},
-  	twoFactorEnabled: { type: DataTypes.BOOLEAN, defaultValue: false, },
-  	twoFactorSecret: { type: DataTypes.STRING, allowNull: true, }
-	}, {
-  	sequelize,
-  	tableName: 'authUser',
-  	timestamps: true,
-});
+// Interface for user data when creating/updating 
+export type NewAuthUser = Omit<AuthUser, 'id' | 'createdAt' | 'updatedAt'> & {
+	password: string;
+};
 
-export const initUserModel = () => AuthUser.sync();
+// Interface for user data after being fetched from DB, excluding sensitive fields
+export type SafeAuthUser = Omit<AuthUser, 'password' | 'twoFactorSecret'>;

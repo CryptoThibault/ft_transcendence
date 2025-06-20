@@ -1,7 +1,7 @@
-//backend/tournament-service/tournament.service.ts
-import { Tournament } from '../models/tournament.models';
-import { PlayerTournament } from '../models/playerTournament.models';
-import { TournamentMatchState, TournamentMatch } from '../models/tournamentMatch.models';
+// backend/tournament-service/src/service/tournaments.service.ts
+import { Tournament, TournamentData } from '../models/tournament.models.js';
+import { PlayerTournament, PlayerTournamentData } from '../models/playerTournament.models.js';
+import { TournamentMatchState, TournamentMatch, TournamentMatchData } from '../models/tournamentMatch.models.js';
 
 import axios from 'axios';
 
@@ -22,16 +22,26 @@ async function reportMatchToUserService(
         score: `${matchData.player1Score}-${matchData.player2Score}`
     };
     console.log('Sending payload to user-service/matches:', payloadForUserService); // Add this for debugging
-    await axios.post(
-        'http://user-service:5501/api/v1/user/matches',
-        payloadForUserService,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+    try {
+        await axios.post(
+            'http://user-service:5501/api/v1/user/matches',
+            payloadForUserService,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Match reported to user-service successfully.');
+    } catch (error) {
+        // Log the full error response from axios for debugging
+        if (axios.isAxiosError(error)) {
+            console.error('Error reporting match to user-service:', error.response?.data || error.message);
+            throw new Error(`User service error: ${error.response?.data?.message || 'Failed to report match.'}`);
         }
-    );
-    console.log('Match reported to user-service successfully.'); // Confirmation log
+        console.error('Unknown error reporting match to user-service:', error);
+        throw new Error('Failed to report match to user service due to an unknown error.');
+    }
 }
 
 interface SubmitResultPayload {
@@ -39,333 +49,192 @@ interface SubmitResultPayload {
     score: string;
 }
 
-export const createTournament = async ({ name }: { name:any }) => Tournament.create({ name });
+// --- Tournament Management ---
 
-export const joinTournament = async (tournament_id: number, player_id: number) => PlayerTournament.create({
-	tournamentId: tournament_id, playerId: player_id   
-});
+export const createTournament = async ({ name }: { name: string }): Promise<TournamentData> => {
+    // Tournament.create is already updated to return TournamentData directly
+    return Tournament.create({ name });
+};
 
-export const startTournament = async (tournament_id: number) => {
-    const players = await PlayerTournament.findAll({
-        where: { tournamentId: tournament_id }
-    });
+export const joinTournament = async (tournament_id: number, player_id: number): Promise<PlayerTournamentData> => {
+    // PlayerTournament.create is already updated to return PlayerTournamentData directly
+    return PlayerTournament.create({ tournamentId: tournament_id, playerId: player_id });
+};
+
+export const startTournament = async (tournament_id: number): Promise<TournamentMatchData[]> => {
+    const players = await PlayerTournament.findByTournamentId(tournament_id);
     console.log('Players found for tournament', tournament_id, ':', players.map(p => p.playerId));
     if (players.length < 2)
         throw new Error('Not enough players to start tournament (minimum 2 needed).');
     const shuffled = players.sort(() => 0.5 - Math.random());
-    const matches = [];
+    const matchesToCreate: Omit<TournamentMatchData, 'id' | 'createdAt' | 'updatedAt'>[] = [];
     for (let i = 0; i < shuffled.length; i += 2) {
-        matches.push({
+        // Handle odd number of players (last player gets a bye)
+        const player1Id = shuffled[i]?.playerId;
+        const player2Id = shuffled[i + 1]?.playerId || null; // Player2 can be null for a bye
+        if (!player1Id) {
+            console.warn(`Skipping match creation due to missing player1Id at index ${i}. This should not happen.`);
+            continue;
+        }
+        matchesToCreate.push({
             tournamentId: tournament_id,
             roundNumber: 1,
-            matchNumberInRound: i / 2 + 1,
-            player1Id: shuffled[i]?.playerId,
-            player2Id: shuffled[i + 1]?.playerId,
+            matchNumberInRound: Math.floor(i / 2) + 1,
+            player1Id: player1Id,
+            player2Id: player2Id,
             winnerId: null,
             score: null,
             state: TournamentMatchState.PENDING,
         });
     }
-    console.log('Attempting to bulkCreate matches:', JSON.stringify(matches, null, 2));
+    console.log('Attempting to create initial matches:', JSON.stringify(matchesToCreate, null, 2));
     try {
-        const createdMatches = await TournamentMatch.bulkCreate(matches);
+        const createdMatches: TournamentMatchData[] = [];
+        for (const matchData of matchesToCreate) {
+            const newMatch = await TournamentMatch.create(matchData);
+            createdMatches.push(newMatch);
+        }
         console.log('Matches successfully created!');
         return createdMatches;
     } catch (error) {
-        console.error('Sequelize bulkCreate error:', error);
+        console.error('Error creating initial matches:', error);
         throw error;
     }
 };
 
 export const getBracket = async (tournamentId: number) => {
-	const matches = await TournamentMatch.findAll({
-		where: { tournamentId },
-    	order: [['roundNumber', 'ASC'], ['matchNumberInRound', 'ASC']],
-  	});
-	const rounds: Record<number, TournamentMatch[]> = {};
-  	matches.forEach((match) => {
-		if (!rounds[match.roundNumber]) rounds[match.roundNumber] = [];
-    	rounds[match.roundNumber].push(match);
-  	});
-	return Object.entries(rounds).map(([round, matches]) => ({
-    	round: +round,
-    	matches,
-  	}));
+    const matches = await TournamentMatch.findByTournamentId(tournamentId);
+    const rounds: Record<number, TournamentMatchData[]> = {};
+    matches.forEach((match) => {
+        if (!rounds[match.roundNumber]) rounds[match.roundNumber] = [];
+        rounds[match.roundNumber].push(match);
+    });
+    return Object.entries(rounds).map(([round, matches]) => ({
+        round: +round,
+        matches,
+    }));
 };
 
-export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload,
-  token: string) => {
-	const match = await TournamentMatch.findByPk(matchId);
-  	if (!match) throw new Error(`Match with ID ${matchId} not found`);
-  	if (match.state === TournamentMatchState.COMPLETED) throw new Error('Match already completed');
-	const pendingMatches = await TournamentMatch.findAll({
-    	where: {
-      		tournamentId: match.tournamentId,
-      		roundNumber: match.roundNumber,
-      		state: TournamentMatchState.PENDING,
-    	},
-  	});
-	const firstPending = pendingMatches.sort((a, b) => a.matchNumberInRound - b.matchNumberInRound)[0];
-  	if (firstPending.id !== match.id)
-    	throw new Error(`This match cannot be submitted yet. Wait for Match #${firstPending.matchNumberInRound}.`);
-	match.state = TournamentMatchState.COMPLETED;
-  	match.winnerId = winner_id;
-  	match.score = score;
-  	await match.save();
-	const [player1Score, player2Score] = score.split('-').map(Number);
-  	if (isNaN(player1Score) || isNaN(player2Score))
-    	throw new Error('Invalid score format. Expected "X-Y"');
-	await reportMatchToUserService({ player1Id: match.player1Id!, player2Id: match.player2Id!,
-		winnerId: winner_id, player1Score, player2Score, playedAt: new Date(), }, token );
-	const remainingMatches = await TournamentMatch.findAll({
-    	where: {
-      		tournamentId: match.tournamentId,
-      		roundNumber: match.roundNumber,
-      		state: TournamentMatchState.PENDING,
-    	},
-  	});
-	if (remainingMatches.length === 0)
-		await createNextRound(match.tournamentId, match.roundNumber);
-	return match;
+export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload, token: string) => {
+    const match = await TournamentMatch.findById(matchId);
+    if (!match) throw new Error(`Match with ID ${matchId} not found`);
+    if (match.state === TournamentMatchState.COMPLETED) throw new Error('Match already completed');
+    // Get all pending matches for the current round
+    const pendingMatchesInRound = await TournamentMatch.findPendingMatchesInRound(
+        match.tournamentId,
+        match.roundNumber
+    );
+    const firstPending = pendingMatchesInRound.sort((a, b) => a.matchNumberInRound - b.matchNumberInRound)[0];
+    // Check if this is the correct match to submit
+    if (firstPending && firstPending.id !== match.id) {
+        throw new Error(`This match cannot be submitted yet. Wait for Match #${firstPending.matchNumberInRound}.`);
+    }
+    // Parse score and validate
+    const [player1ScoreStr, player2ScoreStr] = score.split('-');
+    const player1Score = Number(player1ScoreStr);
+    const player2Score = Number(player2ScoreStr);
+    if (isNaN(player1Score) || isNaN(player2Score) || !score.includes('-'))
+        throw new Error('Invalid score format. Expected "X-Y" where X and Y are numbers.');
+    // Update the match record
+    const updated = await TournamentMatch.update(match.id!, {
+        state: TournamentMatchState.COMPLETED,
+        winnerId: winner_id,
+        score: score,
+    });
+    if (!updated)
+        throw new Error(`Failed to update tournament match with ID ${matchId}.`);
+    // Report result to user service
+    // Ensure player1Id and player2Id are not null before sending to user service,
+    // though for completed matches they should be present.
+    if (match.player1Id === null || match.player2Id === null)
+        throw new Error('Cannot report result: one or both players are missing for this match.');
+    await reportMatchToUserService({
+        player1Id: match.player1Id,
+        player2Id: match.player2Id,
+        winnerId: winner_id,
+        player1Score,
+        player2Score,
+        playedAt: new Date(),
+    }, token);
+    // Check for remaining matches in the current round
+    const remainingMatches = await TournamentMatch.findPendingMatchesInRound(
+        match.tournamentId,
+        match.roundNumber
+    );
+    // If all matches in the current round are completed, create the next round
+    if (remainingMatches.length === 0) {
+        console.log(`All matches in round ${match.roundNumber} for tournament ${match.tournamentId} completed. Creating next round.`);
+        await createNextRound(match.tournamentId, match.roundNumber);
+    }
+    // Re-fetch the match to return the latest state
+    const currentMatchState = await TournamentMatch.findById(match.id!);
+    if (!currentMatchState)
+        throw new Error(`Failed to retrieve updated match with ID ${match.id!}.`);
+    return currentMatchState;
 };
 
 async function createNextRound(tournament_id: number, completedRound: number) {
     console.log(`[createNextRound] Starting for Tournament ID: ${tournament_id}, Completed Round: ${completedRound}`);
-    const completedMatches = await TournamentMatch.findAll({
-        where: {
-            tournamentId: tournament_id,
-            roundNumber: completedRound,
-            state: TournamentMatchState.COMPLETED,
-        },
-        order: [['matchNumberInRound', 'ASC']],
-    });
+    const completedMatches = await TournamentMatch.findCompletedMatchesInRound(
+        tournament_id,
+        completedRound
+    );
     if (completedMatches.length === 0) {
         console.warn(`[createNextRound] No completed matches found for Tournament ID: ${tournament_id}, Round: ${completedRound}. Cannot create next round.`);
-        return; // No matches to process for the next round
+        return;
     }
     const winners = completedMatches
         .map(match => match.winnerId)
-        .filter((winnerId): winnerId is number => winnerId !== null && winnerId !== undefined); // Ensure valid winner IDs
+        .filter((winnerId): winnerId is number => winnerId !== null);
     console.log(`[createNextRound] Winners from Round ${completedRound}: ${winners.length > 0 ? winners.join(', ') : 'None'}`);
     // If there's only one winner, the tournament is over!
     if (winners.length === 1) {
         const overallWinnerId = winners[0];
-        console.log(`[createNextRound] Tournament ${tournament_id} completed! Overall Winner: ${overallWinnerId}`);        
-        // Update the Tournament model status and winner
-        const tournament = await TournamentMatch.findByPk(tournament_id);
+        console.log(`[createNextRound] Tournament ${tournament_id} completed! Overall Winner: ${overallWinnerId}`);
+        // Update the Tournament model to mark it as completed and set the winner
+        const tournament = await Tournament.findById(tournament_id);
         if (tournament) {
-            tournament.state = TournamentMatchState.COMPLETED;
-            tournament.winnerId = overallWinnerId;
-            await tournament.save();
-            console.log(`[createNextRound] Tournament ${tournament_id} marked as COMPLETED.`);
+            const updated = await Tournament.update(tournament.id!, { /* state: 'COMPLETED', winnerId: overallWinnerId */ });
+            if (updated) {
+                 console.log(`[createNextRound] Tournament ${tournament_id} marked as COMPLETED.`);
+            }
         } else {
             console.warn(`[createNextRound] Tournament ${tournament_id} not found to mark as completed.`);
         }
-        return; // Exit, as the tournament has concluded
+        return;
     }
-    const nextMatches = [];
+    const nextMatchesToCreate: Omit<TournamentMatchData, 'id' | 'createdAt' | 'updatedAt'>[] = [];
     for (let i = 0; i < winners.length; i += 2) {
         const player1Id = winners[i];
-        const player2Id = winners[i + 1] || null;
-        if (!player1Id) {
-            console.warn(`[createNextRound] Skipping match creation due to missing player1Id at index ${i}.`);
-            continue;
-        }
-        nextMatches.push({
+        const player2Id = winners[i + 1] || null; // Will be null for byes if `winners.length` is odd
+
+        nextMatchesToCreate.push({
             tournamentId: tournament_id,
             roundNumber: completedRound + 1,
             matchNumberInRound: Math.floor(i / 2) + 1,
             player1Id: player1Id,
-            player2Id: player2Id, // Will be null for byes if `winners.length` is odd
-            winnerId: null,      // New matches are pending
-            score: null,         // New matches have no score
+            player2Id: player2Id,
+            winnerId: null, // New matches are pending
+            score: null, // New matches have no score
             state: TournamentMatchState.PENDING,
         });
     }
-    if (nextMatches.length > 0) {
-        console.log(`[createNextRound] Attempting to bulkCreate ${nextMatches.length} matches for Round ${completedRound + 1}:`);
-        console.log(JSON.stringify(nextMatches, null, 2));        
+    if (nextMatchesToCreate.length > 0) {
+        console.log(`[createNextRound] Attempting to create ${nextMatchesToCreate.length} matches for Round ${completedRound + 1}:`);
+        console.log(JSON.stringify(nextMatchesToCreate, null, 2));
         try {
-            const createdMatches = await TournamentMatch.bulkCreate(nextMatches);
+            const createdMatches: TournamentMatchData[] = [];
+            for (const matchData of nextMatchesToCreate) {
+                const newMatch = await TournamentMatch.create(matchData);
+                createdMatches.push(newMatch);
+            }
             console.log(`[createNextRound] Matches successfully created for Round ${completedRound + 1}!`);
             return createdMatches;
         } catch (error) {
-            console.error(`[createNextRound] Sequelize bulkCreate error for next round:`, error);
+            console.error(`[createNextRound] Error creating matches for next round:`, error);
             throw error;
         }
     } else {
         console.log(`[createNextRound] No further matches to create for Tournament ID: ${tournament_id}.`);
     }
 }
-
-
-/*export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload) => {
-    const match = await TournamentMatch.findByPk(matchId);
-    if (!match) throw new Error(`Match with ID ${matchId} not found`);
-    if (match.state === TournamentMatchState.COMPLETED) throw new Error('Match already completed');
-    const pendingMatches = await TournamentMatch.findAll({
-        where: {
-            tournamentId: match.tournamentId,
-            roundNumber: match.roundNumber,
-            state: TournamentMatchState.PENDING,
-        },
-    });
-    const firstPending = pendingMatches.sort((a, b) => a.matchNumberInRound - b.matchNumberInRound)[0];
-    if (firstPending.id !== match.id)
-        throw new Error(`This match cannot be submitted yet. Wait for Match #${firstPending.matchNumberInRound}.`);
-    // Update match state
-    match.state = TournamentMatchState.COMPLETED;
-    match.winnerId = winner_id;
-    match.score = score;
-    await match.save();
-    // --- REPORT TO USER-SERVICE ---
-    const [player1Score, player2Score] = score.split('-').map(Number);
-    if (isNaN(player1Score) || isNaN(player2Score))
-        throw new Error('Invalid score format. Expected "X-Y"');
-    await reportMatchToUserService({
-        player1Id: match.player1Id!,
-        player2Id: match.player2Id!,
-        winnerId: winner_id,
-        player1Score,
-        player2Score,
-        playedAt: new Date(),
-    });
-    const remainingMatches = await TournamentMatch.findAll({
-        where: {
-            tournamentId: match.tournamentId,
-            roundNumber: match.roundNumber,
-            state: TournamentMatchState.PENDING,
-        },
-    });
-    if (remainingMatches.length === 0)
-        await createNextRound(match.tournamentId, match.roundNumber);
-    return match;
-};
-
-async function createNextRound(tournament_id: number, completedRound: number) {
-    const completedMatches = await TournamentMatch.findAll({
-        where: {
-            tournamentId: tournament_id,
-            roundNumber: completedRound,
-            state: TournamentMatchState.COMPLETED,
-        },
-        order: [['matchNumberInRound', 'ASC']],
-    });
-    const nextMatches = [];
-    for (let i = 0; i < completedMatches.length; i += 2) {
-        const winner1 = completedMatches[i]?.winnerId;
-        const winner2 = completedMatches[i + 1]?.winnerId || null;
-        nextMatches.push({
-            tournamentId: tournament_id,
-            roundNumber: completedRound + 1,
-            matchNumberInRound: i / 2 + 1,
-            player1Id: winner1,
-            player2Id: winner2,
-            state: TournamentMatchState.PENDING,
-        });
-    }
-    if (nextMatches.length > 0)
-        await TournamentMatch.bulkCreate(nextMatches);
-}*/
-
-// ##################################################################3
-
-
-/*export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload) => {
-	const match = await TournamentMatch.findByPk(matchId);
-	if (!match) throw new Error(`Match with ID ${matchId} not found`);
-  	if (match.state === TournamentMatchState.COMPLETED) throw new Error('Match already completed');
-	// Validate correct order
-  	const pendingMatches = await TournamentMatch.findAll({
-    	where: {
-      		tournamentId: match.tournamentId,
-      		round_number: match.roundNumber,
-      		state: TournamentMatchState.PENDING,
-    	},
-  	});
-	const firstPending = pendingMatches.sort((a, b) => a.matchNumberInRound - b.matchNumberInRound)[0];
-  	if (firstPending.id !== match.id) {
-    	throw new Error(`This match cannot be submitted yet. Wait for Match #${firstPending.matchNumberInRound}.`);
-  	}
-	// Update match state
-  	match.state = TournamentMatchState.COMPLETED;
-  	match.winnerId = winner_id;
-  	match.score = score;
-  	await match.save();
-	// --- REPORT TO USER-SERVICE ---
-  	const [player1Score, player2Score] = score.split('-').map(Number);
-  	if (isNaN(player1Score) || isNaN(player2Score))
-    	throw new Error('Invalid score format. Expected "X-Y"');
-	await reportMatchToUserService({
-		player1Id: match.player1Id!,
-    	player2Id: match.player2Id!,
-    	winnerId: winner_id,
-    	player1Score,
-    	player2Score,
-    	playedAt: new Date()
-  	});
-	// Queue next round if this was the last pending match
-	const remainingMatches = await TournamentMatch.findAll({
-    	where: {
-      		tournament_id: match.tournamentId,
-      		round_number: match.roundNumber,
-      		state: TournamentMatchState.PENDING,
-    	},
-  	});
-	if (remainingMatches.length === 0)
-    	await createNextRound(match.tournamentId, match.roundNumber);
-	return match;
-};*/
-
-/*async function createNextRound(tournament_id: number, completedRound: number) {
-	const completedMatches = await TournamentMatch.findAll({
-    	where: {
-      		tournament_id,
-      		round_number: completedRound,
-      		state: TournamentMatchState.COMPLETED,
-    	},
-    	order: [['match_number_in_round', 'ASC']],
-  	});
-	const nextMatches = [];
-  	for (let i = 0; i < completedMatches.length; i += 2) {
-    	const winner1 = completedMatches[i]?.winnerId;
-    	const winner2 = completedMatches[i + 1]?.winnerId || null;
-		nextMatches.push({
-      		tournament_id,
-      		round_number: completedRound + 1,
-      		match_number_in_round: i / 2 + 1,
-      		player1_id: winner1,
-      		player2_id: winner2,
-      		state: TournamentMatchState.PENDING,
-    	});
-  	}
-	if (nextMatches.length > 0)
-    	await TournamentMatch.bulkCreate(nextMatches);
-}*/
-
-/*export const getBracket = async (tournament_id: number) => {
-	const matches = await TournamentMatch.findAll({
-		where: { tournament_id },
-    	order: [['round_number', 'ASC'], ['match_number_in_round', 'ASC']],
-  	});
-	const rounds: any = {};
-  	matches.forEach((match) => {
-		if (!rounds[match.roundNumber]) rounds[match.roundNumber] = [];
-    	rounds[match.roundNumber].push(match);
-  	});
-	return Object.entries(rounds).map(([round, matches]) => ({
-    	round: +round,
-    	matches,
-  	}));
-};
-
-export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload) => {
-  	const match = await TournamentMatch.findByPk(matchId);
-	if (!match)
-		throw new Error(`Match with ID ${matchId} not found`);
-  	match.state = TournamentMatchState.COMPLETED;
-  	match.winnerId = winner_id;
-  	match.score = score;
-  	await match.save();
-  	return match;
-};*/

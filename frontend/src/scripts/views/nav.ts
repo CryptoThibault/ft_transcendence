@@ -63,9 +63,10 @@ function attachLanguageDropdownEvents() {
 	});
 }
 
-export async function loadLanguage(lang: string) {
+/*export async function loadLanguage(lang: string) {
 	try {
-		const response = await fetch(`../langs/${lang}.json`);
+		//const response = await fetch(`../langs/${lang}.json`);
+		const response = await fetch(`/langs/${lang}.json`);
 		const translations = await response.json();
 		applyTranslations(translations);
 		setLanguage(lang);
@@ -73,7 +74,23 @@ export async function loadLanguage(lang: string) {
 	} catch (err) {
 		console.error("Failed to load language:", err);
 	}
+}*/
+
+export async function loadLanguage(lang: string) {
+	try {
+		const response = await fetch(`/langs/${lang}.json`);
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+		const translations = await response.json();
+		applyTranslations(translations);
+		setLanguage(lang);
+	} catch (err) {
+		console.error("Failed to load language:", err);
+	}
 }
+
+
 
 function applyTranslations(translations: Record<string, string>) {
 	const elements = document.querySelectorAll("[data-i18n]");

@@ -3,112 +3,98 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/env';
-import { AuthUser } from '../models/auth.models';
 
-export const generate2FA = async (req: FastifyRequest, res: FastifyReply) => {
-    const user = req.user;
-    const secret = speakeasy.generateSecret();    
-    // Store the secret, but DO NOT enable 2FA until verification
-    user.twoFactorSecret = secret.base32;
-    await user.save();
-    const qrCode = await qrcode.toDataURL(secret.otpauth_url ?? '');
-    return res.send({
-        success: true,
-        qrCode,
-        manualEntry: secret.base32
-    });
+import { findUserByIdWithSensitiveData, updateUserTwoFactor } from '../services/user.service.js';
+import { JWT_SECRET } from '../config/env.js';
+import { AuthUser, SafeAuthUser } from '../models/auth.models.js';
+
+interface AuthenticatedRequest extends FastifyRequest {
+	user?: SafeAuthUser;
+}
+
+const getJwtSecret = (): string => {
+	if (!JWT_SECRET) {
+		throw new Error('JWT_SECRET is not defined in environment variables');
+	}
+	return JWT_SECRET;
 };
 
-export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
-    const { token } = req.body as { token: string };
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader?.split(' ')[1];
-
-    if (!jwtToken) return res.status(401).send({ message: 'Token required' });    
-    let payload: any;
-    try {
-        payload = jwt.verify(jwtToken, JWT_SECRET!) as any;
-    } catch (err) {
-        return res.status(401).send({ message: 'Invalid or expired token' });
-    }
-    // This token should be the temporary one from signIn, which has twoFactor: true
-    if (!payload.twoFactor) return res.status(401).send({ message: 'Access denied: 2FA required for this action or invalid token type.' });
-    const user = await AuthUser.findByPk(payload.userId);
-    if (!user || !user.twoFactorSecret) return res.status(404).send({ message: 'User not found or 2FA not setup' });
-    const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: 'base32',
-        token,
-        window: 1 // Allows for 1 time step deviation (e.g., 30s)
-    });
-    if (!verified)
-        return res.status(401).send({ message: 'Invalid 2FA token' });
-    // If verification is successful, NOW enable 2FA for the user if it was a setup attempt
-    if (!user.twoFactorEnabled) { // Only set to true if it wasn't already
-        user.twoFactorEnabled = true;
-        await user.save();
-    }    
-    const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET!, { expiresIn: '1h' });
-    // Prepare user object for response, EXCLUDING SENSITIVE DATA
-    const userResponse = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        twoFactorEnabled: user.twoFactorEnabled,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-    };
-    return res.send({
-        success: true,
-        message: '2FA verification successful',
-        data: {
-            token: accessToken,
-            user: userResponse
-        }
-    });
-};
-
-
-/*export const generate2FA = async (req: FastifyRequest, res: FastifyReply) => {
-	const user = req.user;
+// POST /2fa/generate
+export const generate2FA = async (req: AuthenticatedRequest, res: FastifyReply) => {
+	const userId = req.user?.id;
+	if (!userId) return res.status(401).send({ message: 'User not authenticated' });
+	const user = await findUserByIdWithSensitiveData(userId);
+	if (!user) return res.status(404).send({ message: 'User not found' });
 	const secret = speakeasy.generateSecret();
-	user.twoFactorSecret = secret.base32;
-	user.twoFactorEnabled = true;
-	await user.save();
+	const updated = await updateUserTwoFactor(user.id, secret.base32, user.twoFactorEnabled);
+	if (!updated) return res.status(500).send({ message: 'Failed to save 2FA secret' });
 	const qrCode = await qrcode.toDataURL(secret.otpauth_url ?? '');
 	return res.send({
 		success: true,
+		message: '2FA setup initiated. Scan QR or use manual code to continue.',
+		twoFactorEnabled: false,
 		qrCode,
 		manualEntry: secret.base32
 	});
 };
 
+// POST /2fa/verify
 export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
-	const { token } = req.body as { token: string };
+	const { token } = req.body as { token?: string };
 	const authHeader = req.headers.authorization;
 	const jwtToken = authHeader?.split(' ')[1];
+	const secret = getJwtSecret();
 
 	if (!jwtToken) return res.status(401).send({ message: 'Token required' });
-	const payload = jwt.verify(jwtToken, JWT_SECRET!) as any;
-	if (!payload.twoFactor) return res.status(401).send({ message: 'Invalid token' });
-	const user = await AuthUser.findByPk(payload.userId);
-  	if (!user || !user.twoFactorSecret) return res.status(404).send({ message: 'User not found or 2FA not setup' });
-
-  	const verified = speakeasy.totp.verify({
+	// Validate format early
+	if (!token || !/^\d{6}$/.test(token))
+		return res.status(400).send({ message: 'Invalid 2FA code format' });
+	let payload: any;
+	try {
+		payload = jwt.verify(jwtToken, secret) as { userId: number; twoFactor?: boolean };
+	} catch (err) {
+		return res.status(401).send({ message: 'Invalid or expired token' });
+	}
+	if (payload.twoFactor !== true || !payload.userId)
+		return res.status(403).send({ message: 'Invalid 2FA verification token' });
+	const user = await findUserByIdWithSensitiveData(payload.userId);
+	if (!user || !user.twoFactorSecret)
+		return res.status(404).send({ message: 'User not found or 2FA not setup' });
+	const verified = speakeasy.totp.verify({
 		secret: user.twoFactorSecret,
 		encoding: 'base32',
 		token,
 		window: 1
 	});
-	if (!verified) return res.status(401).send({ message: 'Invalid 2FA token' });
-	const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET!, { expiresIn: '1h' });
+	if (!verified)
+		return res.status(401).send({ message: 'Invalid 2FA token' });
+	// Enable 2FA if not already active
+	if (!user.twoFactorEnabled) {
+		const success = await updateUserTwoFactor(user.id, user.twoFactorSecret, true);
+		if (!success) {
+			console.error(`Failed to enable 2FA for user ID ${user.id}`);
+			return res.status(500).send({ message: 'Failed to enable 2FA' });
+		}
+	}
+	const finalToken = jwt.sign(
+		{ userId: user.id },
+		secret,
+		{ expiresIn: '1h' }
+	);
+	const userResponse: SafeAuthUser = {
+		id: user.id,
+		name: user.name,
+		email: user.email,
+		twoFactorEnabled: true,
+		createdAt: user.createdAt,
+		updatedAt: user.updatedAt
+	};
 	return res.send({
 		success: true,
-    	message: '2FA verification successful',
-    	data: {
-      		token: accessToken,
-      		user
-    	}
-  	});
-};*/
+		message: '2FA verification successful',
+		data: {
+			token: finalToken,
+			user: userResponse
+		}
+	});
+};

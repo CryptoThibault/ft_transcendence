@@ -1,25 +1,15 @@
-# Use official Node.js image with necessary tooling
 FROM node:20-alpine
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy package.json and tsconfig
-COPY package.json tsconfig.json ./
-
-# Install dependencies
+COPY package*.json tsconfig.json ./
 RUN npm install
-# install  sqlite
-RUN apk add sqlite
 
-# Copy the rest of the application code
+RUN apk add --no-cache sqlite
+
 COPY . .
-
-# Build the TypeScript project
 RUN npm run build
 
-# Expose port
 EXPOSE 5501
 
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]

@@ -5,11 +5,11 @@ import { currentUser, /*userByEmail,*/ updateCurrentUserName,
         onlineStatus, /*lastSeen,*/ uploadAvatar, addFriend, 
         getFriendsList, recordMatch, getCurrentUserMatches,
         getUserMatchHistory, getLeaderboard
-} from "../controllers/session.controller";
+} from "../controllers/session.controller.js";
 
-import { createUser } from '../controllers/user.controllers';
-import { authorize } from '../middleware/auth.middleware';
-import { deleteCurrentUser } from '../controllers/session.controller';
+import { createUser } from '../controllers/user.controllers.js';
+import { authorize } from '../middleware/auth.middleware.js';
+import { deleteCurrentUser } from '../controllers/session.controller.js';
 
 interface UpdateUserRoute {
   Body: {
@@ -20,7 +20,6 @@ interface UpdateUserRoute {
 async function userRoutes(fastify: FastifyInstance) {
     fastify.post('/', createUser);    
     fastify.get('/me', { preHandler: authorize }, currentUser);
-    //fastify.put('/me',  { preHandler: authorize }, updateCurrentUserName);
     fastify.put<UpdateUserRoute>('/me', { preHandler: authorize }, updateCurrentUserName);
     fastify.post('/me/avatar', { preHandler: authorize }, uploadAvatar);
     fastify.get('/me/status', { preHandler: authorize }, onlineStatus);  
