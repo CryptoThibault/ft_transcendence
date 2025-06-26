@@ -72,14 +72,8 @@ export class SignupView {
         }
 
         const data = await response.json();
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.data.token);
         navigateTo("/");
-
-        // messageDiv.style.color = "green";
-        // messageDiv.textContent = "Sign-up successful!";
-        // setTimeout(() => {
-        //   navigateTo("/");
-        // }, 1500);
 
       } catch (error) {
         messageDiv.style.color = "red";

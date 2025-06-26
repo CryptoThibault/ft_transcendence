@@ -53,11 +53,11 @@ export class SignupView {
             const messageDiv = document.getElementById("signup-message");
             form.addEventListener("submit", (e) => __awaiter(this, void 0, void 0, function* () {
                 e.preventDefault();
-                const username = form.querySelector("#username").value.trim();
+                const name = form.querySelector("#username").value.trim();
                 const email = form.querySelector("#email").value.trim();
                 const password = form.querySelector("#password").value;
                 const confirm = form.querySelector("#confirm").value;
-                if (!username || !email || !password || !confirm) {
+                if (!name || !email || !password || !confirm) {
                     alert("All fields are required.");
                     return;
                 }
@@ -66,10 +66,10 @@ export class SignupView {
                     return;
                 }
                 try {
-                    const response = yield fetch("http://localhost:5500/api/v1/auth/sign-up", {
+                    const response = yield fetch("/api/v1/auth/sign-up", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username, email, password }),
+                        body: JSON.stringify({ name, email, password }),
                     });
                     if (!response.ok) {
                         const errorData = yield response.json();
@@ -77,13 +77,8 @@ export class SignupView {
                         return;
                     }
                     const data = yield response.json();
-                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("token", data.data.token);
                     navigateTo("/");
-                    // messageDiv.style.color = "green";
-                    // messageDiv.textContent = "Sign-up successful!";
-                    // setTimeout(() => {
-                    //   navigateTo("/");
-                    // }, 1500);
                 }
                 catch (error) {
                     messageDiv.style.color = "red";
