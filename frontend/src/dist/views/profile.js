@@ -8,6 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 export class ProfileView {
+    constructor(username) {
+        this.username = username;
+        alert(`ProfileView initialized for user: ${username}`);
+    }
     getHtml() {
         return __awaiter(this, void 0, void 0, function* () {
             return `

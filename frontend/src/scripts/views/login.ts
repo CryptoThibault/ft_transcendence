@@ -41,8 +41,8 @@ export class LoginView {
           return;
         }
 
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
+        const res = await response.json();
+        localStorage.setItem("token", res.data.token);
         navigateTo("/");
 
       } catch (error) {

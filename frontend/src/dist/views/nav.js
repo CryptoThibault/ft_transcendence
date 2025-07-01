@@ -67,14 +67,28 @@ function attachLanguageDropdownEvents() {
         });
     });
 }
+/*export async function loadLanguage(lang: string) {
+    try {
+        //const response = await fetch(`../langs/${lang}.json`);
+        const response = await fetch(`/langs/${lang}.json`);
+        const translations = await response.json();
+        applyTranslations(translations);
+        setLanguage(lang);
+        // setLastLang(lang);
+    } catch (err) {
+        console.error("Failed to load language:", err);
+    }
+}*/
 export function loadLanguage(lang) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const response = yield fetch(`../langs/${lang}.json`);
+            const response = yield fetch(`/langs/${lang}.json`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             const translations = yield response.json();
             applyTranslations(translations);
             setLanguage(lang);
-            // setLastLang(lang);
         }
         catch (err) {
             console.error("Failed to load language:", err);

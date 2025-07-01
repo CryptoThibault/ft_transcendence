@@ -87,6 +87,20 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE email = ?`, email);
 		return user ? (user as UserData) : null;
 	}
+
+	/**
+    * Finds a user by their ID, returning full raw data including email.
+    * Useful when internal logic needs access to sensitive fields.
+    * @param id The ID of the user to find.
+    * @returns The full UserData object or null if not found.
+    */
+    static async findByIdWithEmail(id: number): Promise<UserData | null> {
+        const db = await dbPromise;
+        const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
+        return user ? (user as UserData) : null;
+    }
+
+
 	/**
 	* Updates a user record by ID with partial data.
 	* @param id The ID of the user to update.

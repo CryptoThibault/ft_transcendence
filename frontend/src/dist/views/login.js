@@ -28,38 +28,16 @@ export class LoginView {
       `;
         });
     }
-    //   <div id="modal-message" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
-    //   <div class="bg-white rounded p-6 max-w-xs text-center">
-    //     <p id="modal-text" class="text-red-600 mb-4"></p>
-    //     <button id="modal-close" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 transition">Close</button>
-    //   </div>
-    // </div>
     onMounted() {
         return __awaiter(this, void 0, void 0, function* () {
             const form = document.getElementById("login-form");
             const messageDiv = document.getElementById("login-message");
-            // const modal = document.getElementById("modal-message") as HTMLElement;
-            // const modalText = document.getElementById("modal-text") as HTMLElement;
-            // const modalClose = document.getElementById("modal-close") as HTMLElement;
-            // modalClose.addEventListener("click", () => {
-            //   modal.classList.add("hidden");
-            // });
             form.addEventListener("submit", (e) => __awaiter(this, void 0, void 0, function* () {
                 e.preventDefault();
-                // if (!form.checkValidity()) {
-                //   form.reportValidity();
-                //   return;
-                // }
                 const email = form.querySelector("#user-mail").value.trim();
                 const password = form.querySelector("#user-pw").value;
-                // if (!email || !password) {
-                //   modalText.textContent = "Please fill in all fields.";
-                //   modal.classList.remove("hidden");
-                //   modal.classList.add("flex");
-                //   return;
-                // }
                 try {
-                    const response = yield fetch("http://localhost:5500/api/v1/auth/sign-in", {
+                    const response = yield fetch("/api/v1/auth/sign-in", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ email, password }),
@@ -72,11 +50,6 @@ export class LoginView {
                     const data = yield response.json();
                     localStorage.setItem("token", data.token);
                     navigateTo("/");
-                    // messageDiv.style.color = "green";
-                    // messageDiv.textContent = "Login successful!";
-                    // setTimeout(() => {
-                    //   navigateTo("/");
-                    // }, 1500);
                 }
                 catch (error) {
                     messageDiv.style.color = "red";

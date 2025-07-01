@@ -37,6 +37,21 @@ export const navigateTo = (url) => {
     router();
 };
 const router = () => __awaiter(void 0, void 0, void 0, function* () {
+    const location = window.location;
+    const pathRegax = /^\/profile\/([^/]+)$/;
+    const matchRegex = location.pathname.match(pathRegax);
+    if (matchRegex) {
+        const username = matchRegex[1];
+        const profileView = new ProfileView(username);
+        document.querySelector("#mainContent").innerHTML = yield profileView.getHtml();
+        if (typeof profileView.onMounted === "function") {
+            yield profileView.onMounted();
+        }
+        setupNavbar();
+        setupLogoutHandler();
+        loadLanguage(currentLanguage);
+        return;
+    }
     const potentialMatches = routes.map(route => ({
         route,
         isMatch: location.pathname === route.path,
