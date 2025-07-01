@@ -10,9 +10,6 @@ import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
 
-//document.fonts.load("16px 'Press Start 2P'");
-//localStorage.setItem("token", "AAA");
-
 type Route = {
 	path: string;
 	view: any;
@@ -87,7 +84,6 @@ const setupLogoutHandler = () => {
 
 window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;
-
 
 document.addEventListener("DOMContentLoaded", () => {
 	loadLanguage(currentLanguage);
