@@ -192,7 +192,8 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
         const friendships = await Friendship.findFriendsForUser(userId);
         const friendIds: number[] = [];
         friendships.forEach(f => {
-            if (f.status === 'accepted') {
+            //bince changed here if (f.status === 'accepted') 
+            if (f.status === 'pending') {
                 if (f.userId === userId) {
                     friendIds.push(f.friendId);
                 } else {

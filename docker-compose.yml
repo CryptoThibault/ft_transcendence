@@ -34,6 +34,28 @@ services:
       - auth-service
       - user-service
 
+  gameserver-service:
+    build:
+      context: ./backend/gameserver
+    container_name: gameserver-service
+    ports:
+      - "6001:6001"
+    depends_on:
+      - auth-service
+      - user-service
+
+  livechat-service:
+    build:
+      context: ./backend/livechat
+    container_name: livechat-service
+    volumes:
+      - livechat-db:/app/database
+    ports:
+      - "6002:6002"
+    depends_on:
+      - auth-service
+      - user-service
+
   frontend-builder:
     build:
       context: ./frontend
@@ -62,4 +84,6 @@ volumes:
   auth-db:
   user-db:
   tournament-db:
+  lobby-db:
   frontend-build:
+  livechat-db:

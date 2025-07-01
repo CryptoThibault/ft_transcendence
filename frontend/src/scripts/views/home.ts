@@ -1,5 +1,5 @@
 import { navigateTo } from "../main.js";
-
+import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
 export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 export let multiNicknames: string[] = ["Player 1", "Player 2"];
@@ -53,6 +53,130 @@ export class HomeView {
 	}
 
 	async onMounted() {
+		const liveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
+  const liveChatPanel = document.getElementById("liveChatPanel")!;
+  const friendsList = document.getElementById("friendsList")!;
+  const chatContainer = document.getElementById("chatContainer")!;
+  const backToFriendsBtn = document.getElementById("backToFriendsBtn")!;
+  const chatMessages = document.getElementById("chatMessages")!;
+  const chatInput = document.getElementById("chatInput")! as HTMLInputElement;
+
+  const token = localStorage.getItem("token");
+
+  let socket: Socket
+  if (token)
+  {
+	  socket = io("/api/v1/livechat", {
+		auth: {
+		  token: token,
+		},
+	  });
+
+  }
+  async function getFriendsList() {
+		try {
+			if (!token)
+			{
+				throw Error('No token')
+			}
+
+			const response = await fetch("/api/v1/user/me/friends", {
+			method: "GET",
+			headers: {
+				"Authorization": `Bearer ${token}`,
+			},
+			});
+
+			if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.message || "Failed to fetch friends");
+			}
+
+			const friends = await response.json();
+			return friends;
+
+		} catch (error) {
+			throw error;
+		}
+  }	
+  // Toggle panel visibility
+liveChatToggleBtn.addEventListener("click", async () => {
+  if (liveChatPanel.style.transform === "translateX(0%)") {
+    liveChatPanel.style.transform = "translateX(-100%)";
+    showFriendsList();
+	
+  } else {
+    liveChatPanel.style.transform = "translateX(0%)";
+
+    try {
+      const friendsRes = await getFriendsList();
+	  let friends = friendsRes.data 
+	  if (friends)
+      	renderFriends(friends);
+    } catch (error: any) {
+      friendsList.style.display = "none";
+      chatContainer.style.display = "flex";
+      chatMessages.innerHTML = `<div style="color:red;">Error: ${error.message}</div>`;
+    }
+  }
+});
+
+  // Render friends list
+  
+function renderFriends(friends: Array<{ id: number; name: string }>) {
+  friendsList.innerHTML = "";
+  friends.forEach(friend => {
+    const li = document.createElement("li");
+    li.textContent = friend.name;
+    li.style.padding = "10px";
+    li.style.cursor = "pointer";
+    li.style.borderBottom = "1px solid #eee";
+
+    li.addEventListener("click", () => {
+      openChat(friend);
+    });
+
+    friendsList.appendChild(li);
+  });
+}
+
+  function showFriendsList() {
+    friendsList.style.display = "block";
+    chatContainer.style.display = "none";
+  }
+
+  function openChat(friend: { id: number; name: string }) {
+    friendsList.style.display = "none";
+    chatContainer.style.display = "flex";
+    chatMessages.innerHTML = `<div>Chatting with <b>${friend.name}</b></div>`;
+    chatInput.value = "";
+    chatInput.focus();
+
+    // For demo: handle sending messages and showing them in chatMessages
+    const onSend = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && chatInput.value.trim() !== "") {
+        const msg = chatInput.value.trim();
+        const messageDiv = document.createElement("div");
+        messageDiv.textContent = `You: ${msg}`;
+        chatMessages.appendChild(messageDiv);
+        chatInput.value = "";
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    };
+
+    chatInput.removeEventListener("keydown", onSend);
+    chatInput.addEventListener("keydown", onSend);
+  }
+
+  backToFriendsBtn.addEventListener("click", () => {
+    showFriendsList();
+  });
+
+  //renderFriends(friends);
+  // Initially hide panel
+  liveChatPanel.style.transform = "translateX(-100%)";
+
+
 		//handle tournament popup
 		const tournamentBtn = document.getElementById("tournamentBtn")!;
 		const tournamentPopup = document.getElementById("tournamentPopup")!;
