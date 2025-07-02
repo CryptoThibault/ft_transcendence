@@ -42,7 +42,7 @@ const router = () => __awaiter(void 0, void 0, void 0, function* () {
     const matchRegex = location.pathname.match(pathRegax);
     if (matchRegex) {
         const username = matchRegex[1];
-        const profileView = new ProfileView(username);
+        const profileView = new ProfileView(username, false);
         document.querySelector("#mainContent").innerHTML = yield profileView.getHtml();
         if (typeof profileView.onMounted === "function") {
             yield profileView.onMounted();

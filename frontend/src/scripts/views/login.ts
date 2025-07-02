@@ -4,17 +4,17 @@ export class LoginView {
   async getHtml() {
     return `
       <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
-      <form id="login-form" autocomplete="off" class="flex flex-col text-[14px] space-y-8 w-80">
-        <label class="text-black text-left">Email</label>
-        <input id="user-mail" type="email" autocomplete="off" placeholder="abc123@gmail.com" class="px-3 py-2 rounded bg-gray-200 text-gray-500" required />
+      <form id="login-form" autocomplete="off" class="flex flex-col space-y-8 w-80">
+        <label class="text-black text-[14px] text-left">Email</label>
+        <input id="user-mail" type="email" autocomplete="off" placeholder="abc123@gmail.com" class="px-3 py-2 rounded bg-gray-200 text-gray-600 text-sm" required />
 
-        <label class="text-black text-left mt-4" data-i18n="password">Password:</label>
-        <input id="user-pw" type="password" autocomplete="off" placeholder="******" class="px-3 py-2 rounded bg-gray-200 text-gray-500" required />
+        <label class="text-black text-[14px] text-left mt-4" data-i18n="password">Password:</label>
+        <input id="user-pw" type="password" autocomplete="off" placeholder="******" class="px-3 py-2 rounded bg-gray-200 text-gray-600 text-sm" required />
 
-        <button type="submit" class="bg-blue-600 text-white py-4 rounded hover:bg-blue-800 transition-all" data-i18n="login">Login</button>
-        <button type="button" class="bg-black text-white py-4 rounded hover:bg-gray-700 transition-all" data-i18n="login_gg">Login with Google</button>
+        <button type="submit" class="bg-blue-600 text-white text-[14px] py-4 rounded hover:bg-blue-800 transition-all" data-i18n="login">Login</button>
+        <button type="button" class="bg-black text-white text-[14px] py-4 rounded hover:bg-gray-700 transition-all" data-i18n="login_gg">Login with Google</button>
       </form>
-      <div id="login-message" class="mt-4 text-red-900"></div>
+      <div id="login-message" class="mt-4 text-red-900"></div>  
     
       `;
     }

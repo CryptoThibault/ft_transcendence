@@ -9,7 +9,7 @@ export class ProfileView {
       
       <div class="font-mono flex flex-col items-center h-40">
           <div class="flex-grow"></div> 
-          <img id="profileAvatar" src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
+          <img id="profileAvatar" src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
           <div class="flex-grow"></div>
           ${this.isMyProfile ? `
             <button id="editProfileBtn" data-i18n="edit_profile" class="bg-blue-500 text-white px-4 py-1 rounded shadow hover:bg-blue-600 w-full max-w-xs mt-auto">
@@ -37,7 +37,7 @@ export class ProfileView {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         
         <div data-username="Alex" class="user-card">
-        <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+        <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
         <div class="user-name">Alex </div>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
@@ -47,7 +47,7 @@ export class ProfileView {
         </div>
         
         <div data-username="Dodo" class="user-card">
-        <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+        <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
         <div class="user-name">Dodo </div>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
@@ -96,18 +96,24 @@ export class ProfileView {
         
         <!-- Edit Profile Popup -->
         <div id="editProfilePopup" class="text-black font-mono fixed inset-0 hidden items-center justify-center  bg-black/50 backdrop-blur-sm  z-50">
-        <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
-        <form id="editProfileForm" class="space-y-4">
-        <div class="flex flex-col items-center">
-        <img id="editAvatarPreview" src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
-        <input type="file" id="avatarInput" accept="image/*" class="hidden" />
-        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Choose Avatar
-        </button>
-        </div>
+          <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
+            <form id="editProfileForm" class="space-y-4">
+            <div class="flex flex-col items-center">
+              <img id="editAvatarPreview" src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
+              <p data-i18n="changeAvt">Change avatar:</p>
+              <div id="avtOptions" class="flex flex-row">
+                <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+                <img src="./src/imgs/cat.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+                <img src="./src/imgs/dog.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+                <img src="./src/imgs/chicken.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+                <img src="./src/imgs/monkey.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+              </div>
+
+
+            </div>
         <div>
-        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="email">Email</label>
+        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="username">Username</label>
         <input type="text" id="editUsername" class="w-full border rounded p-2" required />
         </div>
         <div class="flex justify-end gap-2 mt-4">
@@ -176,22 +182,22 @@ export class ProfileView {
     const editProfileBtn = document.getElementById("editProfileBtn")!;
     const popup = document.getElementById("editProfilePopup")!;
     const cancelBtn = document.getElementById("cancelEditBtn")!;
-    const avatarInput = document.getElementById("avatarInput") as HTMLInputElement;
     const avatarPreview = document.getElementById("editAvatarPreview") as HTMLImageElement;    
     const usernameInput = document.getElementById("editUsername") as HTMLInputElement;    
     const currentUsername = (document.getElementById("usernameInput") as HTMLInputElement).value;
     const currentAvatarSrc = (document.getElementById("profileAvatar") as HTMLImageElement).src;    
-    const chooseFileBtn = document.getElementById("chooseFileBtn")!;    
-    chooseFileBtn.addEventListener("click", () => {
-      avatarInput.click();
-    });
-    
+
+   
+    let selectedAvt = currentAvatarSrc;
+
     editProfileBtn.addEventListener("click", () => {
       popup.classList.remove("hidden");
       popup.classList.add("flex");
   
       usernameInput.value = currentUsername;
       avatarPreview.src = currentAvatarSrc;
+      selectedAvt = currentAvatarSrc;
+
     });
     
     cancelBtn.addEventListener("click", () => {
@@ -199,24 +205,20 @@ export class ProfileView {
       popup.classList.remove("flex");
     });
     
-    avatarInput.addEventListener("change", (e) => {
-      const files = avatarInput.files;
-      if (files && files[0]) {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          if (event.target?.result) {
-            avatarPreview.src = event.target.result as string;
-          }
-        };
-        reader.readAsDataURL(files[0]);
-      }
+    const avatarOptions = document.querySelectorAll("#avtOptions img");
+    avatarOptions.forEach((img) => {
+      img.addEventListener("click", () => {
+        selectedAvt = img.getAttribute("src")!;
+        avatarPreview.src = selectedAvt;
+      });
     });
-    
+
     const form = document.getElementById("editProfileForm") as HTMLFormElement;
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       
       const newUsername = usernameInput.value.trim();
+      const newAvt = avatarPreview.src;
       if (!newUsername) {
         alert("Username cannot be empty.");
         return;
@@ -235,7 +237,7 @@ export class ProfileView {
           },
           body: JSON.stringify({
             name: newUsername,
-            // avatar: avatarPreview.src,
+            // avatar: selectedAvt,
           }),
         });
         const res = await response.json();
@@ -244,7 +246,7 @@ export class ProfileView {
         }
           
         (document.getElementById("usernameInput") as HTMLInputElement).value = newUsername;
-        // (document.getElementById("profileAvatar") as HTMLImageElement).src = avatarPreview.src;
+        (document.getElementById("profileAvatar") as HTMLImageElement).src = newAvt;
         
         popup.classList.add("hidden");
         popup.classList.remove("flex");
