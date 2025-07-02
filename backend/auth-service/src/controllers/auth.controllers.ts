@@ -54,7 +54,7 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 			name: name.trim(),
 			email: email.toLowerCase(),
 			password,
-			twoFactorEnabled: false,
+			twoFactorEnabled: true, //false,
 			twoFactorSecret: null,
 		};
 		const newUser = await createUser(newUserInput);
@@ -119,7 +119,7 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 			return res.send({
 				success: true,
 				message: '2FA code required',
-				twoFactor: true,
+				twoFactorRequired: true, // changed here too
 				tempToken
 			});
 		}

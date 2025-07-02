@@ -102,7 +102,6 @@ const setupLogoutHandler = () => {
 window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;
 
-
 document.addEventListener("DOMContentLoaded", () => {
 	loadLanguage(currentLanguage);
 	document.body.addEventListener("click", e => {
