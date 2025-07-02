@@ -3,20 +3,20 @@ import { navigateTo } from "../main.js";
 export class LoginView {
   async getHtml() {
     return `
-      <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
+      <h2 class="header_custom mt-20 mb-20" res-i18n="login_pong_42">Login Pong 42</h2>
       <form id="login-form" autocomplete="off" class="flex flex-col text-[14px] space-y-8 w-80">
         <label class="text-black text-left">Email</label>
         <input id="user-mail" type="email" placeholder="abc123@gmail.com"
-          class="px-3 py-2 rounded bg-gray-200 text-gray-500" required />
+          class="px-3 py-2 rounded bg-gray-200 text-gray-600" required />
 
-        <label class="text-black text-left mt-4" data-i18n="password">Password:</label>
+        <label class="text-black text-left mt-4" res-i18n="password">Password:</label>
         <input id="user-pw" type="password" placeholder="******"
-          class="px-3 py-2 rounded bg-gray-200 text-gray-500" required />
+          class="px-3 py-2 rounded bg-gray-200 text-gray-600" required />
 
         <div id="otp-section" class="hidden">
           <label class="text-black text-left mt-4">OTP:</label>
           <input id="user-otp" type="text" placeholder="Enter OTP"
-            class="px-3 py-2 rounded bg-gray-200 text-gray-500" />
+            class="px-3 py-2 rounded bg-gray-200 text-gray-600" />
           <button id="verify-otp-btn" type="button"
             class="bg-green-600 text-white py-2 rounded hover:bg-green-800 transition-all mt-2">
             Verify OTP
@@ -25,13 +25,13 @@ export class LoginView {
 
         <button type="submit"
           class="bg-blue-600 text-white py-4 rounded hover:bg-blue-800 transition-all"
-          data-i18n="login">
+          res-i18n="login">
           Login
         </button>
 
         <button type="button"
           class="bg-black text-white py-4 rounded hover:bg-gray-700 transition-all"
-          data-i18n="login_gg">
+          res-i18n="login_gg">
           Login with Google
         </button>
       </form>
@@ -61,19 +61,19 @@ export class LoginView {
           body: JSON.stringify({ email, password }),
         });
 
-        const data = await response.json();
+        const res = await response.json();
 
         if (!response.ok) {
-          messageDiv.textContent = data.message || "Login failed.";
+          messageDiv.textContent = res.message || "Login failed.";
           return;
         }
 
-        if (data.twoFactorRequired) {
-          tempToken = data.tempToken;
+        if (res.twoFactorRequired) {
+          tempToken = res.tempToken;
           otpSection.classList.remove("hidden");
           messageDiv.textContent = "Two-factor authentication required. Please enter your OTP.";
         } else {
-          localStorage.setItem("token", data.data.token);
+          localStorage.setItem("token", res.data.token);
           navigateTo("/");
         }
 
@@ -101,14 +101,14 @@ export class LoginView {
           body: JSON.stringify({ token: otp }),
         });
 
-        const data = await response.json();
+        const res = await response.json();
 
         if (!response.ok) {
-          messageDiv.textContent = data.message || "OTP verification failed.";
+          messageDiv.textContent = res.message || "OTP verification failed.";
           return;
         }
 
-        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("token", res.data.token);
         navigateTo("/");
 
       } catch (error) {
