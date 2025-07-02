@@ -16,7 +16,7 @@ export class SearchView {
       <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">
         <!-- User 1 -->
         <div data-username="Alex" class="user-card">
-          <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
           <div class="text-black  font-semibold">Alex </div>
           <div class="flex space-x-3 mt-2">
               <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>
@@ -25,7 +25,7 @@ export class SearchView {
         </div>
         <!-- User 2 -->
         <div data-username="Paul" class="user-card">
-          <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
           <div class="text-black  font-semibold">Paul </div>
           <div class="flex space-x-3 mt-2">
               <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
@@ -34,7 +34,7 @@ export class SearchView {
         </div>
         <!-- User 3 -->
         <div data-username="Marie" class="user-card">
-          <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+          <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
           <div class="text-black  font-semibold">Marie </div>
           <div class="flex space-x-3 mt-2">
               <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>

@@ -9,7 +9,7 @@ export class ProfileView {
       
       <div class="font-mono flex flex-col items-center h-40">
           <div class="flex-grow"></div> 
-          <img id="profileAvatar" src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
+          <img id="profileAvatar" src="./src/imgs/kangaroo.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
           <div class="flex-grow"></div>
           ${this.isMyProfile ? `
             <button id="editProfileBtn" data-i18n="edit_profile" class="bg-blue-500 text-white px-4 py-1 rounded shadow hover:bg-blue-600 w-full max-w-xs mt-auto">
@@ -37,7 +37,7 @@ export class ProfileView {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         
         <div data-username="Alex" class="user-card">
-        <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+        <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
         <a href="/" class="user-name" data-link>Alex </a>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
@@ -47,7 +47,7 @@ export class ProfileView {
         </div>
         
         <div data-username="Dodo" class="user-card">
-        <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
+        <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
         <a href="/" class="user-name" data-link>Dodo </a>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
@@ -100,10 +100,10 @@ export class ProfileView {
             <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
             <form id="editProfileForm" class="space-y-4">
             <div class="flex flex-col items-center">
-              <img id="editAvatarPreview" src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
+              <img id="editAvatarPreview" src="./src/imgs/kangaroo.jpg" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
               <p data-i18n="changeAvt">Change avatar:</p>
               <div id="avtOptions" class="flex flex-row">
-                <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
+                <img src="./src/imgs/kangaroo.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
                 <img src="./src/imgs/cat.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
                 <img src="./src/imgs/dog.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
                 <img src="./src/imgs/chicken.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
