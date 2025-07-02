@@ -38,7 +38,7 @@ export class ProfileView {
         
         <div data-username="Alex" class="user-card">
         <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
-        <div class="user-name">Alex </div>
+        <a href="/" class="user-name" data-link>Alex </a>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
         <button data-i18n="block" class="btn-block">Block</button>
@@ -48,7 +48,7 @@ export class ProfileView {
         
         <div data-username="Dodo" class="user-card">
         <img src="./src/imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
-        <div class="user-name">Dodo </div>
+        <a href="/" class="user-name" data-link>Dodo </a>
         <div class="user-actions">
         <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
         <button data-i18n="block" class="btn-block">Block</button>
@@ -73,6 +73,7 @@ export class ProfileView {
         <div id="lose">x</div> 
         </section>
         
+        <!-- history Section -->
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
           <h2 data-i18n="history" class="text-lg font-bold mb-4 text-black">History</h2>
           
@@ -80,10 +81,9 @@ export class ProfileView {
             <table class="min-w-full table-fixed w-full border-collapse">
               <thead>
                 <tr class="bg-gray-100">
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="time">Time</th>
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="score">Score</th>
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="status">Status</th>
+                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
+                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="score">Score</th>
+                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="status">Status</th>
                 </tr>
               </thead>
               <tbody id="historyTableBody" class="text-center text-gray-700">
