@@ -40,5 +40,11 @@
     "multi_players": "Players",
     "single_title": "Play against the AI!",
     "multi_title": "Play against your friends in real-time!",
-    "tournament_title": "Play against other players in a tournament!"
+    "tournament_title": "Play against other players in a tournament!",
+    "changeAvt": "Change avatar",
+    "time": "Time",
+    "score": "Score",
+    "opponent": "Opponent",
+    "status": "Status",
+    "save": "Save"
 }

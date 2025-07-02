@@ -40,6 +40,23 @@ export const navigateTo = (url: string) => {
 };
 
 const router = async () => {
+	const location = window.location;
+	const pathRegax = /^\/profile\/([^/]+)$/;
+	const matchRegex = location.pathname.match(pathRegax);
+
+	if (matchRegex) {
+		const username = matchRegex[1];
+		const profileView = new ProfileView(username, false);
+		document.querySelector("#mainContent")!.innerHTML = await profileView.getHtml();
+		if (typeof profileView.onMounted === "function") {
+			await profileView.onMounted();
+		}
+		setupNavbar();
+		setupLogoutHandler();
+		loadLanguage(currentLanguage);
+		return;
+	}
+	
 	const potentialMatches = routes.map(route => ({
 		route,
 		isMatch: location.pathname === route.path,

@@ -19,7 +19,7 @@ export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
         }
         const userId = req.user.id;
         console.log('Extracted userId from req.user:', userId);
-        const user = await User.findById(userId);
+        const user = await User.findByIdWithEmail(userId);
         if (!user)
             return res.status(404).send({ success: false, message: 'User not found in DB' });
         return res.status(200).send({
