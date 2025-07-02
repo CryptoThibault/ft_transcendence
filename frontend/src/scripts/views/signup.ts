@@ -75,7 +75,6 @@ export class SignupView {
         localStorage.setItem("token", res.data.token);
         navigateTo("/");
 
-
       } catch (error) {
         messageDiv.style.color = "red";
         messageDiv.textContent = "Sign-up failed!";

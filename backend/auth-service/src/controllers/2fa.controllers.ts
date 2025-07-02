@@ -23,7 +23,7 @@ const getJwtSecret = (): string => {
 export const generate2FA = async (req: AuthenticatedRequest, res: FastifyReply) => {
 	const userId = req.user?.id;
 	if (!userId) return res.status(401).send({ message: 'User not authenticated' });
-	const user = await findUserByIdWithSensitiveData(userId);
+	const user = findUserByIdWithSensitiveData(userId);//await findUserByIdWithSensitiveData(userId);
 	if (!user) return res.status(404).send({ message: 'User not found' });
 	const secret = speakeasy.generateSecret();
 	const updated = await updateUserTwoFactor(user.id, secret.base32, user.twoFactorEnabled);
@@ -32,7 +32,7 @@ export const generate2FA = async (req: AuthenticatedRequest, res: FastifyReply) 
 	return res.send({
 		success: true,
 		message: '2FA setup initiated. Scan QR or use manual code to continue.',
-		twoFactorEnabled: false,
+		twoFactorEnabled: true,//false,
 		qrCode,
 		manualEntry: secret.base32
 	});

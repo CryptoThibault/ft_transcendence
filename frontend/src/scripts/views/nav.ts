@@ -63,19 +63,6 @@ function attachLanguageDropdownEvents() {
 	});
 }
 
-/*export async function loadLanguage(lang: string) {
-	try {
-		//const response = await fetch(`../langs/${lang}.json`);
-		const response = await fetch(`/langs/${lang}.json`);
-		const translations = await response.json();
-		applyTranslations(translations);
-		setLanguage(lang);
-		// setLastLang(lang);
-	} catch (err) {
-		console.error("Failed to load language:", err);
-	}
-}*/
-
 export async function loadLanguage(lang: string) {
 	try {
 		const response = await fetch(`/langs/${lang}.json`);
