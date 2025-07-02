@@ -40,6 +40,11 @@
     "multi_players": "Joueurs",
     "single_title": "Jouez contre l'IA !",
     "multi_title": "Jouez contre vos amis en temps réel !",
-    "tournament_title": "Jouez contre d'autres joueurs dans un tournoi !"
-
+    "tournament_title": "Jouez contre d'autres joueurs dans un tournoi !",
+    "changeAvt": "Changer d'avatar",
+    "time": "Temps",
+    "score": "Score",
+    "opponent": "Adversaire",
+    "status": "Statut",
+    "save": "Enregistrer"
 }
