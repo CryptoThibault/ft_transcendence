@@ -16,6 +16,7 @@ async function buildServer() {
     try {
         await fastify.register(registerRoutes)
         await fastify.ready()
+        console.log("Registering sockets...")
         initSockets(fastify)
         await fastify.listen({
         port: 6002,

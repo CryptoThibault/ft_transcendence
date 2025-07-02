@@ -8,14 +8,15 @@ export const onlineUserSockets = new Map<string, Socket>
 export async function initSockets(fastify: FastifyInstance)
 {
     const io = new Server(fastify.server, {
+        path: "/socket.io/",
         cors: 
         {
             origin: "*",
             methods: ["GET", "POST"],
         },
-        path: "/socket.io",
     });
     io.on('connection', (socket) => {
+        console.log("Connection received!");
         const token = socket.handshake.auth.token;
         const userId = getUsernameFromToken(token);
         onlineUserSockets.set(userId, socket)

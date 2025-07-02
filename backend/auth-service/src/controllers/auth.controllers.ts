@@ -65,7 +65,8 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 			email: newUser.email,
 		});
 		const token = jwt.sign(
-			{ userId: newUser.id },
+			//bince changed
+			{ userId: newUser.id, userName: newUser.name },
 			getJwtSecret(),
 			{ expiresIn: '1h' }
 		);
@@ -112,7 +113,8 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 		const { password: _, twoFactorSecret: __, ...userResponse } = user;
 		if (user.twoFactorEnabled) {
 			const tempToken = jwt.sign(
-				{ userId: user.id, twoFactor: true },
+				//bince changed
+				{ userId: user.id, userName: user.name ,twoFactor: true },
 				secret,
 				{ expiresIn: '5m' }
 			);
@@ -127,7 +129,8 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 			expiresIn: '1h',//JWT_EXPIRES_IN || '1h',
 		};
 		const token = jwt.sign(
-			{ userId: user.id },
+			//bince changed
+			{ userId: user.id, userName: user.name },
 			secret,
 			signOptions
 		);

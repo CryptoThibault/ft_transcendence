@@ -66,11 +66,20 @@ export class HomeView {
   let socket: Socket
   if (token)
   {
-	  socket = io("/api/v1/livechat", {
+	  socket = io("/", {
 		auth: {
 		  token: token,
 		},
 	  });
+	  console.log(socket.active)
+	  socket.on("get-chat-message", () => {
+          console.log("I got a message")
+        //   if (from === username || from != recipient) return;
+        //   const item = document.createElement("li");
+        //   item.textContent = `${from}: ${msg}`;
+        //   messages.appendChild(item);
+        //   window.scrollTo(0, document.body.scrollHeight);
+        });
 
   }
   async function getFriendsList() {
@@ -101,6 +110,8 @@ export class HomeView {
   }	
   // Toggle panel visibility
 liveChatToggleBtn.addEventListener("click", async () => {
+	if (!token)
+		return;
   if (liveChatPanel.style.transform === "translateX(0%)") {
     liveChatPanel.style.transform = "translateX(-100%)";
     showFriendsList();
@@ -159,6 +170,10 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
         const messageDiv = document.createElement("div");
         messageDiv.textContent = `You: ${msg}`;
         chatMessages.appendChild(messageDiv);
+		socket.emit("emit-chat-message", {
+              to: friend.name,
+              msg: chatInput.value
+            });
         chatInput.value = "";
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
