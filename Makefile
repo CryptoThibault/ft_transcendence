@@ -1,3 +1,9 @@
+all: dev
+
+clean: clean-docker
+
+re: clean all
+
 #exec shell command
 exec:
 	@echo "Available containers:"; \

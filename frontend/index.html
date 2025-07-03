@@ -12,6 +12,15 @@
 		<nav id="mainNav" class="flex justify-end space-x-4 "></nav>
 	</header>
 	<main id="mainContent"  class="bg-custom bg-animated"></main>
+	<script src="/reset-flag.js"></script>
+	<script>
+		console.log("resetFlag:", window.resetFlag);
+		if (window.resetFlag) {
+			window.resetFlag = false;
+			localStorage.clear();
+			console.log("localStorage empty");
+		}
+	</script>
 	<script type="module" src="src/scripts/main.ts"></script>
 </body>
 </html>

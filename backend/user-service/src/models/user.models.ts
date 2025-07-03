@@ -5,7 +5,7 @@ export interface UserData {
 	id?: number;
 	name: string;
 	email: string;
-	avatar?: string;
+	avatar?: string | null;
 	wins?: number;
 	losses?: number;
 	onlineStatus?: boolean;
@@ -87,20 +87,16 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE email = ?`, email);
 		return user ? (user as UserData) : null;
 	}
-
 	/**
-    * Finds a user by their ID, returning full raw data including email.
-    * Useful when internal logic needs access to sensitive fields.
-    * @param id The ID of the user to find.
-    * @returns The full UserData object or null if not found.
-    */
-    static async findByIdWithEmail(id: number): Promise<UserData | null> {
-        const db = await dbPromise;
-        const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
-        return user ? (user as UserData) : null;
-    }
-
-
+	* Finds a user by their ID, returning full raw data including email.
+	* @param id The ID of the user to find.
+	* @returns The full UserData object or null if not found.
+	*/
+	static async findByIdWithEmail(id: number): Promise<UserData | null> {
+		const db = await dbPromise;
+		const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
+		return user ? (user as UserData) : null;
+	}
 	/**
 	* Updates a user record by ID with partial data.
 	* @param id The ID of the user to update.
@@ -111,7 +107,7 @@ export class User {
 		const db = await dbPromise;
 		const now = new Date().toISOString();
 		const updates: string[] = [];
-		const values: (string | number | boolean)[] = [];
+		const values: (string | number | boolean | null)[] = [];
 
 		if (data.name !== undefined) { updates.push('name = ?'); values.push(data.name); }
 		if (data.email !== undefined) { updates.push('email = ?'); values.push(data.email); }
@@ -126,7 +122,18 @@ export class User {
 		const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
 		values.push(id);
 		const result = await db.run(query, ...values);
-		return (result?.changes ?? 0) > 0;
+		// adding this 
+		console.log('DEBUG (User Model): User.update SQL Query:', query); // ADD THIS LOG
+        console.log('DEBUG (User Model): User.update SQL Values:', values); // ADD THIS LOG
+		try {
+            const result = await db.run(query, ...values);
+            console.log(`DEBUG (User Model): User.update result for ID ${id}: changes = ${result?.changes}`); // ADD THIS LOG
+            return (result?.changes ?? 0) > 0;
+        } catch (error) {
+            console.error(`ERROR (User Model): User.update failed for ID ${id}:`, error); // ADD THIS LOG
+            throw error;
+        }
+		//return (result?.changes ?? 0) > 0;
 	}
 	/**
 	* Sanitizes a UserData object by omitting sensitive fields for public use.

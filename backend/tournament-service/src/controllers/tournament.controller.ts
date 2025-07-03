@@ -37,7 +37,6 @@ export interface CreateTournamentRoute extends RouteGenericInterface {
     };
 }
 
-
 export async function createCasualMatch(request: FastifyRequest<CreateCasualMatchRoute>,
 reply: FastifyReply) {
     try {

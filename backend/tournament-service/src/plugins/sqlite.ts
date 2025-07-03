@@ -4,14 +4,11 @@ import { open, Database } from 'sqlite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Helper for ES Modules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DB_PATH = path.join(__dirname, '../../database/tournament.sqlite');
 
-// Enable verbose logging for sqlite3 (optional, useful for debugging)
 sqlite3.verbose();
-
 // A promise that resolves with the database instance once opened
 export const dbPromise: Promise<Database> = open({
     filename: DB_PATH,
