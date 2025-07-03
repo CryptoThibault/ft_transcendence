@@ -24,7 +24,8 @@
     "sqlite3": "^5.1.6",
     "sqlite": "^4.2.1",
     "speakeasy": "^2.0.0",
-    "qrcode": "^1.5.1"
+    "qrcode": "^1.5.1",
+    "nodemailer": "^6.9.9"
 
   },
   "devDependencies": {
@@ -36,6 +37,8 @@
     "@types/sequelize": "^4.28.14",
     "@types/speakeasy": "^2.0.0",
     "@types/qrcode": "^1.5.1",
-    "@types/better-sqlite3": "^7.6.9"
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/nodemailer": "^6.4.8",
+    "@sendgrid/helpers": "^8.0.0"
   }
 }

@@ -7,7 +7,7 @@ import { connectToDatabase } from './plugins/sqlite.js';
 
 import { PORT } from './config/env.js';
 
-const app = fastify({ logger: true });
+const app = fastify({ /*logger: true*/ });
 app.register(cookie);
 app.register(authRoutes, { prefix: '/api/v1/auth' });
 app.register(verifyTokenRoute, { prefix: '/api/v1/auth' });

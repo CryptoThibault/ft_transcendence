@@ -7,7 +7,7 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     watch: {
-      usePolling: true // Pour Docker
+      usePolling: true
     },
     allowedHosts: [
       'localhost'

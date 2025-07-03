@@ -11,7 +11,7 @@ import { User } from './models/user.models.js';
 import { Server, Socket } from 'socket.io';
 import http from 'http';
 
-const app = fastify({ logger: true });
+const app = fastify({ /*logger: true*/ });
 const server = http.createServer(app.server);
 const io = new Server(server, {
     cors: {
