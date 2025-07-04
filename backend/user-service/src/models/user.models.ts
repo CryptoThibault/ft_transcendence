@@ -97,6 +97,17 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
 		return user ? (user as UserData) : null;
 	}
+
+	/**
+    * Retrieves all users from the database, excluding their email addresses.
+    * @returns An array of sanitized UserData objects.
+    */
+    static async findAll(): Promise<Omit<UserData, 'email'>[]> {
+        const db = await dbPromise;
+        const users = await db.all(`SELECT * FROM users`);
+        return users.map((user: UserData) => User.sanitize(user as UserData));
+    }
+	
 	/**
 	* Updates a user record by ID with partial data.
 	* @param id The ID of the user to update.
