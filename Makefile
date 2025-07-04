@@ -31,4 +31,8 @@ dev:
 	echo "Stopping and removing the containers"
 	docker-compose down --volumes
 	echo "Building the images and starting the containers"
-	docker-compose up --build
+	docker-compose up --build 
+
+prod:
+	docker-compose build --no-cache
+	docker-compose up
