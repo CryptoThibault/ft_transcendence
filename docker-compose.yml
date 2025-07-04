@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 services:
   auth-service:
@@ -21,7 +21,7 @@ services:
       - /app/node_modules
     depends_on:
       - auth-service
-
+  
   tournament-service:
     build:
       context: ./backend/tournament-service
@@ -58,14 +58,7 @@ services:
       - user-service
       - tournament-service
       - frontend-builder
-    command:
-      [
-        "/wait-for-service.sh",
-        "auth-service:5500",
-        "user-service:5501",
-        "tournament-service:5600",
-        "frontend-builder:3000",
-      ]
+    command: ["/wait-for-service.sh", "auth-service:5500", "user-service:5501", "tournament-service:5600", "frontend-builder:3000"]
     restart: always
 
 volumes:

@@ -14,7 +14,11 @@ for service in "$@"; do
   echo "$host:$port is available."
 done
 
+# Fix permissions on uploads directory
+echo "Fixing permissions for /var/www/uploads..."
+chown -R www-data:www-data /var/www/uploads
+chmod -R 755 /var/www/uploads
+
 # Start Nginx
 echo "All services are up. Starting Nginx..."
 exec nginx -g "daemon off;"
-

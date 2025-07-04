@@ -14,9 +14,6 @@ RUN chmod +x node_modules/.bin/vite
 
 EXPOSE 3000
 
-RUN mkdir -p /usr/share/nginx/html \
-    && echo "window.resetFlag = true;" > /usr/share/nginx/html/reset-flag.js
-
 # Build the production-ready frontend
 CMD [ "npm","run","dev" ]
 
