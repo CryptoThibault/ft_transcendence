@@ -14,6 +14,8 @@ RUN chmod +x node_modules/.bin/vite
 
 EXPOSE 3000
 
+RUN mkdir -p /app/dist && echo "window.buildId = '$(date +%s)';" > /app/dist/build-id.js
+
 # Build the production-ready frontend
 CMD [ "npm","run","dev" ]
 

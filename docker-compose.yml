@@ -52,6 +52,7 @@ services:
     ports:
       - "8443:443"
     volumes:
+      - frontend-build:/usr/share/nginx/html
       - user-uploads:/var/www/uploads
     depends_on:
       - auth-service
