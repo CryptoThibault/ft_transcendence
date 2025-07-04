@@ -64,6 +64,32 @@ export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUs
     }
 };
 
+export const getAllUsers = async (req: FastifyRequest, res: FastifyReply) => {
+    try {
+        console.log('Fetching all users from DB');
+        const users = await User.findAll();
+
+        if (!users || users.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: 'No users found',
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: 'Users retrieved successfully',
+            data: { users },
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+
 export const onlineStatus = async (req: FastifyRequest, res: FastifyReply) => {
     try {
         if (!req.user || !req.user.id) {
