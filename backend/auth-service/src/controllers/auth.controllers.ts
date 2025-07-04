@@ -59,7 +59,7 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 			name: name.trim(),
 			email: email.toLowerCase(),
 			password,
-			twoFactorEnabled: false, //false,
+			twoFactorEnabled: true, //false,
 			twoFactorSecret: null,
 			twoFactorMethod: 'email', // adding
 		};
