@@ -1,4 +1,4 @@
-import { MAX_SPEED, MIN_SPEED, SPEED_INC } from "./config.js";
+import { MIN_SPEED, MAX_SPEED, SPEED_INC, BORDER, MIN_DY } from "./config.js";
 import { Ball } from "./ball.js";
 import { Paddle } from "./paddle.js";
 import { canvas, match, gameStates, keys, ball, leftPaddle, rightPaddle } from "./state.js";
@@ -18,9 +18,17 @@ function onPaddleHit(ball: Ball, paddle: Paddle) {
     ball.dy = (ball.y - paddleCenterY) / (paddle.height / 2);
     ball.dx = -ball.dx;
 
-    const length = Math.hypot(ball.dx, ball.dy);
+    let length = Math.hypot(ball.dx, ball.dy);
     ball.dx /= length;
     ball.dy /= length;
+
+    if ((ball.y <= BORDER || canvas.height - BORDER) && Math.abs(ball.dy) < MIN_DY){
+        ball.dy = ball.y <= BORDER ? MIN_DY : -MIN_DY;
+        length = Math.hypot(ball.dx, ball.dy);
+        ball.dx /= length;
+        ball.dy /= length;
+    }
+
     ball.speed = Math.min(ball.speed * SPEED_INC, MAX_SPEED);
     ball.x += ball.dx * ball.radius;
 }  
