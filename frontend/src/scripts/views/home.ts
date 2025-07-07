@@ -53,7 +53,7 @@ export class HomeView {
 	}
 
 	async onMounted() {
-		const liveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
+  const liveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
   const liveChatPanel = document.getElementById("liveChatPanel")!;
   const friendsList = document.getElementById("friendsList")!;
   const chatContainer = document.getElementById("chatContainer")!;
@@ -61,7 +61,18 @@ export class HomeView {
   const chatMessages = document.getElementById("chatMessages")!;
   const chatInput = document.getElementById("chatInput")! as HTMLInputElement;
 
+  function updateUIBasedOnToken() {
   const token = localStorage.getItem("token");
+  const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
+  if (!token && liveChatToggleBtn) {
+    liveChatToggleBtn.style.display = "none";
+  } else if (liveChatToggleBtn) {
+    liveChatToggleBtn.style.display = "block";
+  }
+}
+  updateUIBasedOnToken()
+  const token = localStorage.getItem("token"); 
+
 
   let socket: Socket
   if (token)
@@ -72,13 +83,14 @@ export class HomeView {
 		},
 	  });
 	  console.log(socket.active)
-	  socket.on("get-chat-message", () => {
+	  socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
           console.log("I got a message")
-        //   if (from === username || from != recipient) return;
-        //   const item = document.createElement("li");
-        //   item.textContent = `${from}: ${msg}`;
-        //   messages.appendChild(item);
-        //   window.scrollTo(0, document.body.scrollHeight);
+		
+
+          const item = document.createElement("li");
+          item.textContent = `${from}: ${msg}`;
+          chatMessages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
         });
 
   }
