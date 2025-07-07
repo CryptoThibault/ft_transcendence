@@ -22,15 +22,16 @@ function onPaddleHit(ball: Ball, paddle: Paddle) {
     ball.dx /= length;
     ball.dy /= length;
 
-    if ((ball.y <= BORDER || canvas.height - BORDER) && Math.abs(ball.dy) < MIN_DY){
-        ball.dy = ball.y <= BORDER ? MIN_DY : -MIN_DY;
+    ball.speed = Math.min(ball.speed * SPEED_INC, MAX_SPEED);
+    ball.x += ball.dx * ball.radius;
+
+    if ((ball.y < BORDER || ball.y > canvas.height - BORDER)
+        && (Math.abs(ball.dy) < MIN_DY || Math.abs(Math.abs(ball.dy) - 1) < MIN_DY)) {
+        ball.dy = ball.y < BORDER ? MIN_DY : -MIN_DY;
         length = Math.hypot(ball.dx, ball.dy);
         ball.dx /= length;
         ball.dy /= length;
     }
-
-    ball.speed = Math.min(ball.speed * SPEED_INC, MAX_SPEED);
-    ball.x += ball.dx * ball.radius;
 }  
 
 export function updateGame() {
