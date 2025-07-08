@@ -317,7 +317,8 @@ export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
 		}
 	}
 	const finalToken = jwt.sign(
-		{ userId: user.id },
+		//bince changed
+		{ userId: user.id, userName: user.name},
 		secret,
 		{ expiresIn: '1h' }
 	);

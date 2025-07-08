@@ -6,6 +6,7 @@ import { Match } from '../models/match.models.js';
 import { getDb } from '../plugins/sqlite.js';
 import fs from 'fs';
 import path from 'path';
+import { AcceptFriendshipRequestRoute } from '../types/fastify.js';
 
 interface UpdateUserRequestBody {
   name: string;
@@ -224,19 +225,45 @@ export const acceptFriendRequest = async (req: FastifyRequest, res: FastifyReply
     await db.run('BEGIN TRANSACTION;');
     try {
         const userId = req.user?.id;
-        const { requesterId } = req.body as { requesterId: number };
-        if (!userId || !requesterId) {
-            await db.run('ROLLBACK;');
-            return res.status(400).send({ success: false, message: 'Invalid user or requester ID.' });
-        }
-        const request = await Friendship.findByUserAndFriend(requesterId, userId);
-        if (!request || request.status !== 'pending') {
-            await db.run('ROLLBACK;');
-            return res.status(404).send({ success: false, message: 'Friend request not found or already handled.' });
-        }
-        await Friendship.updateStatus(request.id!, 'accepted');
-        await db.run('COMMIT;');
-        return res.status(200).send({ success: true, message: 'Friend request accepted.' });
+        if (!userId)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const mainUser = await User.findById(userId);
+        if (!mainUser)
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        const friendships = await Friendship.findFriendsForUser(userId);
+        const friendIds: number[] = [];
+        friendships.forEach(f => {
+            //bince changed here if (f.status === 'accepted') 
+            if (f.status === 'accepted') {
+                if (f.userId === userId) {
+                    friendIds.push(f.friendId);
+                } else {
+                    friendIds.push(f.userId);
+                }
+            }
+        });
+        const friendsDetails = await Promise.all(
+            friendIds.map(id => User.findById(id))
+        );
+        const actualFriends = friendsDetails.filter(Boolean);
+        return res.status(200).send({
+            success: true,
+            message: 'Friends list retrieved successfully',
+            data: actualFriends,
+        });
+//         const { requesterId } = req.body as { requesterId: number };
+//         if (!userId || !requesterId) {
+//             await db.run('ROLLBACK;');
+//             return res.status(400).send({ success: false, message: 'Invalid user or requester ID.' });
+//         }
+//         const request = await Friendship.findByUserAndFriend(requesterId, userId);
+//         if (!request || request.status !== 'pending') {
+//             await db.run('ROLLBACK;');
+//             return res.status(404).send({ success: false, message: 'Friend request not found or already handled.' });
+//         }
+//         await Friendship.updateStatus(request.id!, 'accepted');
+//         await db.run('COMMIT;');
+//         return res.status(200).send({ success: true, message: 'Friend request accepted.' });
     } catch (error) {
         await db.run('ROLLBACK;');
         console.error('Error accepting friend request:', error);
@@ -246,6 +273,93 @@ export const acceptFriendRequest = async (req: FastifyRequest, res: FastifyReply
         });
     }
 };
+
+//bince added this
+export const getFriendsPendingList = async (req: FastifyRequest, res: FastifyReply) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const mainUser = await User.findById(userId);
+        if (!mainUser)
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        const friendships = await Friendship.findFriendsForUser(userId);
+        const friendIds: number[] = [];
+        friendships.forEach(f => {
+            if (f.status === 'pending') {
+                if (f.userId === userId) {
+                    friendIds.push(f.friendId);
+                } else {
+                    friendIds.push(f.userId);
+                }
+            }
+        });
+        const friendsDetails = await Promise.all(
+            friendIds.map(id => User.findById(id))
+        );
+        const actualFriends = friendsDetails.filter(Boolean);
+        return res.status(200).send({
+            success: true,
+            message: 'Friends list retrieved successfully',
+            data: actualFriends,
+        });
+    } catch (error) {
+        console.error('Error getting friends list:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+
+//bince added this
+export const acceptFriendshipRequest = async (req: FastifyRequest<AcceptFriendshipRequestRoute>, res: FastifyReply) =>
+{
+       const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
+    try {
+        const userId = req.user?.id;
+        const senderId = req.body.senderId
+        if (!senderId)
+            throw Error('no sender id')
+        if (!userId)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const mainUser = await User.findById(userId);
+        if (!mainUser)
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        const friendship = await Friendship.findByUserAndFriend(userId, senderId);
+      await db.run('COMMIT;');
+        if (!friendship)
+        {
+            return res.status(404).send({
+            success: false,
+            message: 'No request found',
+        });
+        
+        }
+
+        if (typeof friendship.id !== 'number') {
+    return res.status(500).send({
+        success: false,
+        message: 'Invalid friendship record: Missing ID.',
+    });
+}
+        await Friendship.updateStatus(friendship.id, 'accepted');
+
+        return res.status(200).send({
+            success: true,
+            message: 'Friend request accepted successfully',
+        });
+    } catch (error) {
+        await db.run('ROLLBACK;');
+
+        console.error('Error getting friends list:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+}
 
 export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
