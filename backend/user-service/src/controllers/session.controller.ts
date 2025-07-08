@@ -65,29 +65,29 @@ export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUs
 };
 
 export const getAllUsers = async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-        console.log('Fetching all users from DB');
-        const users = await User.findAll();
+	try {
+		console.log('Fetching all users from DB');
+		const users = await User.findAll();
 
-        if (!users || users.length === 0) {
-            return res.status(404).send({
-                success: false,
-                message: 'No users found',
-            });
-        }
+		if (!users || users.length === 0) {
+			return res.status(404).send({
+				success: false,
+				message: 'No users found',
+			});
+		}
 
-        return res.status(200).send({
-            success: true,
-            message: 'Users retrieved successfully',
-            data: { users },
-        });
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
+		return res.status(200).send({
+			success: true,
+			message: 'Users retrieved successfully',
+			data: { users },
+		});
+	} catch (error) {
+		console.error('Error fetching users:', error);
+		return res.status(500).send({
+			success: false,
+			message: (error as Error).message || 'Internal server error',
+		});
+	}
 };
 
 export const onlineStatus = async (req: FastifyRequest, res: FastifyReply) => {
@@ -133,7 +133,16 @@ export const uploadAvatar = async (req: FastifyRequest, res: FastifyReply) => {
             return res.status(400).send({ success: false, message: 'No file uploaded' });
         if (data.file.truncated)
             return res.status(400).send({ success: false, message: 'File is too large. Maximum size is 5MB.' });
-        const fileName = `${Date.now()}-${data.filename}`;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(data.mimetype)) {
+            return res.status(400).send({
+                success: false,
+                message: 'Invalid file type. Only JPG, PNG, and WEBP are allowed.',
+            });
+        }
+        //const fileName = `${Date.now()}-${data.filename}`;
+        const sanitizedFilename = path.basename(data.filename).replace(/\s+/g, '-');
+        const fileName = `${Date.now()}-${sanitizedFilename.slice(0, 100)}`;
         const uploadDir = path.resolve('./uploads');
         const filePath = path.join(uploadDir, fileName);
         if (!fs.existsSync(uploadDir))
@@ -265,7 +274,6 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 				}
 			}
 		}
-
 		const [acceptedFriends, pendingSent, pendingReceived] = await Promise.all([
 			Promise.all([...acceptedIds].map(User.findById)),
 			Promise.all(pendingSentIds.map(User.findById)),
@@ -289,48 +297,6 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 		});
 	}
 };
-
-
-/*export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId)
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
-        const mainUser = await User.findById(userId);
-        if (!mainUser)
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        console.log('User ID:', userId);
-        const friendships = await Friendship.findFriendsForUser(userId);
-        console.log('Friendships found:', friendships);
-        const friendIds: number[] = [];
-        friendships.forEach(f => {
-            if (f.status === 'accepted') {
-                if (f.userId === userId) {
-                    friendIds.push(f.friendId);
-                } else {
-                    friendIds.push(f.userId);
-                }
-            }
-        });
-        console.log('Accepted friend IDs:', friendIds);
-        const friendsDetails = await Promise.all(
-            friendIds.map(id => User.findById(id))
-        );
-        console.log('Friend details:', friendsDetails);
-        const actualFriends = friendsDetails.filter(Boolean);
-        return res.status(200).send({
-            success: true,
-            message: 'Friends list retrieved successfully',
-            data: actualFriends,
-        });
-    } catch (error) {
-        console.error('Error getting friends list:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
-};*/
 
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
     console.log('User service: Incoming request body for recordMatch:', req.body);
@@ -414,7 +380,6 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             updatedPlayer2Wins += 1;
             updatedPlayer1Losses += 1;
         }
-        // Use your custom User.update method for each player
         const player1Updated = await User.update(player1Id, {
             wins: updatedPlayer1Wins,
             losses: updatedPlayer1Losses,

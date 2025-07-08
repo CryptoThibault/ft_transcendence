@@ -1,6 +1,7 @@
 import { navigateTo } from "../main";
 
 export class ProfileView {
+  private DEFAULT_AVATAR_PATH: string = '/uploads/default-avatar.png';
   constructor(private username?: string, private isMyProfile: boolean = true) {
   }
   async getHtml() {
@@ -8,16 +9,15 @@ export class ProfileView {
     <section class="bg-gray-100 max-w-5xl w-full mx-auto rounded-lg shadow-md p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
       <div class="font-mono flex flex-col items-center h-40">
-          <div class="flex-grow"></div> 
-          <img id="profileAvatar" src="./src/imgs/kangaroo.jpg" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" />  
-          <div class="flex-grow"></div>
-          ${this.isMyProfile ? `
-            <button id="editProfileBtn" data-i18n="edit_profile" class="bg-blue-500 text-white px-4 py-1 rounded shadow hover:bg-blue-600 w-full max-w-xs mt-auto">
-              Edit profile
-            </button>` : ""}
+        <div class="flex-grow"></div> 
+        <img id="profileAvatar" src="" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" /> 
+        <div class="flex-grow"></div>
+        ${this.isMyProfile ? `
+          <button id="editProfileBtn" data-i18n="edit_profile" class="bg-blue-500 text-white px-4 py-1 rounded shadow hover:bg-blue-600 w-full max-w-xs mt-auto">
+            Edit profile
+          </button>` : ""}
       </div>
       
-      <!-- Info -->
       <div class="font-mono flex-1 bg-white rounded p-4 shadow space-y-4">
         <div>
           <label data-i18n="username" class="text-black text-left block font-semibold">Username</label>
@@ -27,39 +27,18 @@ export class ProfileView {
           <label data-i18n="email" class="text-black text-left block font-semibold">Email</label>
           <input id="emailInput" type="text" disabled value="" class="w-full mt-1 p-2 rounded bg-gray-200 text-gray-600"/>
         </div>
+        <button id="deleteAccountBtn" class="bg-black text-white px-4 py-1 rounded shadow hover:bg-red-600 w-full max-w-xs" data-i18n="delete_account">Delete account</button>
         </div>
         </section>
         
-        <!-- Friend Section -->
         <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
         <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        
-        <div data-username="Alex" class="user-card">
-        <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
-        <a href="/" class="user-name" data-link>Alex </a>
-        <div class="user-actions">
-        <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
-        <button data-i18n="block" class="btn-block">Block</button>
-        <button data-i18n="chat" class="btn-send-message">Chat</button>
-        </div>          
-        </div>
-        
-        <div data-username="Dodo" class="user-card">
-        <img src="./src/imgs/kangaroo.jpg" alt="avatar" class="user-avatar" />
-        <a href="/" class="user-name" data-link>Dodo </a>
-        <div class="user-actions">
-        <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
-        <button data-i18n="block" class="btn-block">Block</button>
-        <button data-i18n="chat" class="btn-send-message">Chat</button>
-        </div>          
-        </div>
-        
+        <div id="friendsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <p id="noFriendsMessage" class="text-gray-600 italic mt-2 hidden" data-i18n="no_friends_yet">No friends yet.</p>
         </div>
         </section>
         
-        <!-- Stats Section -->
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
         <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
         <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
@@ -73,7 +52,6 @@ export class ProfileView {
         <div id="lose">x</div> 
         </section>
         
-        <!-- history Section -->
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
           <h2 data-i18n="history" class="text-lg font-bold mb-4 text-black">History</h2>
           
@@ -81,9 +59,10 @@ export class ProfileView {
             <table class="min-w-full table-fixed w-full border-collapse">
               <thead>
                 <tr class="bg-gray-100">
-                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
-                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="score">Score</th>
-                  <th class="w-1/3 text-center py-2 text-gray-700" data-i18n="status">Status</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="time">Time</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i19n="score">Score</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="status">Status</th>
                 </tr>
               </thead>
               <tbody id="historyTableBody" class="text-center text-gray-700">
@@ -93,28 +72,19 @@ export class ProfileView {
           </div>
         </section>
 
-        
-        <!-- Edit Profile Popup -->
-        <div id="editProfilePopup" class="text-black font-mono fixed inset-0 hidden items-center justify-center  bg-black/50 backdrop-blur-sm  z-50">
-          <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-            <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
-            <form id="editProfileForm" class="space-y-4">
-            <div class="flex flex-col items-center">
-              <img id="editAvatarPreview" src="./src/imgs/kangaroo.jpg" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
-              <p data-i18n="changeAvt">Change avatar:</p>
-              <div id="avtOptions" class="flex flex-row">
-                <img src="./src/imgs/kangaroo.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
-                <img src="./src/imgs/cat.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
-                <img src="./src/imgs/dog.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
-                <img src="./src/imgs/chicken.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
-                <img src="./src/imgs/monkey.jpg" class="mx-2 w-12 h-12 rounded-full border object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 " />
-              </div>
-
-
-            </div>
+        <div id="editProfilePopup" class="text-black font-mono fixed inset-0 hidden items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+        <h2 class="text-xl font-bold mb-4" data-i18n="edit_profile">Edit Profile</h2>
+        <form id="editProfileForm" class="space-y-4">
+        <div class="flex flex-col items-center">
+        <img id="editAvatarPreview" src="" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
+        <input type="file" id="avatarInput" accept="image/*" class="hidden" />
+        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Choose Avatar
+        </button>
+        </div>
         <div>
-        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="username">Username</label>
-        <input type="text" id="editUsername" class="w-full border rounded p-2" required />
+        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="email">Username</label> <input type="text" id="editUsername" class="w-full border rounded p-2" required />
         </div>
         <div class="flex justify-end gap-2 mt-4">
         <button type="button" id="cancelEditBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" data-i18n="cancel">Cancel</button>
@@ -132,14 +102,14 @@ export class ProfileView {
       if (this.isMyProfile) {
         this.handleEditProfile();
       }
+      // await this.loadFriends();
       await this.loadHistory();
     } catch (err: any) {
       alert(err);
       navigateTo("/");
     }
   }
-
-  
+    
   private async setupProfileDefault() {
     const url = this.isMyProfile? "/api/v1/user/me": `/api/v1/user/${this.username}`;
     try {
@@ -156,11 +126,13 @@ export class ProfileView {
       }
       const username = document.getElementById("usernameInput") as HTMLInputElement;
       const email = document.getElementById("emailInput") as HTMLInputElement;
-      // const profileAvatar = document.getElementById("profileAvatar") as HTMLImageElement;
+      const profileAvatar = document.getElementById("profileAvatar") as HTMLImageElement; 
       
       username.value = userData.data.user.name;
       email.value = userData.data.user.email;
-      // profileAvatar.src = userData.data.user.avatar;
+      
+      const avatarFilename = userData.data.user.avatar;
+      profileAvatar.src = avatarFilename ? `/uploads/${avatarFilename}` : this.DEFAULT_AVATAR_PATH;
 
       const statsTotal = document.getElementById("total")!;
       const statsWin = document.getElementById("win")!;
@@ -170,34 +142,42 @@ export class ProfileView {
       const losses = userData.data.user.losses;
       const total = wins + losses;
 
-      statsWin.textContent = wins;
-      statsLose.textContent = losses;
-      statsTotal.textContent = total;
+      statsWin.textContent = wins.toString(); 
+      statsLose.textContent = losses.toString(); 
+      statsTotal.textContent = total.toString(); 
     } catch (error:any) {
+      console.error("Error setting up profile default:", error);
       throw new Error(error);
     }
-  }            
+  }             
   
   private handleEditProfile() {
     const editProfileBtn = document.getElementById("editProfileBtn")!;
     const popup = document.getElementById("editProfilePopup")!;
     const cancelBtn = document.getElementById("cancelEditBtn")!;
-    const avatarPreview = document.getElementById("editAvatarPreview") as HTMLImageElement;    
-    const usernameInput = document.getElementById("editUsername") as HTMLInputElement;    
+    const avatarInput = document.getElementById("avatarInput") as HTMLInputElement;
+    const avatarPreview = document.getElementById("editAvatarPreview") as HTMLImageElement;     
+    const usernameInput = document.getElementById("editUsername") as HTMLInputElement;     
     const currentUsername = (document.getElementById("usernameInput") as HTMLInputElement).value;
-    const currentAvatarSrc = (document.getElementById("profileAvatar") as HTMLImageElement).src;    
+    const currentAvatarSrc = (document.getElementById("profileAvatar") as HTMLImageElement).src;     
+    const chooseFileBtn = document.getElementById("chooseFileBtn")!;     
+    
+    let selectedAvatarFile: File | null = null;
 
-   
-    let selectedAvt = currentAvatarSrc;
-
+    chooseFileBtn.addEventListener("click", () => {
+      avatarInput.click();
+    });
+    
     editProfileBtn.addEventListener("click", () => {
+      const currentUsername = (document.getElementById("usernameInput") as HTMLInputElement).value;
+      const currentAvatarSrc = (document.getElementById("profileAvatar") as HTMLImageElement).src;
       popup.classList.remove("hidden");
       popup.classList.add("flex");
   
       usernameInput.value = currentUsername;
       avatarPreview.src = currentAvatarSrc;
-      selectedAvt = currentAvatarSrc;
-
+      avatarInput.value = ''; 
+      selectedAvatarFile = null;
     });
     
     cancelBtn.addEventListener("click", () => {
@@ -205,20 +185,28 @@ export class ProfileView {
       popup.classList.remove("flex");
     });
     
-    const avatarOptions = document.querySelectorAll("#avtOptions img");
-    avatarOptions.forEach((img) => {
-      img.addEventListener("click", () => {
-        selectedAvt = img.getAttribute("src")!;
-        avatarPreview.src = selectedAvt;
-      });
-    });
 
+    avatarInput.addEventListener("change", (e) => {
+      const files = avatarInput.files;
+      if (files && files[0]) {
+        selectedAvatarFile = files[0]; 
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          if (event.target?.result) {
+            avatarPreview.src = event.target.result as string;
+          }
+        };
+        reader.readAsDataURL(files[0]);
+      } else {
+        selectedAvatarFile = null; 
+      }
+    });
+    
     const form = document.getElementById("editProfileForm") as HTMLFormElement;
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       
       const newUsername = usernameInput.value.trim();
-      const newAvt = avatarPreview.src;
       if (!newUsername) {
         alert("Username cannot be empty.");
         return;
@@ -229,85 +217,167 @@ export class ProfileView {
       }
 
       try {
-        const response = await fetch("/api/v1/user/me", {
+        let uploadedAvatarFilename: string | null = null;
+        if (selectedAvatarFile) {
+            const formDataAvatar = new FormData();
+            formDataAvatar.append("avatar", selectedAvatarFile);
+
+            const avatarUploadResponse = await fetch("/api/v1/user/me/avatar", { 
+                method: "POST", 
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: formDataAvatar,
+            });
+
+            const avatarUploadRes = await avatarUploadResponse.json();
+            if (!avatarUploadResponse.ok) {
+                throw new Error(avatarUploadRes.message || "Failed to upload avatar");
+            }
+            uploadedAvatarFilename = avatarUploadRes.data.avatar; 
+        }
+
+        const updateBody: { name: string; avatar?: string } = { name: newUsername };
+        if (uploadedAvatarFilename) {
+            updateBody.avatar = uploadedAvatarFilename; 
+        }
+
+        const response = await fetch("/api/v1/user/me", { 
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json", 
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({
-            name: newUsername,
-            // avatar: selectedAvt,
-          }),
+          body: JSON.stringify(updateBody),
         });
+
         const res = await response.json();
         if (!response.ok) {
           throw new Error(res.message || "Failed to update profile");
         }
           
         (document.getElementById("usernameInput") as HTMLInputElement).value = newUsername;
-        (document.getElementById("profileAvatar") as HTMLImageElement).src = newAvt;
+        const finalAvatarSrc = uploadedAvatarFilename ? `/uploads/${uploadedAvatarFilename}` : currentAvatarSrc;
+        (document.getElementById("profileAvatar") as HTMLImageElement).src = finalAvatarSrc;
         
         popup.classList.add("hidden");
         popup.classList.remove("flex");
         
-        alert("Profile updated!");
+        // alert("Profile updated!");
+        // await this.loadFriends();
+        // await this.loadHistory(); 
+
       } catch (err) {
         console.error("Error updating profile:", err);
         alert(`Error updating profile: ${err}`);
+      }
+    });
+  }
+
+  private async loadFriends() {
+    const friendsContainer = document.getElementById("friendsContainer")!;
+    const noFriendsMessage = document.getElementById("noFriendsMessage")!;
+    friendsContainer.innerHTML = ''; 
+    if (!this.isMyProfile) {
+      noFriendsMessage.classList.remove("hidden");
+      return;
     }
-  });
+    try {
+      const response = await fetch("/api/v1/user/me/friends", { 
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const resJson = await response.json();
+
+      if (!response.ok || !resJson.success) {
+        throw new Error(resJson.message || "Failed to load friends");
+      }
+
+      const friends = resJson.data.friends;
+
+      if (!friends || friends.length === 0) {
+        noFriendsMessage.classList.remove("hidden");
+        return;
+      }
+
+      noFriendsMessage.classList.add("hidden");
+      
+      friends.forEach((friend: any) => {
+        const friendCard = document.createElement('div');
+        friendCard.setAttribute('data-username', friend.name);
+        friendCard.className = 'user-card';
+        const avatarSrc = friend.avatar ? `/uploads/${friend.avatar}` : this.DEFAULT_AVATAR_PATH;
+
+        friendCard.innerHTML = `
+          <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
+          <div class="user-name">${friend.name}</div>
+          <div class="user-actions">
+            <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
+            <button data-i18n="block" class="btn-block">Block</button>
+            <button data-i18n="chat" class="btn-send-message">Chat</button>
+          </div>
+        `;
+        friendsContainer.appendChild(friendCard);
+      });
+
+    } catch (error: any) {
+      console.error("Error loading friends:", error);
+      friendsContainer.innerHTML = `<p class="text-red-500">Error loading friends: ${error.message || error}</p>`;
+      noFriendsMessage.classList.remove("hidden");
+    }
   }
 
   private async loadHistory() {
     const userId = this.isMyProfile ? 'me' : this.username;
-  const url = this.isMyProfile ? "/api/v1/user/me/match-history" : `/api/v1/user/${userId}/match-history`;
+    const url = `/api/v1/user/${userId}/matches`;
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const resJson = await response.json();
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-    const resJson = await response.json();
+      const tbody = document.getElementById("historyTableBody")!;
+      const noHistoryMsg = document.getElementById("noHistoryMessage")!;
 
-    const tbody = document.getElementById("historyTableBody")!;
-    const noHistoryMsg = document.getElementById("noHistoryMessage")!;
+      if (!response.ok || !resJson.success) {
+        throw new Error(resJson.message || "Failed to load match history");
+      }
+      const matches = resJson.data;
 
-    if (!response.ok || !resJson.success) {
-      throw new Error(resJson.message || "Failed to load match history");
-    }
+      if (!matches || matches.length === 0) {
+        tbody.innerHTML = "";
+        noHistoryMsg.classList.remove("hidden");
+        return;
+      }
 
-    const matches = resJson.data;
-
-    if (!matches || matches.length === 0) {
+      noHistoryMsg.classList.add("hidden");
       tbody.innerHTML = "";
-      noHistoryMsg.classList.remove("hidden");
-      return;
+      for (const match of matches) {
+        const playedAt = new Date(match.playedAt).toLocaleString();
+        const displayOpponent = this.isMyProfile ? (match.player1Id === undefined ? match.player2Name : match.player1Name) :
+                                (match.player1Name === this.username ? match.player2Name : match.player1Name);
+
+        //const score = `${match.score1} - ${match.score2}`;
+        const score = `${match.player1Score} - ${match.player2Score}`;
+        const status = match.status || "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-center">${playedAt}</td>
+          <td class="px-4 py-2 text-center">${displayOpponent}</td>
+          <td class="px-4 py-2 text-center">${score}</td>
+          <td class="px-4 py-2 text-center">${status}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    } catch (error: any) {
+      console.error("Error loading match history:", error);
+      alert(`Error loading match history: ${error.message || error}`);
     }
-
-    noHistoryMsg.classList.add("hidden");
-    tbody.innerHTML = "";
-    for (const match of matches) {
-      const playedAt = new Date(match.playedAt).toLocaleString();
-      const opponent = (match.player1Name === this.username || this.isMyProfile && match.player1Id === undefined) ? match.player2Name : match.player1Name;
-      const score = `${match.score1} - ${match.score2}`;
-      const status = match.status || "";
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="px-4 py-2 text-center">${playedAt}</td>
-        <td class="px-4 py-2 text-center">${opponent}</td>
-        <td class="px-4 py-2 text-center">${score}</td>
-        <td class="px-4 py-2 text-center">${status}</td>
-      `;
-      tbody.appendChild(tr);
-    }
-  } catch (error: any) {
-    alert(`Error loading match history: ${error.message || error}`);
   }
-
-
-  }
-
 }
+
