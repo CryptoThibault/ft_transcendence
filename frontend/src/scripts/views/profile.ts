@@ -102,7 +102,7 @@ export class ProfileView {
       if (this.isMyProfile) {
         this.handleEditProfile();
       }
-      // await this.loadFriends();
+      await this.loadFriends();
       await this.loadHistory();
       await this.deleteUser();
     } catch (err: any) {
@@ -277,10 +277,10 @@ export class ProfileView {
 
   private async loadFriends() {
     const friendsContainer = document.getElementById("friendsContainer")!;
-    const noFriendsMessage = document.getElementById("noFriendsMessage")!;
+    //const noFriendsMessage = document.getElementById("noFriendsMessage")!;
     friendsContainer.innerHTML = ''; 
     if (!this.isMyProfile) {
-      noFriendsMessage.classList.remove("hidden");
+      //noFriendsMessage.classList.remove("hidden");
       return;
     }
     try {
@@ -296,15 +296,58 @@ export class ProfileView {
         throw new Error(resJson.message || "Failed to load friends");
       }
 
-      const friends = resJson.data.friends;
+      const friends = resJson.data.accepted;
+      const friendsPending = resJson.data.pendingReceived;
 
-      if (!friends || friends.length === 0) {
-        noFriendsMessage.classList.remove("hidden");
-        return;
-      }
+      console.log("Friends:", friends);
+      // if (!friends || friends.length === 0) {
+      //   //noFriendsMessage.classList.remove("hidden");
+      //   return;
+      // }
 
-      noFriendsMessage.classList.add("hidden");
-      
+     // noFriendsMessage.classList.add("hidden");
+     
+     friendsPending.forEach((friend: any) => {
+        const friendCard = document.createElement('div');
+        friendCard.setAttribute('data-username', friend.name);
+        friendCard.className = 'user-card';
+        const avatarSrc = friend.avatar ? `/uploads/${friend.avatar}` : this.DEFAULT_AVATAR_PATH;
+
+        friendCard.innerHTML = `
+          <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
+          <div class="user-name">${friend.name}</div>
+          <div class="user-actions">
+            <button id="rejectBtn" data-i18n="Reject" class="btn-remove-friend">Reject</button>
+            <button id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
+          </div>
+        `;
+        const rejectBtn = friendCard.querySelector('#rejectBtn') as HTMLButtonElement;
+        const acceptBtn = friendCard.querySelector('#acceptBtn') as HTMLButtonElement;
+        acceptBtn.addEventListener('click', async () => {
+          try {
+            const response = await fetch(`/api/v1/user/me/friends/accept`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ senderId: friend.id }),
+            });
+            const resJson = await response.json();
+            if (!response.ok || !resJson.success) {
+              throw new Error(resJson.message || "Failed to reject friend request");
+            }
+            friendCard.remove();
+          } catch (error: any) {
+            console.error("Error rejecting friend request:", error);
+            alert(`Error rejecting friend request: ${error.message || error}`);
+          }
+        });
+
+        
+        friendsContainer.appendChild(friendCard);
+      });
+
       friends.forEach((friend: any) => {
         const friendCard = document.createElement('div');
         friendCard.setAttribute('data-username', friend.name);
@@ -317,7 +360,6 @@ export class ProfileView {
           <div class="user-actions">
             <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
             <button data-i18n="block" class="btn-block">Block</button>
-            <button data-i18n="chat" class="btn-send-message">Chat</button>
           </div>
         `;
         friendsContainer.appendChild(friendCard);
@@ -326,7 +368,7 @@ export class ProfileView {
     } catch (error: any) {
       console.error("Error loading friends:", error);
       friendsContainer.innerHTML = `<p class="text-red-500">Error loading friends: ${error.message || error}</p>`;
-      noFriendsMessage.classList.remove("hidden");
+      //noFriendsMessage.classList.remove("hidden");
     }
   }
 
