@@ -14,8 +14,8 @@ POST http://localhost:5500/api/v1/auth/sign-in
 Content-Type: application/json
 
 {
-  "email":"alice@example.com",
-  "password":"Test8365!"
+  "email":"alice@test.com",
+  "password":"Test8035!"
 }
 
 ### 2FA/setup
@@ -30,14 +30,23 @@ Content-Type: application/json
 
 //createUser
 POST http://localhost:5501/api/v1/user
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MTU0MzA2OSwiZXhwIjoxNzUxNTQ2NjY5fQ.Ygy1UEg_yQ68I5KObdadw1JxadHWQshURpSF6vssL98
+Content-Type: application/json
+
 {
-  "name": "bob",
-  "email":"bob@example.com"
+  "name": "alex",
+  "email":"alex@example.com"
 }
+
+### all users
+GET http://localhost:5501/api/v1/user/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTU2MzU1NCwiZXhwIjoxNzUxNTY3MTU0fQ.y8PqCt4LaybpATBr_KjeXttMy_BW7WMlyv1Ha7xpq2s
+Content-Type: application/json
+
 
 ### user/me
 GET http://localhost:5501/api/v1/user/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MDI3NzQyMSwiZXhwIjoxNzUwMjgxMDIxfQ.k5QefQt18so_eFc1lMXWCBZcEbgfSHPZS1DwReSjPfE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MTU3NTEzNSwiZXhwIjoxNzUxNTc4NzM1fQ.ITwC4_PzcAC51DyV2KjnvO8Xe3btMWVFCLUECM655Os
 
 PUT http://localhost:5501/api/v1/user/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MDA3MDk1NiwiZXhwIjoxNzUwMDc0NTU2fQ.hiTgTGaqOct2oMnTtjCFRvecvLa5Y4OphHksy4ODDlo
@@ -49,12 +58,26 @@ Content-Type: application/json
 
 ### addFriend
 POST http://localhost:5501/api/v1/user/me/friends
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTQ0NzI4MCwiZXhwIjoxNzUxNDUwODgwfQ.8aiQjd01y4YU8wuUboTqiMxboSkzIfXqujAqrfyjM4c
+Content-Type: application/json
+
 {
-  "friendId": 5
+  "friendId": 1
+}
+
+### acceptFriendRequest
+POST http://localhost:5501/api/v1/user/me/friends/accept
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTQ0NzI4MCwiZXhwIjoxNzUxNDUwODgwfQ.8aiQjd01y4YU8wuUboTqiMxboSkzIfXqujAqrfyjM4c
+Content-Type: application/json
+
+{
+  "requesterId": 1
 }
 
 ### getFriendsList
 GET http://localhost:5501/api/v1/user/me/friends
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTQ0NzI4MCwiZXhwIjoxNzUxNDUwODgwfQ.8aiQjd01y4YU8wuUboTqiMxboSkzIfXqujAqrfyjM4c
+Content-Type: application/json
 
 //createCasualMatch
 http://localhost:5600/api/v1/player/matches/challenge
@@ -74,7 +97,7 @@ POST http://localhost:5600/api/v1/player/matches/123/result
 
 ### createTournament
 POST http://localhost:5600/api/v1/player/tournament 
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MDA3MDExNSwiZXhwIjoxNzUwMDczNzE1fQ.4ZtLsLnovYgFcMbKReHOfkV9mCeRQUtWUT3bTV42lFs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTUzMzY5OSwiZXhwIjoxNzUxNTM3Mjk5fQ.Rg6CG4fTQSbYnPuZWl0FuT6ENgOoKZNgC94AmuMk1p4
 Content-Type: application/json
 
 {
@@ -82,12 +105,12 @@ Content-Type: application/json
 }
 
 ### joinTournament
-POST http://localhost:5600/api/v1/player/tournament/2/join
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MDA3MDExNSwiZXhwIjoxNzUwMDczNzE1fQ.4ZtLsLnovYgFcMbKReHOfkV9mCeRQUtWUT3bTV42lFs
+POST http://localhost:5600/api/v1/player/tournament/1/join
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc1MTUzMzY5OSwiZXhwIjoxNzUxNTM3Mjk5fQ.Rg6CG4fTQSbYnPuZWl0FuT6ENgOoKZNgC94AmuMk1p4
 Content-Type: application/json
 
 {
-  "player_id": 1
+  "player_id": 2
 }
 
 //startTournament 
@@ -103,4 +126,9 @@ POST http://localhost:5600/api/v1/player/tournament/matches/456/result
   "winner_id": 1,
   "score": "21-17"
 }
+
+## matches history
+GET http://localhost:5501/api/v1/user/2/matches
 // token
+
+

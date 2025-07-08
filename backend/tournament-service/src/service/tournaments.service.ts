@@ -16,6 +16,7 @@ async function reportMatchToUserService(
     },
     token: string
 ) {
+    console.log('[reportMatchToUserService] matchData:', matchData); // for debug
     const payloadForUserService = {
         player2Id: matchData.player2Id,
         winnerId: matchData.winnerId,
@@ -50,7 +51,6 @@ interface SubmitResultPayload {
 }
 
 // --- Tournament Management ---
-
 export const createTournament = async ({ name }: { name: string }): Promise<TournamentData> => {
     // Tournament.create is already updated to return TournamentData directly
     return Tournament.create({ name });
@@ -143,11 +143,9 @@ export const submitTournamentResult = async (matchId: number, { winner_id, score
     });
     if (!updated)
         throw new Error(`Failed to update tournament match with ID ${matchId}.`);
-    // Report result to user service
-    // Ensure player1Id and player2Id are not null before sending to user service,
-    // though for completed matches they should be present.
     if (match.player1Id === null || match.player2Id === null)
         throw new Error('Cannot report result: one or both players are missing for this match.');
+    console.log('[submitTournamentResult] winner_id:', winner_id); // for debug
     await reportMatchToUserService({
         player1Id: match.player1Id,
         player2Id: match.player2Id,

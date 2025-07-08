@@ -6,6 +6,9 @@ export interface AuthUser {
 	password?: string;
 	twoFactorEnabled: boolean;
 	twoFactorSecret?: string | null;
+	twoFactorMethod?: 'totp' | 'sms' | 'email'; //adding thid
+  	phoneNumber?: string; // adding this
+  	backupEmail?: string; // adding this
 	createdAt: number; 
 	updatedAt: number;
 }

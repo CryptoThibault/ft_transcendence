@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { signUp, signIn/*, signOut*/ } from '../controllers/auth.controllers.js';
 import { generate2FA, verify2FA } from '../controllers/2fa.controllers.js';
 import { authorizeSkip2FA } from '../middlewares/auth.middleware.js';
-import { googleAuth } from '../controllers/google-auth.controller.js';
+import { googleAuth ,redirectToGoogle, handleGoogleCallback } from '../controllers/google-auth.controller.js';
 import { buildRateLimit, rateLimitConfig } from '../utils/rateLimitOptions.js';
 
 async function authRoutes(fastify: FastifyInstance) {
@@ -20,6 +20,9 @@ async function authRoutes(fastify: FastifyInstance) {
         { preHandler: [authorizeSkip2FA], 
           config: buildRateLimit(rateLimitConfig.verify2FA).config, }, verify2FA
     );
+    // Google OAuth Redirect Flow (NEW)
+    fastify.get('/google/redirect', redirectToGoogle);
+    fastify.get('/google/callback', handleGoogleCallback);
     // POST /sign-out
     //fastify.post('/sign-out', signOut);
 }

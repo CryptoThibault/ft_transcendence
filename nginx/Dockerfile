@@ -22,14 +22,10 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 # Clean out NGINX default HTML files
 RUN rm -rf /usr/share/nginx/html/* /usr/share/nginx/html/.??*
 
-# Copy built frontend files
-#COPY --from=frontend_builder /app/frontend_root/frontend/src/dist/. /usr/share/nginx/html/
-
 # Copy wait-for-service script
 COPY nginx/wait-for-service.sh /wait-for-service.sh
 RUN chmod +x /wait-for-service.sh
 
 EXPOSE 443
 CMD ["nginx", "-g", "daemon off;"]
-
 

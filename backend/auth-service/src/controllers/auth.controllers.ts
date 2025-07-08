@@ -7,6 +7,11 @@ import { createUser, findUserByEmail, findUserByEmailWithSensitiveData } from '.
 import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/env.js';
 import { userServiceClient } from '../utils/userServiceClient.js';
 import { AuthUser, NewAuthUser, SafeAuthUser } from '../models/auth.models.js';
+// adding this bellow
+import { storeOtp } from '../services/otp.service.js';
+//import { sendOtpEmail } from '../utils/email.js';
+import { sendOtpEmail } from '../services/email.service.js';
+
 
 const getJwtSecret = (): string => {
 	if (!JWT_SECRET)
@@ -43,7 +48,7 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 					'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
 			});
 		}
-		const existingUser = await findUserByEmail(email);
+		const existingUser = findUserByEmail(email);//await findUserByEmail(email);
 		if (existingUser) {
 			return res.status(409).send({
 				success: false,
@@ -54,8 +59,9 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 			name: name.trim(),
 			email: email.toLowerCase(),
 			password,
-			twoFactorEnabled: false,
+			twoFactorEnabled: true, //false,
 			twoFactorSecret: null,
+			twoFactorMethod: 'email', // adding
 		};
 		const newUser = await createUser(newUserInput);
 		if (!newUser) throw new Error('Failed to create user during database operation.');
@@ -87,15 +93,20 @@ export const signUp = async (req: FastifyRequest, res: FastifyReply) => {
 	}
 };
 
-
 export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
-		console.debug('[signIn] Incoming request body:', req.body); //Debug log
+		//console.debug('[signIn] Incoming request body:', req.body);
 		const { email, password } = req.body as {
 			email: string;
 			password: string;
 		};
 		const user = await findUserByEmailWithSensitiveData(email);
+		/*console.debug('[signIn] User fetched:', {
+  			id: user?.id,
+  			email: user?.email,
+  			twoFactorEnabled: user?.twoFactorEnabled,
+  			twoFactorMethod: user?.twoFactorMethod
+		});*/
 		if (!user) {
 			return res.status(404).send({
 				success: false,
@@ -118,10 +129,33 @@ export const signIn = async (req: FastifyRequest, res: FastifyReply) => {
 				secret,
 				{ expiresIn: '5m' }
 			);
+			// Send OTP via email if method is 'email'
+  			if (user.twoFactorMethod === 'email') {
+    			const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+    			const stored = await storeOtp(user.id, otp);
+    			if (!stored) {
+      				return res.status(500).send({
+        				success: false,
+        				message: 'Failed to store OTP code.',
+      				});
+    			}
+				try {
+					await sendOtpEmail(user.email, otp);
+				} catch (err) {
+					return res.status(500).send({ success: false, message: 'Failed to send OTP email.' });
+				}
+				//const sent = await sendOtpEmail(user.email, otp);
+    			/*if (!sent) { // check this
+      				return res.status(500).send({
+       					 success: false,
+       					message: 'Failed to send OTP email.',
+      				});
+    			}*/
+  			}
 			return res.send({
 				success: true,
 				message: '2FA code required',
-				twoFactor: true,
+				twoFactorRequired: true, // changed here too
 				tempToken
 			});
 		}

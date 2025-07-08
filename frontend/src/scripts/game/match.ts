@@ -68,18 +68,26 @@ export class Match {
             this.end();
     }
 
-    async sendResult() {
+   async sendResult() {
+        let route: string;
+        if (this.gameMode === 0)
+            route = "/api/v1/user/singleplayer";
+        else if (this.gameMode === 1)
+            route = "/api/v1/user/multiplayer";
+        else if (this.gameMode === 2)
+            route = "/api/v1/user/tournament";
+        else
+            return console.log("gamemode do not exist");
         try {
-            const response = await fetch("/api/v1/user/matches", {
+            const response = await fetch(route, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     token: localStorage.getItem("token"),
-                    gameMode: this.gameMode,
-                    player1: this.player1,
                     player2: this.player2,
-                    score: this.score,
-                    winner: this.winner
+                    score1: this.score[1],
+                    score2: this.score[2],
+                    userWin: this.winner === this.player1 ? true : false
                 }),
             });
 

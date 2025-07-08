@@ -1,3 +1,16 @@
+
+interface User {
+  id: number;
+  name: string;
+  // email: string;
+  avatar: string;
+  wins: number;
+  losses: number;
+  onlineStatus: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class SearchView {
     async getHtml() {
 		return `
@@ -13,34 +26,7 @@ export class SearchView {
       </div>
 
       <!-- User Cards example -->
-      <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">
-        <!-- User 1 -->
-        <div data-username="Alex" class="user-card">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
-          <div class="text-black  font-semibold">Alex </div>
-          <div class="flex space-x-3 mt-2">
-              <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>
-              <button data-i18n="block" class="btn-block">Block</button>
-          </div>          
-        </div>
-        <!-- User 2 -->
-        <div data-username="Paul" class="user-card">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
-          <div class="text-black  font-semibold">Paul </div>
-          <div class="flex space-x-3 mt-2">
-              <button data-i18n="remove_friend" class="btn-remove-friend">Remove Friend</button>
-              <button data-i18n="block" class="btn-block">Block</button>
-          </div>          
-        </div>
-        <!-- User 3 -->
-        <div data-username="Marie" class="user-card">
-          <img src="../imgs/9005ef6f70bb2a49db4c7c60e0185d3e.jpg" alt="avatar" class="user-avatar" />
-          <div class="text-black  font-semibold">Marie </div>
-          <div class="flex space-x-3 mt-2">
-              <button data-i18n="add_friend" class="btn-add-friend">Add Friend</button>
-              <button data-i18n="block" class="btn-block">Block</button>
-          </div>          
-        </div>
+      <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">      
       </div>
     </div>
 
@@ -51,19 +37,117 @@ export class SearchView {
 
   async onMounted() {
     const searchInput = document.getElementById("searchInput") as HTMLInputElement;
-    const userCards = document.querySelectorAll("#userCards > div");
+    const userCards = document.getElementById("userCards")!;
 
-    searchInput.addEventListener("input", () => {
-        const filter = searchInput.value.toLowerCase();
+    try {
+      const res = await fetch("/api/v1/user/users", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch friends");
+      }
+      const result = await res.json();
+      const users = result?.data?.users || [];
 
-        userCards.forEach(card => {
-            const username = card.getAttribute("data-username") || "";
-            if (username.toLowerCase().includes(filter)) {
-                (card as HTMLElement).style.display = "flex";
-            } else {
-                (card as HTMLElement).style.display = "none";
+      let userMe:User |null = null;
+      const dataMe = await fetch("/api/v1/user/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+        },
+      });
+      if (!dataMe.ok) {
+        throw new Error("Failed to fetch your user");
+      }
+      const resultMe = await dataMe.json();
+      if (resultMe?.data?.user) {
+        userMe = resultMe.data.user;
+      }
+      // console.log("userMe email", userMe?.email);
+      users.forEach((user:User) => {
+        if (user.name != userMe?.name) {
+          // console.log("user id", user.id);
+          const card = document.createElement("div");
+          card.className = "user-card";
+          card.setAttribute("data-username", user.name);
+
+          const img = document.createElement("img");
+          img.src = `/uploads/${user.avatar}`;
+          img.alt = user.name;
+          img.className = "user-avatar";
+
+          const nameLink = document.createElement("a");
+          // nameLink.href = `/profile/${user.name}`;
+          nameLink.href = "/";
+          nameLink.setAttribute("data-link", "");
+          nameLink.className = "flex items-center gap-2 font-semibold text-black";
+
+          const statusDot = document.createElement("span");
+          statusDot.textContent = "●";
+          statusDot.style.color = user.onlineStatus === 0 ? "#dc2626" : "#16a34a"; 
+          statusDot.style.fontSize = "20px";
+          const nameText = document.createElement("span");
+          nameText.textContent = user.name;
+          nameLink.appendChild(statusDot);
+          nameLink.appendChild(nameText);
+          const addButton = document.createElement("button");
+          addButton.className = "btn-add-friend";
+          addButton.textContent = "Add Friend";
+          addButton.addEventListener("click", async () => {
+            try { 
+              const addFriendRequest = await fetch("/api/v1/user/me/friends", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+                },
+                body: JSON.stringify({ friendId: user.id }),
+              })
+              if (!addFriendRequest.ok) {
+                throw new Error("Failed to send friend request");
+              }
+              console.log(`Add friend request sent to ${user.name}`);
+              addButton.style.display = "none"
+              const successMessage = document.createElement("span");
+              successMessage.textContent = "Friend request sent!";
+              successMessage.style.color = "green";
+              addButton.parentElement?.appendChild(successMessage);
+            } catch (error) {
+              console.error("Error sending friend request:", error);
+              const errorMessage = document.createElement("span");
+              errorMessage.textContent = "Failed to send friend request.";
+              errorMessage.style.color = "red";
+              addButton.parentElement?.appendChild(errorMessage);              
             }
-        });
-    });
-}
+          });
+
+          card.appendChild(img);
+          card.appendChild(nameLink);
+          card.appendChild(addButton);
+          userCards.appendChild(card);
+        }
+      });
+      searchInput.addEventListener("input", () => {
+        const filter = searchInput.value.toLowerCase();
+        const cards = userCards.getElementsByClassName("user-card") as HTMLCollectionOf<HTMLElement>;
+        Array.from(cards).forEach((card) => {
+          const username = card.getAttribute("data-username") || "";
+          if (username.toLowerCase().includes(filter)) {
+            card.style.display = "flex";
+          } else {
+            card.style.display = "none";
+          }
+        })
+      });
+    
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      userCards.innerHTML = "<p>Failed to load users.</p>";
+    }
+  }
 }
