@@ -104,6 +104,7 @@ export class ProfileView {
       }
       // await this.loadFriends();
       await this.loadHistory();
+      await this.deleteUser();
     } catch (err: any) {
       alert(err);
       navigateTo("/");
@@ -378,6 +379,33 @@ export class ProfileView {
       console.error("Error loading match history:", error);
       alert(`Error loading match history: ${error.message || error}`);
     }
+  }
+
+  private async deleteUser() {
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn")!;
+    deleteAccountBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+        return;
+      }
+      try {
+        const response = await fetch("/api/v1/user/me", {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const resJson = await response.json();
+        if (!response.ok || !resJson.success) {
+          throw new Error(resJson.message || "Failed to delete account");
+        }
+        alert("Account deleted successfully.");
+        localStorage.removeItem("token");
+        navigateTo("/");
+      } catch (error: any) {
+        console.error("Error deleting account:", error);
+        alert(`Error deleting account: ${error.message || error}`);
+      }
+    });
   }
 }
 

@@ -311,7 +311,6 @@ export const getFriendsPendingList = async (req: FastifyRequest, res: FastifyRep
         });
     }
 };
-
 //bince added this
 export const acceptFriendshipRequest = async (req: FastifyRequest<AcceptFriendshipRequestRoute>, res: FastifyReply) =>
 {
