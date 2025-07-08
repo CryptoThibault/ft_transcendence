@@ -11,13 +11,13 @@ export class LoginView {
 
   async getHtml() {
     return `
-      <h2 class="header_custom mt-20 mb-20" res-i18n="login_pong_42">Login Pong 42</h2>
+      <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
       <form id="login-form" autocomplete="off" class="flex flex-col text-[14px] space-y-8 w-80">
         <label class="text-black text-left">Email</label>
         <input id="user-email" type="email" placeholder="abc123@gmail.com"
           class="px-3 py-2 rounded bg-gray-200 text-gray-600" required />
 
-        <label class="text-black text-left mt-4" res-i18n="password">Password:</label>
+        <label class="text-black text-left mt-4" data-i18n="password">Password:</label>
         <input id="user-password" type="password" placeholder="******"
           class="px-3 py-2 rounded bg-gray-200 text-gray-600" required />
 
@@ -33,13 +33,13 @@ export class LoginView {
 
         <button type="submit"
           class="bg-blue-600 text-white py-4 rounded hover:bg-blue-800 transition-all"
-          res-i18n="login">
+          data-i18n="login">
           Login
         </button>
 
         <button id="google-login-btn" type="button"
           class="bg-black text-white py-4 rounded hover:bg-gray-700 transition-all"
-          res-i18n="login_gg">
+          data-i18n="login_gg">
           Login with Google
         </button>
       </form>

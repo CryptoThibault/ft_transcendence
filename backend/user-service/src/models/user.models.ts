@@ -97,7 +97,7 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
 		return user ? (user as UserData) : null;
 	}
-
+	
 	/**
     * Retrieves all users from the database, excluding their email addresses.
     * @returns An array of sanitized UserData objects.
