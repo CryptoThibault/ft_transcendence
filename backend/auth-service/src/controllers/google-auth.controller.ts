@@ -115,7 +115,8 @@ export const googleAuth = async (req: FastifyRequest, res: FastifyReply) => {
         const signOptions: SignOptions = {
             expiresIn: '1h',//JWT_SECRET || '1h',
         };
-        const token = jwt.sign({ userId: user.id }, secret, signOptions);
+        //bince changed
+        const token = jwt.sign({ userId: user.id, userName: user.name }, secret, signOptions);
         return res.send({
             success: true,
             message: 'Google sign-in successful',

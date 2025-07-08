@@ -87,6 +87,12 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE email = ?`, email);
 		return user ? (user as UserData) : null;
 	}
+	//bince added this
+	static async findByName(name: string): Promise<UserData | null> {
+		const db = await dbPromise;
+		const user = await db.get(`SELECT * FROM users WHERE name = ?`, name);
+		return user ? (user as UserData) : null;
+	}
 	/**
 	* Finds a user by their ID, returning full raw data including email.
 	* @param id The ID of the user to find.
@@ -107,7 +113,7 @@ export class User {
         const users = await db.all(`SELECT * FROM users`);
         return users.map((user: UserData) => User.sanitize(user as UserData));
     }
-	
+
 	/**
 	* Updates a user record by ID with partial data.
 	* @param id The ID of the user to update.
