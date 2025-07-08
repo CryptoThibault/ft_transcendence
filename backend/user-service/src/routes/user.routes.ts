@@ -4,7 +4,8 @@ import { FastifyInstance } from 'fastify';
 import { currentUser, /*userByEmail,*/ updateCurrentUserName,
         onlineStatus, /*lastSeen,*/ uploadAvatar, addFriend, 
         getFriendsList, recordMatch, getCurrentUserMatches,
-        getUserMatchHistory, getLeaderboard
+        getUserMatchHistory, getLeaderboard,
+        acceptFriendshipRequest
 } from "../controllers/session.controller.js";
 
 import { createUser } from '../controllers/user.controllers.js';
@@ -25,6 +26,8 @@ async function userRoutes(fastify: FastifyInstance) {
     fastify.get('/me/status', { preHandler: authorize }, onlineStatus);  
     fastify.post('/me/friends', { preHandler: authorize }, addFriend);
     fastify.get('/me/friends', { preHandler: authorize }, getFriendsList);
+    //bince added this
+    fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendshipRequest);
     fastify.post('/matches', { preHandler: authorize }, recordMatch);
     fastify.get('/me/matches', { preHandler: authorize }, getCurrentUserMatches);
     fastify.get('/:id/matches', { preHandler: authorize }, getUserMatchHistory);

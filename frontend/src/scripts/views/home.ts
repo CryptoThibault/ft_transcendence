@@ -60,7 +60,7 @@ export class HomeView {
   const backToFriendsBtn = document.getElementById("backToFriendsBtn")!;
   const chatMessages = document.getElementById("chatMessages")!;
   const chatInput = document.getElementById("chatInput")! as HTMLInputElement;
-
+  let selectedFriend = ""
   function updateUIBasedOnToken() {
   const token = localStorage.getItem("token");
   const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
@@ -86,11 +86,13 @@ export class HomeView {
 	  socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
           console.log("I got a message")
 		
-
-          const item = document.createElement("li");
-          item.textContent = `${from}: ${msg}`;
-          chatMessages.appendChild(item);
-          window.scrollTo(0, document.body.scrollHeight);
+		  if (from == selectedFriend)
+		  {
+			const item = document.createElement("li");
+          	item.textContent = `${from}: ${msg}`;
+          	chatMessages.appendChild(item);
+          	window.scrollTo(0, document.body.scrollHeight);
+		  }
         });
 
   }
@@ -157,6 +159,7 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 
     li.addEventListener("click", () => {
       openChat(friend);
+	  selectedFriend = friend.name
     });
 
     friendsList.appendChild(li);
@@ -175,7 +178,6 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
     chatInput.value = "";
     chatInput.focus();
 
-    // For demo: handle sending messages and showing them in chatMessages
     const onSend = (e: KeyboardEvent) => {
       if (e.key === "Enter" && chatInput.value.trim() !== "") {
         const msg = chatInput.value.trim();
@@ -197,6 +199,7 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 
   backToFriendsBtn.addEventListener("click", () => {
     showFriendsList();
+	selectedFriend = ""
   });
 
   //renderFriends(friends);
