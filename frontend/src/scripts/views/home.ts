@@ -135,7 +135,7 @@ liveChatToggleBtn.addEventListener("click", async () => {
 
     try {
       const friendsRes = await getFriendsList();
-	  let friends = friendsRes.data 
+	  let friends = friendsRes.data.accepted
 	  if (friends)
       	renderFriends(friends);
     } catch (error: any) {

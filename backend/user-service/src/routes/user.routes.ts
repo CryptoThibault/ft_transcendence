@@ -25,7 +25,7 @@ async function userRoutes(fastify: FastifyInstance) {
     fastify.post('/me/avatar', { preHandler: authorize }, uploadAvatar);
     fastify.get('/me/status', { preHandler: authorize }, onlineStatus);  
     fastify.post('/me/friends', { preHandler: authorize }, addFriend);
-    fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendRequest);
+    //fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendRequest);
     fastify.get('/me/friends', { preHandler: authorize }, getFriendsList);
     //bince added this
     fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendshipRequest);

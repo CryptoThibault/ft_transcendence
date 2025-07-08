@@ -344,7 +344,7 @@ export const acceptFriendshipRequest = async (req: FastifyRequest<AcceptFriendsh
         message: 'Invalid friendship record: Missing ID.',
     });
 }
-            await Friendship.updateStatus(friendship.id, 'accepted');
+        await Friendship.updateStatus(friendship.id, 'accepted');
 
         return res.status(200).send({
             success: true,
