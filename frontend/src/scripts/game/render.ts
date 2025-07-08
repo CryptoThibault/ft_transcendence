@@ -59,7 +59,8 @@ export function renderEndMenu() {
     ctx.textAlign = "center";
     ctx.fillText("END", canvas.width / 2, canvas.height / 5);
     ctx.font = "16px 'Press Start 2P'";
-    ctx.fillText(`Congratulations ${match?.score[0] === MAX_SCORE ? match?.player1 : match?.player2}, you win!`, canvas.width / 2, canvas.height / 5 * 2);
+    ctx.fillText(!match?.gameMode && match?.score[1] === MAX_SCORE ? `Unfortunately you lost, try again!`
+        : `Congratulations ${match?.score[0] === MAX_SCORE ? match?.player1 : match?.player2}, you win!`, canvas.width / 2, canvas.height / 5 * 2);
     ctx.fillText("Press R to Restart", canvas.width / 2, canvas.height / 5 * 3);
     ctx.fillText("Press ESC to Quit", canvas.width / 2, canvas.height / 5 * 4);
 }

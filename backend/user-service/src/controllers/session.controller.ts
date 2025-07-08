@@ -20,7 +20,9 @@ export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
         }
         const userId = req.user.id;
         console.log('Extracted userId from req.user:', userId);
+        //const user = await User.findById(userId);
         const user = await User.findByIdWithEmail(userId);
+        console.log('User object:', user);
         if (!user)
             return res.status(404).send({ success: false, message: 'User not found in DB' });
         return res.status(200).send({
@@ -61,6 +63,32 @@ export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUs
             message: (error as Error).message || 'Internal server error',
         });
     }
+};
+
+export const getAllUsers = async (req: FastifyRequest, res: FastifyReply) => {
+	try {
+		console.log('Fetching all users from DB');
+		const users = await User.findAll();
+
+		if (!users || users.length === 0) {
+			return res.status(404).send({
+				success: false,
+				message: 'No users found',
+			});
+		}
+
+		return res.status(200).send({
+			success: true,
+			message: 'Users retrieved successfully',
+			data: { users },
+		});
+	} catch (error) {
+		console.error('Error fetching users:', error);
+		return res.status(500).send({
+			success: false,
+			message: (error as Error).message || 'Internal server error',
+		});
+	}
 };
 
 export const onlineStatus = async (req: FastifyRequest, res: FastifyReply) => {
@@ -106,7 +134,16 @@ export const uploadAvatar = async (req: FastifyRequest, res: FastifyReply) => {
             return res.status(400).send({ success: false, message: 'No file uploaded' });
         if (data.file.truncated)
             return res.status(400).send({ success: false, message: 'File is too large. Maximum size is 5MB.' });
-        const fileName = `${Date.now()}-${data.filename}`;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(data.mimetype)) {
+            return res.status(400).send({
+                success: false,
+                message: 'Invalid file type. Only JPG, PNG, and WEBP are allowed.',
+            });
+        }
+        //const fileName = `${Date.now()}-${data.filename}`;
+        const sanitizedFilename = path.basename(data.filename).replace(/\s+/g, '-');
+        const fileName = `${Date.now()}-${sanitizedFilename.slice(0, 100)}`;
         const uploadDir = path.resolve('./uploads');
         const filePath = path.join(uploadDir, fileName);
         if (!fs.existsSync(uploadDir))
@@ -165,7 +202,7 @@ export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
             return res.status(400).send({ success: false, message: 'Friendship already exists or is pending.' });
         }
         await Friendship.create({ userId: inviterId, friendId: friendId, status: 'pending' });
-        await Friendship.create({ userId: friendId, friendId: inviterId, status: 'pending' });
+        //await Friendship.create({ userId: friendId, friendId: inviterId, status: 'pending' });
         await db.run('COMMIT;');
         return res.status(200).send({
             success: true,
@@ -182,7 +219,10 @@ export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
     }
 };
 
-export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
+// Adding this
+export const acceptFriendRequest = async (req: FastifyRequest, res: FastifyReply) => {
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
     try {
         const userId = req.user?.id;
         if (!userId)
@@ -211,8 +251,22 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
             message: 'Friends list retrieved successfully',
             data: actualFriends,
         });
+//         const { requesterId } = req.body as { requesterId: number };
+//         if (!userId || !requesterId) {
+//             await db.run('ROLLBACK;');
+//             return res.status(400).send({ success: false, message: 'Invalid user or requester ID.' });
+//         }
+//         const request = await Friendship.findByUserAndFriend(requesterId, userId);
+//         if (!request || request.status !== 'pending') {
+//             await db.run('ROLLBACK;');
+//             return res.status(404).send({ success: false, message: 'Friend request not found or already handled.' });
+//         }
+//         await Friendship.updateStatus(request.id!, 'accepted');
+//         await db.run('COMMIT;');
+//         return res.status(200).send({ success: true, message: 'Friend request accepted.' });
     } catch (error) {
-        console.error('Error getting friends list:', error);
+        await db.run('ROLLBACK;');
+        console.error('Error accepting friend request:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
@@ -307,6 +361,57 @@ export const acceptFriendshipRequest = async (req: FastifyRequest<AcceptFriendsh
     }
 }
 
+export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).send({ success: false, message: 'Unauthorized: missing user ID' });
+		}
+
+		const friendships = await Friendship.findFriendsForUser(userId);
+
+		const acceptedIds = new Set<number>();
+		const pendingSentIds: number[] = [];
+		const pendingReceivedIds: number[] = [];
+
+		for (const f of friendships) {
+			if (f.status === 'accepted') {
+				const otherId = f.userId === userId ? f.friendId : f.userId;
+				acceptedIds.add(otherId);
+			} else if (f.status === 'pending') {
+				if (f.userId === userId) {
+					// I sent the request
+					pendingSentIds.push(f.friendId);
+				} else if (f.friendId === userId) {
+					// I received the request
+					pendingReceivedIds.push(f.userId);
+				}
+			}
+		}
+		const [acceptedFriends, pendingSent, pendingReceived] = await Promise.all([
+			Promise.all([...acceptedIds].map(User.findById)),
+			Promise.all(pendingSentIds.map(User.findById)),
+			Promise.all(pendingReceivedIds.map(User.findById)),
+		]);
+
+		return res.status(200).send({
+			success: true,
+			message: 'Friend list retrieved successfully.',
+			data: {
+				accepted: acceptedFriends.filter(Boolean),
+				pendingSent: pendingSent.filter(Boolean),
+				pendingReceived: pendingReceived.filter(Boolean),
+			},
+		});
+	} catch (error) {
+		console.error('Error in getFriendsList:', error);
+		return res.status(500).send({
+			success: false,
+			message: (error as Error).message || 'Internal server error.',
+		});
+	}
+};
+
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
     console.log('User service: Incoming request body for recordMatch:', req.body);
     const db = getDb();
@@ -389,7 +494,6 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             updatedPlayer2Wins += 1;
             updatedPlayer1Losses += 1;
         }
-        // Use your custom User.update method for each player
         const player1Updated = await User.update(player1Id, {
             wins: updatedPlayer1Wins,
             losses: updatedPlayer1Losses,
@@ -519,3 +623,90 @@ export const deleteCurrentUser = async (req: FastifyRequest, res: FastifyReply) 
         });
     }
 };
+
+export const deleteAvatar = async (req: FastifyRequest, res: FastifyReply) => {
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
+
+    try {
+        if (!req.user || !req.user.id) {
+            await db.run('ROLLBACK;');
+            return res.status(401).send({ success: false, message: 'Unauthorized' });
+        }
+
+        const userId = req.user.id;
+        const user = await User._findByIdRaw(userId);
+
+        if (!user || !user.avatar) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({ success: false, message: 'Avatar not found.' });
+        }
+
+        const avatarPath = path.resolve('./uploads', user.avatar);
+        if (fs.existsSync(avatarPath)) {
+            fs.unlinkSync(avatarPath);
+        }
+
+        //const updated = await User.update(userId, { avatar: undefined });
+        const updated = await User.update(userId, { avatar: null });
+        console.log('User.update() result:', updated);
+
+        if (!updated) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({ success: false, message: 'Failed to remove avatar.' });
+        }
+
+        await db.run('COMMIT;');
+        return res.status(200).send({ success: true, message: 'Avatar removed successfully.' });
+
+    } catch (error) {
+        await db.run('ROLLBACK;');
+        console.error('Error removing avatar:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+
+
+/*export const deleteAvatar = async (req: FastifyRequest, res: FastifyReply) => {
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
+    try {
+        if (!req.user || !req.user.id) {
+            await db.run('ROLLBACK;');
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available.' });
+        }
+        const userId = req.user.id;
+        const user = await User._findByIdRaw(userId);
+        if (!user) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        }
+        if (user.avatar) {
+            const avatarPath = path.resolve('./uploads', user.avatar);
+            if (fs.existsSync(avatarPath)) {
+                fs.unlinkSync(avatarPath);
+            }
+        }
+        const updated = await User.update(userId, { avatar: undefined });
+        if (!updated) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({ success: false, message: 'Failed to remove avatar.' });
+        }
+        await db.run('COMMIT;');
+        return res.status(200).send({
+            success: true,
+            message: 'Avatar deleted successfully',
+        });
+    } catch (error) {
+        await db.run('ROLLBACK;');
+        console.error('Error deleting avatar:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};*/
+
