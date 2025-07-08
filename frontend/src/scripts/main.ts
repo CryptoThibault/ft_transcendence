@@ -52,6 +52,7 @@ export const navigateTo = (url: string) => {
 };
 
 const router = async () => {
+    console.log("ROUT")
     const location = window.location;
     const pathRegax = /^\/profile\/([^/]+)$/;
     const matchRegex = location.pathname.match(pathRegax);
