@@ -10,11 +10,11 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
 {
     const targetSocket: Socket | undefined = onlineUserSockets.get(to);
     const isBlock = await isBlocked(userId, to)
-    if (isBlock)
-        return;
     if (targetSocket)
     {
         const cmdResult: CommandResult = await msgCmdCheck(msg,userId,to)
+        if (isBlock)
+            return
         if (cmdResult.error)
         {
             console.error("there is an error");
@@ -28,18 +28,17 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
             msg: msg
             });
         }
-        else
-        {
-            const isBlock = await isBlocked(userId, to)
-            io.to(targetSocket.id).emit('emit-invite-message', {
-            from: userId,
-            roomName: cmdResult.replyMessage
-            });
-            io.to(onlineUserSockets.get(userId)!.id).emit('emit-invite-message', {
-            from: "server",
-            roomName: cmdResult.replyMessage
-            });
-        }
+        //else
+        //{
+            // io.to(targetSocket.id).emit('emit-invite-message', {
+            // from: userId,
+            // roomName: cmdResult.replyMessage
+            // });
+            // io.to(onlineUserSockets.get(userId)!.id).emit('emit-invite-message', {
+            // from: "server",
+            // roomName: cmdResult.replyMessage
+            // });
+       // }
 
     }
         //TO-DO database check if user exists

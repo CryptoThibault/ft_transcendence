@@ -4,6 +4,7 @@ import { GetMessagesBody, getMessagesSchema } from "./schemas/createMessage.sche
 import { findAllDbAsync, getDbAsync, runDbAsync } from "./databaseServices";
 import { blockUser } from "./services/msgCmdServices";
 import { CommandResult } from "./interfaces/types";
+import { onlineUserSockets } from "./sockets";
 
 export async function registerRoutes(fastify: FastifyInstance)
 {
@@ -25,11 +26,17 @@ fastify.get('/api/messages/:user2', {preValidation: fastify.authenticate} ,async
   }
 });
 
-fastify.post("/blockuser",{schema: blockUserSchema}, async (req: FastifyRequest,reply: FastifyReply) => {
-    const { user, blocked_user } = req.body as { user: string, blocked_user: string };
-    const blocker_user = user
+
+fastify.get('/api/getOnlineFriends', {preValidation: fastify.authenticate} ,async (req: FastifyRequest, reply: FastifyReply) => {
+  const onlineUsers = Array.from(onlineUserSockets.keys());
+  reply.send({ data: onlineUsers });
+});
+
+fastify.post("/blockuser",{schema: blockUserSchema, preValidation: fastify.authenticate}, async (req: FastifyRequest,reply: FastifyReply) => {
+    const { blocked_user } = req.body as { user: string, blocked_user: string };
+    const blocker_user = req.user as { userName: string };
     
-    const result: CommandResult = await blockUser(blocker_user,blocked_user)
+    const result: CommandResult = await blockUser(blocker_user.userName,blocked_user)
 
     if (result.error)
     {

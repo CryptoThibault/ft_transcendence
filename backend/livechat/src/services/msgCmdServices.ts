@@ -7,7 +7,7 @@ export async function blockUser(blocker_user: string, blocked_user: string): Pro
     if (!blocked)
     {
         try {
-            await runDbAsync(`INSERT INTO blocked_users (blocked_id, blocker_id) VALUES (?,?)`, [blocker_user, blocked_user])
+            await runDbAsync(`INSERT INTO blocked_users (blocked_id, blocker_id) VALUES (?,?)`, [blocked_user, blocker_user])
             return ({error:null, replyMessage: "User is succesfully blocked.",  isCommand: true})
         } catch (error) {
             return ({error: error as Error, replyMessage: "Error occured while inserting blocked_users", isCommand: true})
@@ -68,21 +68,18 @@ export async function msgCmdCheck(msg: string, sender_id: string, receiver_id: s
 {
     if (msg.startsWith('/block'))
     {
-        console.error("BLOCK TRIGERERERED")
         const result: CommandResult = await blockUser(sender_id, receiver_id)
         return result;
     }
     else if (msg.startsWith('/pardon'))
     {
         const result: CommandResult = await unblockUser(sender_id, receiver_id)
-        console.error("PARDON TRIGERERERED")
         result.isCommand = true;
         return result;
     }
     else if (msg.startsWith('/invite'))
     {
         const result = createRoomInRoomService()
-        console.error("INVITE TRIGERERERED")
         return result;
     }
     else
