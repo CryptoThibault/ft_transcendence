@@ -32,24 +32,26 @@ export class ProfileView {
         </section>
         
         <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-        <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>
-        
-        <div id="friendsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <p id="noFriendsMessage" class="text-gray-600 italic mt-2 hidden" data-i18n="no_friends_yet">No friends yet.</p>
-        </div>
+          <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>          
+          <div id="friendsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
+              <p id="noFriendsMessage" class="text-gray-600 italic mt-2 hidden" data-i18n="no_friends_yet">No friends yet.</p>
+          </div>
+          <h1 class="font-mono text-lg text-black font-bold my-5"> Pending Requests</h1>
+          <div id="pendingRequest" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
+          </div>
         </section>
         
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-        <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
-        <div data-i18n="total">Total</div> 
-        <div data-i18n="win">Win</div>
-        <div data-i18n="lose">Lose</div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
-        <div id="total">x</div> 
-        <div id="win">x</div> 
-        <div id="lose">x</div> 
+          <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
+            <div data-i18n="total">Total</div> 
+            <div data-i18n="win">Win</div>
+            <div data-i18n="lose">Lose</div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
+          <div id="total">x</div> 
+          <div id="win">x</div> 
+          <div id="lose">x</div> 
         </section>
         
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
@@ -277,12 +279,13 @@ export class ProfileView {
 
   private async loadFriends() {
     const friendsContainer = document.getElementById("friendsContainer")!;
-    //const noFriendsMessage = document.getElementById("noFriendsMessage")!;
-    friendsContainer.innerHTML = ''; 
-    if (!this.isMyProfile) {
-      //noFriendsMessage.classList.remove("hidden");
-      return;
-    }
+    const pendingRequestContainer = document.getElementById("pendingRequest")!;
+    // const noFriendsMessage = document.getElementById("noFriendsMessage")!;
+    // friendsContainer.innerHTML = ''; 
+    // if (!this.isMyProfile) {
+    //   noFriendsMessage.classList.remove("hidden");
+    //   return;
+    // }
     try {
       const response = await fetch("/api/v1/user/me/friends", { 
         method: "GET",
@@ -297,15 +300,17 @@ export class ProfileView {
       }
 
       const friends = resJson.data.accepted;
-      const friendsPending = resJson.data.pendingReceived;
 
-      console.log("Friends:", friends);
+      const friendsPending = resJson.data.pendingReceived;
+      const friendsSent = resJson.data.pendingSent;
+
+      // console.log("Friends:", friends);
       // if (!friends || friends.length === 0) {
       //   //noFriendsMessage.classList.remove("hidden");
       //   return;
       // }
 
-     // noFriendsMessage.classList.add("hidden");
+    //  noFriendsMessage.classList.add("hidden");
      
      friendsPending.forEach((friend: any) => {
         const friendCard = document.createElement('div');
@@ -345,8 +350,47 @@ export class ProfileView {
         });
 
         
-        friendsContainer.appendChild(friendCard);
+        pendingRequestContainer.appendChild(friendCard);
       });
+
+      friendsSent.forEach((friend: any) => {
+        const friendCard = document.createElement('div');
+        friendCard.setAttribute('data-username', friend.name);
+        friendCard.className = 'user-card';
+        const avatarSrc = friend.avatar ? `/uploads/${friend.avatar}` : this.DEFAULT_AVATAR_PATH;
+
+        friendCard.innerHTML = `
+          <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
+          <div class="user-name">${friend.name}</div>
+          <div class="user-actions">
+            <button id="cancelBtn" data-i18n="cancel_request" class="btn-remove-friend">Cancel Request</button>
+          </div>
+        `;
+        const cancelBtn = friendCard.querySelector('#cancelBtn') as HTMLButtonElement;
+        cancelBtn.addEventListener('click', async () => {
+          try {
+            const response = await fetch(`/api/v1/user/me/friends/cancel`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ receiverId: friend.id }),
+            });
+            const resJson = await response.json();
+            if (!response.ok || !resJson.success) {
+              throw new Error(resJson.message || "Failed to cancel friend request");
+            }
+            friendCard.remove();
+          } catch (error: any) {
+            console.error("Error cancelling friend request:", error);
+            alert(`Error cancelling friend request: ${error.message || error}`);
+          }
+        });
+
+        
+        pendingRequestContainer.appendChild(friendCard);
+      }); 
 
       friends.forEach((friend: any) => {
         const friendCard = document.createElement('div');
@@ -368,7 +412,7 @@ export class ProfileView {
     } catch (error: any) {
       console.error("Error loading friends:", error);
       friendsContainer.innerHTML = `<p class="text-red-500">Error loading friends: ${error.message || error}</p>`;
-      //noFriendsMessage.classList.remove("hidden");
+      // noFriendsMessage.classList.remove("hidden");
     }
   }
 

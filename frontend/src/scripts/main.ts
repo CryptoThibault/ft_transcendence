@@ -52,7 +52,6 @@ export const navigateTo = (url: string) => {
 };
 
 const router = async () => {
-    console.log("ROUT")
     const location = window.location;
     const pathRegax = /^\/profile\/([^/]+)$/;
     const matchRegex = location.pathname.match(pathRegax);
@@ -111,26 +110,6 @@ const setupLogoutHandler = () => {
         });
     }
 };
-
-window.addEventListener("popstate", router);
-(window as any).loadLanguage = loadLanguage;
-
-document.addEventListener("DOMContentLoaded", () => {
-    loadLanguage(currentLanguage);
-    document.body.addEventListener("click", e => {
-
-        const target = e.target as HTMLElement;
-        const link = target.closest("[data-link]") as HTMLElement | null;
-        if (link) {
-            e.preventDefault();
-            const path = link.getAttribute("href") || link.getAttribute("data-link");
-            if (path) {
-                navigateTo(path);
-            }
-        }
-    });
-    router();
-});
 
 window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;

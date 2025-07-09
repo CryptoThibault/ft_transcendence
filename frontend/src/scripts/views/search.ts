@@ -36,42 +36,86 @@ export class SearchView {
 	}
 
   async onMounted() {
-    const searchInput = document.getElementById("searchInput") as HTMLInputElement;
-    const userCards = document.getElementById("userCards")!;
-
     try {
-      const res = await fetch("/api/v1/user/users", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
-        },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to fetch friends");
-      }
-      const result = await res.json();
-      const users = result?.data?.users || [];
+      const myID = await this.getMyID();
+      // console.log("My ID:", myID);
+      const friendID = await this.getFriends();
+      // console.log("Friend IDs:", friendID);
+      await this.getUserCard(friendID, myID);
+    } catch (error) {
+      console.error("Error during SearchView onMounted:", error);
+      const userCards = document.getElementById("userCards")!;
+      userCards.innerHTML = "<p>Failed to load users.</p>";
+    }
+  }
 
-      let userMe:User |null = null;
-      const dataMe = await fetch("/api/v1/user/me", {
+  async getMyID(): Promise<number> {
+    try {
+      const response = await fetch("/api/v1/user/me", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
         },
       });
-      if (!dataMe.ok) {
+      if (!response.ok) {
         throw new Error("Failed to fetch your user");
       }
-      const resultMe = await dataMe.json();
-      if (resultMe?.data?.user) {
-        userMe = resultMe.data.user;
+      const result = await response.json();
+      if (result?.data?.user) {
+        return result.data.user.id;
       }
-      // console.log("userMe email", userMe?.email);
-      users.forEach((user:User) => {
-        if (user.name != userMe?.name) {
-          // console.log("user id", user.id);
+      throw new Error("User not found");
+    } catch (error) {
+      console.error("Error fetching your user ID:", error);
+      throw error;
+    }
+  }
+
+  async getFriends(): Promise<number[]> {
+    try {
+      const response = await fetch("/api/v1/user/me/friends", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch friends");
+      }
+      const result = await response.json();
+      const acceptedID = result.data.accepted?.map((u: { id: number }) => u.id) || [];
+      const pendingSentID = result.data.pendingSent?.map((u: { id: number }) => u.id) || [];
+      const pendingReceivedID = result.data.pendingReceived?.map((u: { id: number }) => u.id) || [];
+      const allFriendIDs = [...acceptedID, ...pendingSentID, ...pendingReceivedID];
+      return allFriendIDs;
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+      throw error;
+    }
+  } 
+
+  async getUserCard(friendID: number[], myID: number) { 
+    const userCards = document.getElementById("userCards")!;
+    try {
+      const response = await fetch("/api/v1/user/users", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const result = await response.json();
+      const users: User[] = result?.data?.users || [];
+
+      users.forEach((user: User) => {
+        // console.log("All User:", user.id);
+        if (user.id !== myID && friendID.indexOf(user.id) === -1) {
+          console.log("User to display:", user.id);
           const card = document.createElement("div");
           card.className = "user-card";
           card.setAttribute("data-username", user.name);
@@ -82,7 +126,6 @@ export class SearchView {
           img.className = "user-avatar";
 
           const nameLink = document.createElement("a");
-          // nameLink.href = `/profile/${user.name}`;
           nameLink.href = "/";
           nameLink.setAttribute("data-link", "");
           nameLink.className = "flex items-center gap-2 font-semibold text-black";
@@ -111,18 +154,23 @@ export class SearchView {
               if (!addFriendRequest.ok) {
                 throw new Error("Failed to send friend request");
               }
-              console.log(`Add friend request sent to ${user.name}`);
               addButton.style.display = "none"
               const successMessage = document.createElement("span");
               successMessage.textContent = "Friend request sent!";
               successMessage.style.color = "green";
               addButton.parentElement?.appendChild(successMessage);
+              setTimeout(() => {
+                successMessage.remove();
+              }, 2000);
             } catch (error) {
               console.error("Error sending friend request:", error);
               const errorMessage = document.createElement("span");
               errorMessage.textContent = "Failed to send friend request.";
               errorMessage.style.color = "red";
-              addButton.parentElement?.appendChild(errorMessage);              
+              addButton.parentElement?.appendChild(errorMessage);      
+              setTimeout(() => {
+                errorMessage.remove();
+                }, 2000);        
             }
           });
 
@@ -132,6 +180,8 @@ export class SearchView {
           userCards.appendChild(card);
         }
       });
+      ///search functionality
+      const searchInput = document.getElementById("searchInput") as HTMLInputElement;
       searchInput.addEventListener("input", () => {
         const filter = searchInput.value.toLowerCase();
         const cards = userCards.getElementsByClassName("user-card") as HTMLCollectionOf<HTMLElement>;
@@ -144,10 +194,132 @@ export class SearchView {
           }
         })
       });
-    
     } catch (error) {
       console.error("Error fetching users:", error);
       userCards.innerHTML = "<p>Failed to load users.</p>";
     }
   }
 }
+
+
+
+
+////////////////////////
+// async onMounted() {
+//     const searchInput = document.getElementById("searchInput") as HTMLInputElement;
+//     const userCards = document.getElementById("userCards")!;
+
+//     try {
+//       const res = await fetch("/api/v1/user/users", {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+//         },
+//       });
+//       if (!res.ok) {
+//         throw new Error("Failed to fetch friends");
+//       }
+//       const result = await res.json();
+//       const users = result?.data?.users || [];
+
+//       let userMe:User |null = null;
+//       const dataMe = await fetch("/api/v1/user/me", {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+//         },
+//       });
+//       if (!dataMe.ok) {
+//         throw new Error("Failed to fetch your user");
+//       }
+//       const resultMe = await dataMe.json();
+//       if (resultMe?.data?.user) {
+//         userMe = resultMe.data.user;
+//       }
+//       users.forEach((user:User) => {
+//         if (user.name != userMe?.name) {
+//           const card = document.createElement("div");
+//           card.className = "user-card";
+//           card.setAttribute("data-username", user.name);
+
+//           const img = document.createElement("img");
+//           img.src = `/uploads/${user.avatar}`;
+//           img.alt = user.name;
+//           img.className = "user-avatar";
+
+//           const nameLink = document.createElement("a");
+//           nameLink.href = "/";
+//           nameLink.setAttribute("data-link", "");
+//           nameLink.className = "flex items-center gap-2 font-semibold text-black";
+
+//           const statusDot = document.createElement("span");
+//           statusDot.textContent = "●";
+//           statusDot.style.color = user.onlineStatus === 0 ? "#dc2626" : "#16a34a"; 
+//           statusDot.style.fontSize = "20px";
+//           const nameText = document.createElement("span");
+//           nameText.textContent = user.name;
+//           nameLink.appendChild(statusDot);
+//           nameLink.appendChild(nameText);
+//           const addButton = document.createElement("button");
+//           addButton.className = "btn-add-friend";
+//           addButton.textContent = "Add Friend";
+//           addButton.addEventListener("click", async () => {
+//             try { 
+//               const addFriendRequest = await fetch("/api/v1/user/me/friends", {
+//                 method: "POST",
+//                 headers: {
+//                   "Content-Type": "application/json",
+//                   "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+//                 },
+//                 body: JSON.stringify({ friendId: user.id }),
+//               })
+//               if (!addFriendRequest.ok) {
+//                 throw new Error("Failed to send friend request");
+//               }
+//               addButton.style.display = "none"
+//               const successMessage = document.createElement("span");
+//               successMessage.textContent = "Friend request sent!";
+//               successMessage.style.color = "green";
+//               addButton.parentElement?.appendChild(successMessage);
+//               setTimeout(() => {
+//                 successMessage.remove();
+//               }, 2000);
+//             } catch (error) {
+//               console.error("Error sending friend request:", error);
+//               const errorMessage = document.createElement("span");
+//               errorMessage.textContent = "Failed to send friend request.";
+//               errorMessage.style.color = "red";
+//               addButton.parentElement?.appendChild(errorMessage);      
+//               setTimeout(() => {
+//                 errorMessage.remove();
+//                 }, 2000);        
+//             }
+//           });
+
+//           card.appendChild(img);
+//           card.appendChild(nameLink);
+//           card.appendChild(addButton);
+//           userCards.appendChild(card);
+//         }
+//       });
+//       searchInput.addEventListener("input", () => {
+//         const filter = searchInput.value.toLowerCase();
+//         const cards = userCards.getElementsByClassName("user-card") as HTMLCollectionOf<HTMLElement>;
+//         Array.from(cards).forEach((card) => {
+//           const username = card.getAttribute("data-username") || "";
+//           if (username.toLowerCase().includes(filter)) {
+//             card.style.display = "flex";
+//           } else {
+//             card.style.display = "none";
+//           }
+//         })
+//       });
+    
+//     } catch (error) {
+//       console.error("Error fetching users:", error);
+//       userCards.innerHTML = "<p>Failed to load users.</p>";
+//     }
+//   }
+// }
