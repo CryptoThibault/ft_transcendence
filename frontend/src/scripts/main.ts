@@ -111,6 +111,27 @@ const setupLogoutHandler = () => {
     }
 };
 
+export async function getUserName(): Promise<string | undefined> {
+    try {
+        const response = await fetch("/api/v1/user/me", {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+            },
+        });
+        if (!response.ok) {
+            throw new Error("Failed to fetch your user");
+        }
+        const result = await response.json();
+        return result.data.user.name;
+    } catch (err) {
+        console.error("Error fetching user data:", err);
+        alert("Failed to fetch user data. Please try again later.");
+        return undefined;
+    }
+}
+
 window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;
 

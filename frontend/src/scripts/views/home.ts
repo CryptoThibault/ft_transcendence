@@ -1,8 +1,8 @@
 import { navigateTo } from "../main.js";
 import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
-export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 export let multiNicknames: string[] = ["Player 1", "Player 2"];
+export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 export class HomeView {
 	async getHtml() {
