@@ -1,5 +1,5 @@
-import { navigateTo } from "../main.js";
-import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
+import { getUserName, navigateTo } from "../main.js";
+import { io, Socket } from "socket.io-client";
 
 export let multiNicknames: string[] = ["Player 1", "Player 2"];
 export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
@@ -53,159 +53,170 @@ export class HomeView {
 	}
 
 	async onMounted() {
-  const liveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
-  const liveChatPanel = document.getElementById("liveChatPanel")!;
-  const friendsList = document.getElementById("friendsList")!;
-  const chatContainer = document.getElementById("chatContainer")!;
-  const backToFriendsBtn = document.getElementById("backToFriendsBtn")!;
-  const chatMessages = document.getElementById("chatMessages")!;
-  const chatInput = document.getElementById("chatInput")! as HTMLInputElement;
-  let selectedFriend = ""
-  function updateUIBasedOnToken() {
-  const token = localStorage.getItem("token");
-  const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
-  if (!token && liveChatToggleBtn) {
-    liveChatToggleBtn.style.display = "none";
-  } else if (liveChatToggleBtn) {
-    liveChatToggleBtn.style.display = "block";
-  }
-}
-  updateUIBasedOnToken()
-  const token = localStorage.getItem("token"); 
+		const liveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
+		const liveChatPanel = document.getElementById("liveChatPanel")!;
+		const friendsList = document.getElementById("friendsList")!;
+		const chatContainer = document.getElementById("chatContainer")!;
+		const backToFriendsBtn = document.getElementById("backToFriendsBtn")!;
+		const chatMessages = document.getElementById("chatMessages")!;
+		const chatInput = document.getElementById("chatInput")! as HTMLInputElement;
+		let selectedFriend = ""
+		function updateUIBasedOnToken() {
+		const token = localStorage.getItem("token");
+		const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
+		if (!token && liveChatToggleBtn) {
+			liveChatToggleBtn.style.display = "none";
+		} else if (liveChatToggleBtn) {
+			liveChatToggleBtn.style.display = "block";
+		}
+		}
+		updateUIBasedOnToken()
+		const token = localStorage.getItem("token"); 
 
 
-  let socket: Socket
-  if (token)
-  {
-	  socket = io("/", {
-		auth: {
-		  token: token,
-		},
-	  });
-	  console.log(socket.active)
-	  socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
-          console.log("I got a message")
-		
-		  if (from == selectedFriend)
-		  {
-			const item = document.createElement("li");
-          	item.textContent = `${from}: ${msg}`;
-          	chatMessages.appendChild(item);
-          	window.scrollTo(0, document.body.scrollHeight);
-		  }
-        });
+		let socket: Socket
+		if (token)
+		{
+			socket = io("/", {
+				auth: {
+				token: token,
+				},
+			});
+			console.log(socket.active)
+			socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
+				console.log("I got a message")
+				
+				if (from == selectedFriend)
+				{
+					const item = document.createElement("li");
+					item.textContent = `${from}: ${msg}`;
+					chatMessages.appendChild(item);
+					window.scrollTo(0, document.body.scrollHeight);
+				}
+				});
 
-  }
-  async function getFriendsList() {
-		try {
+		}
+		async function getFriendsList() {
+				try {
+					if (!token)
+					{
+						throw Error('No token')
+					}
+
+					const response = await fetch("/api/v1/user/me/friends", {
+					method: "GET",
+					headers: {
+						"Authorization": `Bearer ${token}`,
+					},
+					});
+
+					if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || "Failed to fetch friends");
+					}
+
+					const friends = await response.json();
+					return friends;
+
+				} catch (error) {
+					throw error;
+				}
+		}	
+		// Toggle panel visibility
+		liveChatToggleBtn.addEventListener("click", async () => {
 			if (!token)
-			{
-				throw Error('No token')
-			}
+				return;
+		if (liveChatPanel.style.transform === "translateX(0%)") {
+			liveChatPanel.style.transform = "translateX(-100%)";
+			showFriendsList();
+			
+		} else {
+			liveChatPanel.style.transform = "translateX(0%)";
 
-			const response = await fetch("/api/v1/user/me/friends", {
-			method: "GET",
-			headers: {
-				"Authorization": `Bearer ${token}`,
-			},
+			try {
+			const friendsRes = await getFriendsList();
+			let friends = friendsRes.data.accepted
+			if (friends)
+				renderFriends(friends);
+			} catch (error: any) {
+			friendsList.style.display = "none";
+			chatContainer.style.display = "flex";
+			chatMessages.innerHTML = `<div style="color:red;">Error: ${error.message}</div>`;
+			}
+		}
+		});
+
+		// Render friends list
+		
+		function renderFriends(friends: Array<{ id: number; name: string }>) {
+		friendsList.innerHTML = "";
+		friends.forEach(friend => {
+			const li = document.createElement("li");
+			li.textContent = friend.name;
+			li.style.padding = "10px";
+			li.style.cursor = "pointer";
+			li.style.borderBottom = "1px solid #eee";
+
+			li.addEventListener("click", () => {
+			openChat(friend);
+			selectedFriend = friend.name
 			});
 
-			if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(errorData.message || "Failed to fetch friends");
-			}
-
-			const friends = await response.json();
-			return friends;
-
-		} catch (error) {
-			throw error;
+			friendsList.appendChild(li);
+		});
 		}
-  }	
-  // Toggle panel visibility
-liveChatToggleBtn.addEventListener("click", async () => {
-	if (!token)
-		return;
-  if (liveChatPanel.style.transform === "translateX(0%)") {
-    liveChatPanel.style.transform = "translateX(-100%)";
-    showFriendsList();
-	
-  } else {
-    liveChatPanel.style.transform = "translateX(0%)";
 
-    try {
-      const friendsRes = await getFriendsList();
-	  let friends = friendsRes.data.accepted
-	  if (friends)
-      	renderFriends(friends);
-    } catch (error: any) {
-      friendsList.style.display = "none";
-      chatContainer.style.display = "flex";
-      chatMessages.innerHTML = `<div style="color:red;">Error: ${error.message}</div>`;
-    }
-  }
-});
+		function showFriendsList() {
+			friendsList.style.display = "block";
+			chatContainer.style.display = "none";
+		}
 
-  // Render friends list
-  
-function renderFriends(friends: Array<{ id: number; name: string }>) {
-  friendsList.innerHTML = "";
-  friends.forEach(friend => {
-    const li = document.createElement("li");
-    li.textContent = friend.name;
-    li.style.padding = "10px";
-    li.style.cursor = "pointer";
-    li.style.borderBottom = "1px solid #eee";
+		function openChat(friend: { id: number; name: string }) {
+			friendsList.style.display = "none";
+			chatContainer.style.display = "flex";
+			chatMessages.innerHTML = `<div>Chatting with <b>${friend.name}</b></div>`;
+			chatInput.value = "";
+			chatInput.focus();
 
-    li.addEventListener("click", () => {
-      openChat(friend);
-	  selectedFriend = friend.name
-    });
+			const onSend = (e: KeyboardEvent) => {
+			if (e.key === "Enter" && chatInput.value.trim() !== "") {
+				const msg = chatInput.value.trim();
+				const messageDiv = document.createElement("div");
+				messageDiv.textContent = `You: ${msg}`;
+				chatMessages.appendChild(messageDiv);
+				socket.emit("emit-chat-message", {
+					to: friend.name,
+					msg: chatInput.value
+					});
+				chatInput.value = "";
+				chatMessages.scrollTop = chatMessages.scrollHeight;
+			}
+			};
 
-    friendsList.appendChild(li);
-  });
-}
+			chatInput.removeEventListener("keydown", onSend);
+			chatInput.addEventListener("keydown", onSend);
+		}
 
-  function showFriendsList() {
-    friendsList.style.display = "block";
-    chatContainer.style.display = "none";
-  }
+		backToFriendsBtn.addEventListener("click", () => {
+			showFriendsList();
+			selectedFriend = ""
+		});
 
-  function openChat(friend: { id: number; name: string }) {
-    friendsList.style.display = "none";
-    chatContainer.style.display = "flex";
-    chatMessages.innerHTML = `<div>Chatting with <b>${friend.name}</b></div>`;
-    chatInput.value = "";
-    chatInput.focus();
+		//renderFriends(friends);
+		// Initially hide panel
+		liveChatPanel.style.transform = "translateX(-100%)";
 
-    const onSend = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && chatInput.value.trim() !== "") {
-        const msg = chatInput.value.trim();
-        const messageDiv = document.createElement("div");
-        messageDiv.textContent = `You: ${msg}`;
-        chatMessages.appendChild(messageDiv);
-		socket.emit("emit-chat-message", {
-              to: friend.name,
-              msg: chatInput.value
-            });
-        chatInput.value = "";
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    };
-
-    chatInput.removeEventListener("keydown", onSend);
-    chatInput.addEventListener("keydown", onSend);
-  }
-
-  backToFriendsBtn.addEventListener("click", () => {
-    showFriendsList();
-	selectedFriend = ""
-  });
-
-  //renderFriends(friends);
-  // Initially hide panel
-  liveChatPanel.style.transform = "translateX(-100%)";
-
+		let username: string | undefined = "Player 1";
+        if (localStorage.getItem("token")) {
+                username = await getUserName();
+            if (!username) {
+                localStorage.removeItem("token");
+            	navigateTo("/");
+                return;
+            }
+            multiNicknames[0] = username;
+			tournamentNicknames[0] = username;
+        }
 
 		//handle tournament popup
 		const tournamentBtn = document.getElementById("tournamentBtn")!;
@@ -229,6 +240,11 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 				input.type = "text";
 				input.id = `TournamentNickname${i}`;
 				input.className = "text-black p-2 border rounded mb-3 block w-full";
+		
+				if (localStorage.getItem("token") && i === 0) {
+					input.value = tournamentNicknames[0];
+					input.readOnly = true;
+				}
 
 				nicknameInputs.appendChild(label);
 				nicknameInputs.appendChild(input);
@@ -284,6 +300,11 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 				input.type = "text";
 				input.id = `multiNickname${i}`;
 				input.className = "text-black p-2 border rounded mb-3 block w-full";
+
+				if (localStorage.getItem("token") && i === 0) {
+					input.value = multiNicknames[0];
+					input.readOnly = true;
+				}
 
 				nicknameMultiInputs.appendChild(label);
 				nicknameMultiInputs.appendChild(input);

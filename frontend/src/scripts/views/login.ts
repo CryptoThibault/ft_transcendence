@@ -3,12 +3,6 @@ import { navigateTo } from "../main.js";
 declare const google: any;
 
 export class LoginView {
-  private googleClientId: string;
-
-  constructor(googleClientId: string) {
-    this.googleClientId = googleClientId;
-  }
-
   async getHtml() {
     return `
       <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
@@ -127,14 +121,10 @@ export class LoginView {
       }
     });
 
-    console.log("GOOGLE_CLIENT_ID:", window.GOOGLE_CLIENT_ID);
-    console.log("google object:", window.google);
-    console.log(import.meta.env);
-
     googleLoginBtn.addEventListener("click", () => {
       window.location.href = "/api/v1/auth/google/redirect";
       google.accounts.id.initialize({
-        client_id: this.googleClientId,
+        client_id: window.GOOGLE_CLIENT_ID,
         callback: async (response: any) => {
           try {
             const result = await fetch("/api/v1/auth/google-auth", {

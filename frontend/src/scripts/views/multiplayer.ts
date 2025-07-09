@@ -1,6 +1,5 @@
 import { multiNicknames } from "./home.js"
 import { Match } from "../game/match.js";
-import { getUserName, navigateTo } from "../main.js";
 
 export class Multiplayer {
     async getHtml() {
@@ -17,15 +16,6 @@ export class Multiplayer {
     }
 
     async onMounted() {
-        let username: string | undefined = "Player 1";
-        if (localStorage.getItem("token")) {
-                username = await getUserName();
-            if (!username) {
-                navigateTo("/");
-                return;
-            }
-            multiNicknames[0] = username;
-        }
         const match: Match = new Match(1, multiNicknames[0], multiNicknames[1]);;
         match.start();
     }

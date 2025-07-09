@@ -19,6 +19,10 @@ declare global {
 	interface ImportMeta {
 		env: any;
 	}
+
+    interface Socket {
+        on: any;
+    }
 }
 window.GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -37,7 +41,6 @@ export const setLanguage = (lang: string) => {
 const routes: Route[] = [
 	{ path: "/", view: HomeView },
 	{ path: "/login", view: LoginView },
-//	{ path: "/login", view: () => new LoginView(import.meta.env.VITE_GOOGLE_CLIENT_ID) },
 	{ path: "/signup", view: SignupView },
 	{ path: "/profile", view: ProfileView, protected: true },
 	{ path: "/search", view: SearchView, protected: true },

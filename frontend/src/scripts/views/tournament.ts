@@ -1,6 +1,5 @@
 import { tournamentNicknames } from "./home.js"
 import { Tournament } from "../game/tournament.js";
-import { getUserName, navigateTo } from "../main.js";
 
 export class TournamentView {
     async getHtml() {
@@ -19,15 +18,6 @@ export class TournamentView {
     }
 
     async onMounted() {
-		let username: string | undefined = "Player 1";
-		if (localStorage.getItem("token")) {
-				username = await getUserName();
-			if (!username) {
-				navigateTo("/");
-				return;
-			}
-			tournamentNicknames[0] = username;
-		}
 		const tournament: Tournament = new Tournament(tournamentNicknames);
 		tournament.startNextMatch();
     }
