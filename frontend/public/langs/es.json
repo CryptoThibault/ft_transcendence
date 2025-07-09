@@ -46,6 +46,10 @@
     "score": "Puntuación",
     "opponent": "Oponente",
     "status": "Estado",
-    "save": "Guardar"
-
+    "save": "Guardar",
+    "pending_request": "Solicitud pendiente",
+    "friends": "Amigos",
+    "delete_account": "Eliminar cuenta",
+    "statistics": "Estadística",
+    "choose_avatar": "Elige Avatar"
 }

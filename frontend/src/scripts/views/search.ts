@@ -38,9 +38,7 @@ export class SearchView {
   async onMounted() {
     try {
       const myID = await this.getMyID();
-      // console.log("My ID:", myID);
       const friendID = await this.getFriends();
-      // console.log("Friend IDs:", friendID);
       await this.getUserCard(friendID, myID);
     } catch (error) {
       console.error("Error during SearchView onMounted:", error);
@@ -113,9 +111,7 @@ export class SearchView {
       const users: User[] = result?.data?.users || [];
 
       users.forEach((user: User) => {
-        // console.log("All User:", user.id);
         if (user.id !== myID && friendID.indexOf(user.id) === -1) {
-          console.log("User to display:", user.id);
           const card = document.createElement("div");
           card.className = "user-card";
           card.setAttribute("data-username", user.name);

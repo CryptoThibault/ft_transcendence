@@ -14,15 +14,13 @@ declare global {
 	interface Window {
 		GOOGLE_CLIENT_ID: string;
 		google: any;
+        buildId: string;
 	}
 
 	interface ImportMeta {
 		env: any;
 	}
 
-    interface Socket {
-        on: any;
-    }
 }
 window.GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -32,10 +30,12 @@ type Route = {
 	protected?: boolean;
 };
 
-let currentLanguage = "en";
+export const setLanguage = (lang: string | null) => {
+    if (lang)
+	    localStorage.setItem("language", lang);
+    else
+	    localStorage.setItem("language", "en");
 
-export const setLanguage = (lang: string) => {
-	currentLanguage = lang;
 };
 
 const routes: Route[] = [
@@ -68,7 +68,7 @@ const router = async () => {
         }
         setupNavbar();
         setupLogoutHandler();
-        loadLanguage(currentLanguage);
+        loadLanguage(localStorage.getItem("language"));
         return;
     }
     
@@ -100,7 +100,7 @@ const router = async () => {
     setupNavbar();
     setupLogoutHandler();
 
-    loadLanguage(currentLanguage);
+    loadLanguage(localStorage.getItem("language"));
 };
 
 const setupLogoutHandler = () => {
@@ -139,7 +139,15 @@ window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;
 
 document.addEventListener("DOMContentLoaded", () => {
-	loadLanguage(currentLanguage);
+    const currentBuildId = window.buildId;
+    const savedBuildId = localStorage.getItem("buildId");
+    if (currentBuildId !== savedBuildId) {
+        localStorage.clear();
+        localStorage.setItem("buildId", currentBuildId);
+    }
+    if (!localStorage.getItem("language"))
+        localStorage.setItem("language", "en");
+	loadLanguage(localStorage.getItem("language"));
 	document.body.addEventListener("click", e => {
 
 		const target = e.target as HTMLElement;

@@ -46,5 +46,10 @@
     "score": "Score",
     "opponent": "Opponent",
     "status": "Status",
-    "save": "Save"
+    "save": "Save",
+    "pending_request": "Pending Request",
+    "friends": "Friends",
+    "delete_account": "Delete account",
+    "statistics": "Statistics",
+    "choose_avatar": "Choose Avatar"
 }

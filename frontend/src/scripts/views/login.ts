@@ -1,4 +1,4 @@
-import { navigateTo } from "../main.js";
+import { getUserName, navigateTo } from "../main.js";
 
 declare const google: any;
 
@@ -132,20 +132,13 @@ export class LoginView {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ idToken: response.credential }),
             });
-
-            const res = await result.json();
-
-            if (!result.ok) return this.showMessage(messageDiv, res.message || "Google login failed.");
-
-            localStorage.setItem("token", res.data.token);
-            navigateTo("/");
+            
           } catch (error) {
             console.error("Google login error:", error);
             this.showMessage(messageDiv, "Google login failed.");
           }
         },
       });
-
       google.accounts.id.prompt();
     });
 
@@ -153,7 +146,32 @@ export class LoginView {
     const token = urlParams.get("token");
     if (token) {
       localStorage.setItem("token", token);
+      this.shortenName();
       navigateTo("/");
+    }
+  }
+
+  async shortenName() {
+    let username = await getUserName();
+    if (username && username.length > 8) {
+      try {
+        const response = await fetch("/api/v1/user/me", { 
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json", 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ name: username.slice(0, 8) }),
+            });
+
+            const res = await response.json();
+            if (!response.ok) {
+              throw new Error(res.message || "Failed to update profile");
+            }
+        } catch (err) {
+          console.error("Error updating profile:", err);
+          alert(`Error updating profile: ${err}`);
+        }
     }
   }
 

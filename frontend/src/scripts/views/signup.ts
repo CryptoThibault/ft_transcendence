@@ -49,6 +49,11 @@ export class SignupView {
       const password = (form.querySelector("#password") as HTMLInputElement).value;
       const confirm = (form.querySelector("#confirm") as HTMLInputElement).value;
 
+      if (name.length < 3 || name.length > 8) {
+        alert("Username must be between 3 and 8 characters.");
+        return;
+      }
+
       if (!name || !email || !password || !confirm) {
         alert("All fields are required.");
         return;

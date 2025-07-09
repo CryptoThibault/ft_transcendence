@@ -43,14 +43,6 @@
   </div>
 </div>
 	<script src="/build-id.js"></script>
-	<script>
-		const currentBuildId = window.buildId;
-		const savedBuildId = localStorage.getItem("buildId");
-		if (currentBuildId !== savedBuildId) {
-			localStorage.clear();
-			localStorage.setItem("buildId", currentBuildId);
-		}
-	</script>
 	<main id="mainContent"  class="bg-custom bg-animated"></main>
 	<script type="module" src="src/scripts/main.ts"></script>
 </body>

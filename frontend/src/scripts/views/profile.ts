@@ -32,17 +32,17 @@ export class ProfileView {
         </section>
         
         <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-          <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>          
+          <h2 class="font-mono text-lg text-black font-bold mb-2" data-i18n="friends">Friends</h2>          
           <div id="friendsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
               <p id="noFriendsMessage" class="text-gray-600 italic mt-2 hidden" data-i18n="no_friends_yet">No friends yet.</p>
           </div>
-          <h1 class="font-mono text-lg text-black font-bold my-5"> Pending Requests</h1>
+          <h2 class="font-mono text-lg text-black font-bold my-5" data-i18n="pending_request">Pending Requests</h2>
           <div id="pendingRequest" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
           </div>
         </section>
         
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-          <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
+          <h2 class=" text-lg text-black font-bold mb-2" data-i18n="statistics">Statistics</h2>
           <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
             <div data-i18n="total">Total</div> 
             <div data-i18n="win">Win</div>
@@ -63,7 +63,7 @@ export class ProfileView {
                 <tr class="bg-gray-100">
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="time">Time</th>
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i19n="score">Score</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="score">Score</th>
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="status">Status</th>
                 </tr>
               </thead>
@@ -81,12 +81,13 @@ export class ProfileView {
         <div class="flex flex-col items-center">
         <img id="editAvatarPreview" src="" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
         <input type="file" id="avatarInput" accept="image/*" class="hidden" />
-        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" data-i18n="choose_avatar">
         Choose Avatar
         </button>
         </div>
         <div>
-        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="email">Username</label> <input type="text" id="editUsername" class="w-full border rounded p-2" required />
+        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="username">Username</label>
+        <input type="text" id="editUsername" class="w-full border rounded p-2" required />
         </div>
         <div class="flex justify-end gap-2 mt-4">
         <button type="button" id="cancelEditBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" data-i18n="cancel">Cancel</button>
@@ -214,8 +215,8 @@ export class ProfileView {
         alert("Username cannot be empty.");
         return;
       }
-      if (newUsername.length < 3 || newUsername.length > 20) {
-        alert("Username must be between 3 and 20 characters.");
+      if (newUsername.length < 3 || newUsername.length > 8) {
+        alert("Username must be between 3 and 8 characters.");
         return;
       }
 

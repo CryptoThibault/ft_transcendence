@@ -11,7 +11,7 @@ export class HomeView {
 
 	  <div class="flex flex-col sm:flex-row gap-8">
 		<a href="/singleplayer" data-link class="btn-gamemode" data-i18n="singleplayer">
-			Single player
+			Singleplayer
 		</a>
 		<button id="multiPlayerBtn" class="btn-gamemode" data-i18n="multiplayer"">
 			Multiplayer
@@ -82,7 +82,6 @@ export class HomeView {
 				token: token,
 				},
 			});
-			console.log(socket.active)
 			socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
 				console.log("I got a message")
 				
