@@ -1,19 +1,16 @@
-import Fastify, { FastifyRequest } from "fastify"
-import fastifyStatic from "@fastify/static"
-import path from "path"
+import Fastify, { FastifyReply, FastifyRequest } from "fastify"
+import jwt from '@fastify/jwt';
 import { registerRoutes } from "./routes"
 import { initSockets } from "./sockets"
 import { db } from "./initDatabase"
+import { registerAuth } from "./registerAuth";
 
 async function buildServer() {
     
     const fastify = Fastify({logger: true})
-    fastify.register(fastifyStatic, {
-    root: path.join(__dirname, '../frontend'),
-    prefix: '/'
-    })
 
     try {
+        await registerAuth(fastify)
         await fastify.register(registerRoutes)
         await fastify.ready()
         console.log("Registering sockets...")

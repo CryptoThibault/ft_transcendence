@@ -7,24 +7,23 @@ import { CommandResult } from "./interfaces/types";
 
 export async function registerRoutes(fastify: FastifyInstance)
 {
-    fastify.get("/", (req,res) => {
+    fastify.get("/api/",(req: FastifyRequest,res: FastifyReply) => {
         return ({message: "hello"})
     })
 
-fastify.get('/messages/:user1/:user2', async (req: FastifyRequest, reply: FastifyReply) => {
-  const { user1, user2 } = req.params as { user1: string; user2: string };
+
+fastify.get('/api/messages/:user2', {preValidation: fastify.authenticate} ,async (req: FastifyRequest, reply: FastifyReply) => {
+  const { user2 } = req.params as { user2: string };
+  const user = req.user as { userName: string };
+
   try {
-    const messages: Message[] = await findAllDbAsync(`SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? and receiver_id = ?)`, [user1,user2,user2,user1])
+    const messages: Message[] = await findAllDbAsync(`SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? and receiver_id = ?)`, [user.userName,user2,user2,user.userName])
     reply.send(messages);
   } catch (err) {
     console.error(err);
     reply.status(500).send({ error: 'Database error' });
   }
 });
-
-fastify.get("/chat", (req, reply) => {
-  reply.type('text/html').sendFile('index.html')
-})
 
 fastify.post("/blockuser",{schema: blockUserSchema}, async (req: FastifyRequest,reply: FastifyReply) => {
     const { user, blocked_user } = req.body as { user: string, blocked_user: string };

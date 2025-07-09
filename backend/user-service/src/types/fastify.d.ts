@@ -19,3 +19,4 @@ interface AcceptFriendshipRequestRoute extends RouteGenericInterface {
     senderId: number;
   };
 }
+

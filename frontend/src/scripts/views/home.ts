@@ -122,6 +122,32 @@ export class HomeView {
 			throw error;
 		}
   }	
+
+    async function getMessageHistory(selectedFriendName: string) {
+		try {
+			if (!token)
+			{
+				throw Error('No token')
+			}
+
+			const response = await fetch(`/livechat/api/messages/${selectedFriendName}`, {
+			method: "GET",
+			headers: {
+				"Authorization": `Bearer ${token}`,
+			},
+			});
+
+			if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.message || "Failed to get message history");
+			}
+			const messages = await response.json();
+			return messages;
+
+		} catch (error) {
+			throw error;
+		}
+  }	
   // Toggle panel visibility
 liveChatToggleBtn.addEventListener("click", async () => {
 	if (!token)
@@ -171,13 +197,23 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
     chatContainer.style.display = "none";
   }
 
-  function openChat(friend: { id: number; name: string }) {
+  async function openChat(friend: { id: number; name: string }) {
     friendsList.style.display = "none";
     chatContainer.style.display = "flex";
     chatMessages.innerHTML = `<div>Chatting with <b>${friend.name}</b></div>`;
     chatInput.value = "";
     chatInput.focus();
 
+	const messages = await getMessageHistory(friend.name);
+	//TO-DO message type
+	messages.forEach(message  => {
+		const oldMsg = message.message
+		const sender = message.sender_id == friend.name ? friend.name : "You:"
+		const messageDiv = document.createElement("div");
+        messageDiv.textContent = `${sender}: ${oldMsg}`;
+		chatMessages.appendChild(messageDiv);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
+	});
     const onSend = (e: KeyboardEvent) => {
       if (e.key === "Enter" && chatInput.value.trim() !== "") {
         const msg = chatInput.value.trim();

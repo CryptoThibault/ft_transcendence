@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 //const JWT_SECRET = process.env.JWT_SECRET
-export function getUsernameFromToken(token: string): string
+export function getUserFromToken(token: string): {userId: string, userName: string}
 {
     // if (!JWT_SECRET) 
     // {
@@ -9,7 +9,7 @@ export function getUsernameFromToken(token: string): string
     // }
     try {
     const decoded = jwt.verify(token, 'secret') as JwtPayload;
-    return decoded.userName
+    return {userId: decoded.userId,userName: decoded.userName}
     } catch (err) {
     throw Error('Invalid Token')
     }

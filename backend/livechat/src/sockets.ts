@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io"
 import { FastifyInstance } from "fastify"
 import { sendMessageToSocket } from "./services/msgService"
-import { getUsernameFromToken } from "./services/auth"
+import { getUserFromToken } from "./services/auth"
 
 export const onlineUserSockets = new Map<string, Socket>
 
@@ -15,24 +15,27 @@ export async function initSockets(fastify: FastifyInstance)
             methods: ["GET", "POST"],
         },
     });
-    io.on('connection', (socket) => {
+    io.on('connection', (socket: Socket) => {
         console.log("Connection received!");
         const token = socket.handshake.auth.token;
         let userId = ""
+        let userName = ""
         try {
-            userId = getUsernameFromToken(token);
-            onlineUserSockets.set(userId, socket)
-            console.log(userId + ' (' + onlineUserSockets.get(userId) + ') ' + 'connected');
-            socket.join(userId);
+            const user: {userId: string, userName:string} = getUserFromToken(token);
+            userId = user.userId
+            userName = user.userName
+            onlineUserSockets.set(userName, socket)
+            console.log(userName + ' (' + onlineUserSockets.get(userId) + ') ' + 'connected');
+            socket.join(userName);
             socket.on('disconnect', () => 
             {
-                console.log(userId + ' (' + onlineUserSockets.get(userId) + ') ' + 'disconnected');
+                console.log(userName + ' (' + onlineUserSockets.get(userName) + ') ' + 'disconnected');
                 onlineUserSockets.delete(userId)
             })
-            socket.on('emit-chat-message', async ({ to, msg }) => {
-                console.log(userId + " " + to + " " + msg);
+            socket.on('emit-chat-message', async ({to, msg}: {to: string, msg: string}) => {
+                console.log(userName + " " + to + " " + msg);
                 try {
-                    await sendMessageToSocket(io,userId,to,msg)
+                    await sendMessageToSocket(io,userName,to,msg)
                 } catch (error) {
                     console.log(error)
                 }
