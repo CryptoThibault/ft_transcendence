@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 
-config({ path: `.env.local.livechat` });
+config({ path: `.env.development.local` });
 
 export const {
     JWT_SECRET
