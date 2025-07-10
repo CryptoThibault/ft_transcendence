@@ -5,7 +5,8 @@ import { localOpponentQuery } from '../types/fastify.js';
 import { currentUser, /*userByEmail,*/ updateCurrentUserName,
         onlineStatus, /*lastSeen,*/ uploadAvatar, addFriend, 
         getFriendsList, recordMatch, getCurrentUserMatches,
-        getUserMatchHistory, getLeaderboard
+        getUserMatchHistory, getLeaderboard,
+        recordMatchServer
 } from "../controllers/session.controller.js";
 
 import { createUser } from '../controllers/user.controllers.js';
@@ -31,6 +32,8 @@ async function userRoutes(fastify: FastifyInstance) {
     fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendRequest);
     fastify.get('/me/friends', { preHandler: authorize }, getFriendsList);
     fastify.post('/matches', { preHandler: authorize }, recordMatch);
+    //bince added this
+    fastify.post('/matches/server',recordMatchServer);
     fastify.get('/me/matches', { preHandler: authorize }, getCurrentUserMatches);
     fastify.get('/:id/matches', { preHandler: authorize }, getUserMatchHistory);
     fastify.get('/leaderboard', { preHandler: authorize }, getLeaderboard);

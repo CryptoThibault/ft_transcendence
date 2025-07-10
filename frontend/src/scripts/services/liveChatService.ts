@@ -318,8 +318,6 @@ export class LiveChatService {
             try {
                 const parsedMsg = JSON.parse(oldMsg);
                 const messageDiv = document.createElement("div");
-                messageDiv.textContent = `${sender}: ${oldMsg}`;
-                chatMessages.appendChild(messageDiv);
             } catch (e) {
                 const messageDiv = document.createElement("div");
                 messageDiv.textContent = `${sender}: ${oldMsg}`;

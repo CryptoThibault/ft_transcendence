@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { onlineUserSockets } from "../sockets";
-
+import { JWT_SECRET } from "../config/config";
+import jwt from 'jsonwebtoken';
 export interface GameInvitation {
     id: string;
     from: string;
@@ -188,7 +189,7 @@ class GameService {
         this.gameLoops.set(roomName, gameLoop);
     }
 
-    private updateGame(roomName: string): void {
+    private async updateGame(roomName: string): Promise<void> {
         const gameState = this.activeGames.get(roomName);
         if (!gameState || gameState.gameEnded) return;
 
@@ -266,7 +267,31 @@ class GameService {
         if (gameState.score[0] >= 5 || gameState.score[1] >= 5) {
             gameState.gameEnded = true;
             gameState.winner = gameState.score[0] >= 5 ? player1 : player2;
+   
+        try {
+              const response = await fetch("http://user-service:5501/api/v1/user/matches/server", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    player1Id:onlineUserSockets.get(player1)!.userId,
+                    player2Id:onlineUserSockets.get(player2)!.userId,
+                    winnerId:onlineUserSockets.get(gameState.winner)!.userId,
+                    score: `${gameState?.score[0]}-${gameState?.score[1]}`
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.log(errorData.message)
+                throw new Error(errorData.message || "Failed to send match result due to server error.");
+            }
             this.endGame(roomName);
+        } catch (error) {
+            console.log(error)
+        }
+
         }
 
         gameState.lastUpdate = Date.now();
@@ -279,7 +304,7 @@ class GameService {
         gameState.ball.dy = 0;
     }
 
-    private endGame(roomName: string): void {
+    private async endGame(roomName: string): Promise<void> {
         console.log(`Ending game in room ${roomName}`);
         
         const gameLoop = this.gameLoops.get(roomName);
@@ -293,7 +318,6 @@ class GameService {
         const gameState = this.activeGames.get(roomName);
 
         this.removeGameRoom(roomName);
-        
         console.log(`Room ${roomName} cleaned up after game end`);
     }
 

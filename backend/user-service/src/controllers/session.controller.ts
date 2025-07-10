@@ -561,6 +561,126 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
         });
     }
 };
+//bince added
+export const recordMatchServer = async (req: FastifyRequest, res: FastifyReply) => {
+    console.log('User service: Incoming request body for recordMatch:', req.body);
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
+    try {
+        const { player1Id, player2Id, winnerId, score } = req.body as {
+            player1Id: number
+            player2Id: number;
+            winnerId: number;
+            score: string;
+        };
+
+        if (!player2Id || !winnerId || !score) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Missing match data: player2Id, winnerId, and score are required.',
+            });
+        }
+
+        const scoreParts = score.split('-');
+        if (scoreParts.length !== 2) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Invalid score format. Use "number-number", e.g., "10-8"',
+            });
+        }
+
+        const [player1Score, player2Score] = scoreParts.map(Number);
+        if (isNaN(player1Score) || isNaN(player2Score)) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Score must contain valid numbers.',
+            });
+        }
+
+        if (![player1Id, player2Id].includes(winnerId)) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Winner ID must match one of the players.',
+            });
+        }
+        const player1 = await User._findByIdRaw(player1Id);
+        const player2 = await User._findByIdRaw(player2Id);
+        const player2Data = await User._findByIdRaw(player2Id);
+        const player2NameFromDb = player2Data?.name;
+
+        if (!player1 || !player2) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({
+                success: false,
+                message: 'One or both players not found.',
+            });
+        }
+        const match = await Match.create({
+            player1Id,
+            player2Id,
+            winnerId,
+            player1Score,
+            player2Score,
+            playedAt: new Date().toISOString(),
+        });
+
+        if (!match.id) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to record match due to database issue.',
+            });
+        }
+        // --- Update Player Stats ---
+        let updatedPlayer1Wins = player1.wins ?? 0;
+        let updatedPlayer1Losses = player1.losses ?? 0;
+        let updatedPlayer2Wins = player2.wins ?? 0;
+        let updatedPlayer2Losses = player2.losses ?? 0;
+
+        if (winnerId === player1Id) {
+            updatedPlayer1Wins += 1;
+            updatedPlayer2Losses += 1;
+        } else {
+            updatedPlayer2Wins += 1;
+            updatedPlayer1Losses += 1;
+        }
+
+        const player1Updated = await User.update(player1Id, {
+            wins: updatedPlayer1Wins,
+            losses: updatedPlayer1Losses,
+        });
+
+        const player2Updated = await User.update(player2Id, {
+            wins: updatedPlayer2Wins,
+            losses: updatedPlayer2Losses,
+        });
+
+        if (!player1Updated || !player2Updated) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to update player stats.',
+            });
+        }
+        await db.run('COMMIT;');
+        return res.status(201).send({
+            success: true,
+            message: 'Match recorded successfully',
+            data: match,
+        });
+    } catch (error) {
+        await db.run('ROLLBACK;');
+        console.error('Error recording match:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
 
 export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyReply) => {
     try {
