@@ -2,9 +2,44 @@ import { navigateTo } from "../main";
 
 export class ProfileView {
   private DEFAULT_AVATAR_PATH: string = '/uploads/default-avatar.png';
-  constructor(private username?: string, private isMyProfile: boolean = true) {
-  }
+  private meID: number | undefined = undefined;
+  constructor(private userID?: string, private isMyProfile: boolean = true) {}
   async getHtml() {
+      if (!this.isMyProfile) {
+        return `
+        <section class="bg-gray-100 max-w-5xl w-full mx-auto rounded-lg shadow-md p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
+        
+        <div class="font-mono flex flex-col items-center h-40">
+          <div class="flex-grow"></div> 
+          <img id="profileAvatar" src="" alt="Avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white shadow" /> 
+          <div class="flex-grow"></div>
+
+        </div>
+        
+        <div class="font-mono flex-1 bg-white rounded p-4 shadow space-y-4">
+          <div>
+            <label data-i18n="username" class="text-black text-left block font-semibold">Username</label>
+            <input id="usernameInput" type="text" disabled value="" class="w-full mt-1 p-2 rounded bg-gray-200 text-gray-600"/>
+          </div>
+          <div>
+            <label data-i18n="email" class="text-black text-left block font-semibold">Email</label>
+            <input id="emailInput" type="text" disabled value="********" class="w-full mt-1 p-2 rounded bg-gray-200 text-gray-600"/>
+          </section>
+      
+          <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
+            <h2 class=" text-lg text-black font-bold mb-2" data-i18n="statistics">Statistics</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
+              <div data-i18n="total">Total</div> 
+              <div data-i18n="win">Win</div>
+              <div data-i18n="lose">Lose</div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
+            <div id="total">x</div> 
+            <div id="win">x</div> 
+            <div id="lose">x</div> 
+          </section>
+        `;
+    }
     return `
     <section class="bg-gray-100 max-w-5xl w-full mx-auto rounded-lg shadow-md p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
@@ -99,22 +134,30 @@ export class ProfileView {
       }
       
   async onMounted() {
-    try {
-      await this.setupProfileDefault();
-      if (this.isMyProfile) {
-        this.handleEditProfile();
+    if (!this.isMyProfile) {
+        try {
+          await this.setupFriendProfile();
+        } catch (err: any) {
+          alert(err);
+          navigateTo("/");
+        }
       }
-      await this.loadFriends();
-      await this.loadHistory();
-      await this.deleteUser();
-    } catch (err: any) {
-      alert(err);
-      navigateTo("/");
+    else {
+      try {
+        await this.setupProfileDefault();
+        this.handleEditProfile();
+        await this.loadFriends();
+        await this.loadHistory();
+        await this.deleteUser();
+      } catch (err: any) {
+        alert(err);
+        navigateTo("/");
+      }
     }
   }
     
   private async setupProfileDefault() {
-    const url = this.isMyProfile? "/api/v1/user/me": `/api/v1/user/${this.username}`;
+    const url = "/api/v1/user/me";
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -131,6 +174,7 @@ export class ProfileView {
       const email = document.getElementById("emailInput") as HTMLInputElement;
       const profileAvatar = document.getElementById("profileAvatar") as HTMLImageElement; 
       
+      this.meID = userData.data.user.id;
       username.value = userData.data.user.name;
       email.value = userData.data.user.email;
       
@@ -160,8 +204,7 @@ export class ProfileView {
     const cancelBtn = document.getElementById("cancelEditBtn")!;
     const avatarInput = document.getElementById("avatarInput") as HTMLInputElement;
     const avatarPreview = document.getElementById("editAvatarPreview") as HTMLImageElement;     
-    const usernameInput = document.getElementById("editUsername") as HTMLInputElement;     
-    const currentUsername = (document.getElementById("usernameInput") as HTMLInputElement).value;
+    const usernameInput = document.getElementById("editUsername") as HTMLInputElement;
     const currentAvatarSrc = (document.getElementById("profileAvatar") as HTMLImageElement).src;     
     const chooseFileBtn = document.getElementById("chooseFileBtn")!;     
     
@@ -302,13 +345,11 @@ export class ProfileView {
 
         friendCard.innerHTML = `
           <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
-          <div class="user-name">${friend.name}</div>
+          <div href="/profile/${friend.id}" data-link class="user-name">${friend.name}</div>
           <div class="user-actions">
-            <button id="rejectBtn" data-i18n="Reject" class="btn-remove-friend">Reject</button>
             <button id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
           </div>
         `;
-        const rejectBtn = friendCard.querySelector('#rejectBtn') as HTMLButtonElement;
         const acceptBtn = friendCard.querySelector('#acceptBtn') as HTMLButtonElement;
         acceptBtn.addEventListener('click', async () => {
           try {
@@ -325,6 +366,7 @@ export class ProfileView {
               throw new Error(resJson.message || "Failed to reject friend request");
             }
             friendCard.remove();
+            navigateTo("/profile");
           } catch (error: any) {
             console.error("Error rejecting friend request:", error);
             alert(`Error rejecting friend request: ${error.message || error}`);
@@ -343,33 +385,11 @@ export class ProfileView {
 
         friendCard.innerHTML = `
           <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
-          <div class="user-name">${friend.name}</div>
+          <div href="/profile/${friend.id}" data-link class="user-name">${friend.name}</div>
           <div class="user-actions">
-            <button id="cancelBtn" data-i18n="cancel_request" class="btn-remove-friend">Cancel Request</button>
+            <button id="cancelBtn" data-i18n="cancel_request" class="btn-remove-friend">Pending</button>
           </div>
         `;
-        const cancelBtn = friendCard.querySelector('#cancelBtn') as HTMLButtonElement;
-        cancelBtn.addEventListener('click', async () => {
-          try {
-            const response = await fetch(`/api/v1/user/me/friends/cancel`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ receiverId: friend.id }),
-            });
-            const resJson = await response.json();
-            if (!response.ok || !resJson.success) {
-              throw new Error(resJson.message || "Failed to cancel friend request");
-            }
-            friendCard.remove();
-          } catch (error: any) {
-            console.error("Error cancelling friend request:", error);
-            alert(`Error cancelling friend request: ${error.message || error}`);
-          }
-        });
-
         
         pendingRequestContainer.appendChild(friendCard);
       }); 
@@ -382,11 +402,7 @@ export class ProfileView {
 
         friendCard.innerHTML = `
           <img src="${avatarSrc}" alt="avatar" class="user-avatar" />
-          <div class="user-name">${friend.name}</div>
-          <div class="user-actions">
-            <button data-i18n="remove_friend" class="btn-remove-friend">Remove</button>
-            <button data-i18n="block" class="btn-block">Block</button>
-          </div>
+          <div href="/profile/${friend.id}" data-link class="user-name">${friend.name}</div>
         `;
         friendsContainer.appendChild(friendCard);
       });
@@ -398,8 +414,7 @@ export class ProfileView {
   }
 
   private async loadHistory() {
-    const userId = this.isMyProfile ? 'me' : this.username;
-    const url = `/api/v1/user/${userId}/matches`;
+    const url = `/api/v1/user/me/matches`;
 
     try {
         const response = await fetch(url, {
@@ -445,7 +460,6 @@ export class ProfileView {
     }
   }
 
-
   private async deleteUser() {
     const deleteAccountBtn = document.getElementById("deleteAccountBtn")!;
     deleteAccountBtn.addEventListener("click", async () => {
@@ -472,5 +486,43 @@ export class ProfileView {
       }
     });
   }
+
+  async setupFriendProfile() {
+    try {
+      const response = await fetch("/api/v1/user/users",{
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const resJson = await response.json();
+      if (!response.ok || !resJson.success) {
+        throw new Error(resJson.message || "Failed to fetch user data");    
+      }
+      const user = resJson.data.users.find((user: any) => user.id === Number(this.userID));
+      if (!user) {
+        throw new Error("User not found");
+      }
+      const usernameFriend = document.getElementById("usernameInput") as HTMLInputElement;
+      usernameFriend.value = user.name;
+      const avtFriend = document.getElementById("profileAvatar") as HTMLImageElement;
+      const avatarFilename = user.avatar;
+      avtFriend.src = avatarFilename ? `/uploads/${avatarFilename}` : this.DEFAULT_AVATAR_PATH;
+      const statsTotal = document.getElementById("total")!;
+      const statsWin = document.getElementById("win")!;
+      const statsLose = document.getElementById("lose")!;
+      const wins = user.wins;
+      const losses = user.losses;
+      const total = wins + losses;  
+      statsWin.textContent = wins.toString();
+      statsLose.textContent = losses.toString();
+      statsTotal.textContent = total.toString();
+    } catch (error: any) {
+      console.error("Error setting up friend profile:", error);
+      throw new Error(error);
+    }
+  }
 }
+
 

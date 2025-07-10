@@ -120,7 +120,7 @@ export class SearchView {
           img.className = "user-avatar";
 
           const nameLink = document.createElement("a");
-          nameLink.href = "/";
+          nameLink.href = `/profile/${user.id}`;
           nameLink.setAttribute("data-link", "");
           nameLink.className = "flex items-center gap-2 font-semibold text-black";
 

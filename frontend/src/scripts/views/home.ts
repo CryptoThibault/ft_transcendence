@@ -35,7 +35,6 @@ export class HomeView {
 		</div>
 	  </div>
 
-
 	  <!-- Multiplayer Popup -->
 		<div id="multiPlayerPopup" class="fixed inset-0 items-center justify-center bg-black/50 backdrop-blur-sm hidden z-50">
 		<div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
@@ -49,8 +48,6 @@ export class HomeView {
 			</div>
 		</div>
 	  </div>
-
-
     `;
 	}
 
@@ -76,7 +73,6 @@ export class HomeView {
 			liveChatService.connect(token);
 		}
 
-		// Toggle panel visibility
 		liveChatToggleBtn.addEventListener("click", async () => {
 			if (!token)
 				return;
@@ -108,7 +104,6 @@ export class HomeView {
 			liveChatService.showFriendsList();
 		});
 
-		// Initialize panel position
 		liveChatPanel.style.transform = "translateX(-100%)";
 
 		let username: string | undefined = "Player 1";
@@ -123,7 +118,6 @@ export class HomeView {
 			tournamentNicknames[0] = username;
         }
 
-		//handle tournament popup
 		const tournamentBtn = document.getElementById("tournamentBtn")!;
 		const tournamentPopup = document.getElementById("tournamentPopup")!;
 		const nicknameInputs = document.getElementById("nicknameInputs")!;
@@ -184,7 +178,6 @@ export class HomeView {
 			navigateTo("/tournament");
 		});
 
-		//handle multiplayer popup
 		const multiBtn = document.getElementById("multiPlayerBtn")!;
 		const multiPopup = document.getElementById("multiPlayerPopup")!;
 		const nicknameMultiInputs = document.getElementById("nicknameMultiInputs")!;

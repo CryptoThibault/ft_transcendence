@@ -9,10 +9,6 @@
     "strict": true,
   },
   "include": ["src/scripts/**/*.ts",  "src/**/*.ts"],
-  "exclude": ["node_modules", 
-    "**/dist"
-  ],
-  "types": [
-    "node",
-],
+  "exclude": ["node_modules", "**/dist"],
+  "types": ["node"],
 }

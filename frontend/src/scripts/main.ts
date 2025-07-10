@@ -54,7 +54,6 @@ export const setLanguage = (lang: string | null) => {
 const routes: Route[] = [
 	{ path: "/", view: HomeView },
 	{ path: "/login", view: LoginView },
-//	{ path: "/login", view: () => new LoginView(import.meta.env.VITE_GOOGLE_CLIENT_ID) },
 	{ path: "/signup", view: SignupView },
 	{ path: "/profile", view: ProfileView, protected: true },
 	{ path: "/search", view: SearchView, protected: true },
@@ -71,12 +70,11 @@ export const navigateTo = (url: string) => {
 
 const router = async () => {
     const location = window.location;
-    const pathRegax = /^\/profile\/([^/]+)$/;
-    const matchRegex = location.pathname.match(pathRegax);
-
+    const pathRegex = /^\/profile\/(\d+)$/;
+    const matchRegex = location.pathname.match(pathRegex);
     if (matchRegex) {
-        const username = matchRegex[1];
-        const profileView = new ProfileView(username, false);
+        const userID = matchRegex[1];
+        const profileView = new ProfileView(userID, false);
         document.querySelector("#mainContent")!.innerHTML = await profileView.getHtml();
         if (typeof profileView.onMounted === "function") {
             await profileView.onMounted();

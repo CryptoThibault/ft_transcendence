@@ -1,4 +1,4 @@
-import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
+import { io, Socket } from "socket.io-client";
 import { navigateTo } from "../main.js";
 
 export interface Friend {
