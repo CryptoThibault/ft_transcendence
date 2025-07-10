@@ -32,17 +32,17 @@ export class ProfileView {
         </section>
         
         <section class="bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-          <h2 class="font-mono text-lg text-black font-bold mb-2">Friends</h2>          
+          <h2 class="font-mono text-lg text-black font-bold mb-2" data-i18n="friends">Friends</h2>          
           <div id="friendsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
               <p id="noFriendsMessage" class="text-gray-600 italic mt-2 hidden" data-i18n="no_friends_yet">No friends yet.</p>
           </div>
-          <h1 class="font-mono text-lg text-black font-bold my-5"> Pending Requests</h1>
+          <h2 class="font-mono text-lg text-black font-bold my-5" data-i18n="pending_request">Pending Requests</h2>
           <div id="pendingRequest" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">          
           </div>
         </section>
         
         <section class="font-mono bg-white max-w-5xl w-full mx-auto mt-6 p-4 rounded-lg shadow">
-          <h2 class=" text-lg text-black font-bold mb-2">Stats</h2>
+          <h2 class=" text-lg text-black font-bold mb-2" data-i18n="statistics">Statistics</h2>
           <div class="grid grid-cols-1 sm:grid-cols-3 text-gray-700 gap-2 text-center">
             <div data-i18n="total">Total</div> 
             <div data-i18n="win">Win</div>
@@ -63,7 +63,7 @@ export class ProfileView {
                 <tr class="bg-gray-100">
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="time">Time</th>
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="opponent">Opponent</th>
-                  <th class="w-1/4 text-center py-2 text-gray-700" data-i19n="score">Score</th>
+                  <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="score">Score</th>
                   <th class="w-1/4 text-center py-2 text-gray-700" data-i18n="status">Status</th>
                 </tr>
               </thead>
@@ -81,7 +81,7 @@ export class ProfileView {
         <div class="flex flex-col items-center">
         <img id="editAvatarPreview" src="" alt="Avatar Preview" class="w-24 h-24 rounded-full mb-2 object-cover" />
         <input type="file" id="avatarInput" accept="image/*" class="hidden" />
-        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button id="chooseFileBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" data-i18n="choose_avatar">
         Choose Avatar
         </button>
         </div>
@@ -214,8 +214,8 @@ export class ProfileView {
         alert("Username cannot be empty.");
         return;
       }
-      if (newUsername.length < 3 || newUsername.length > 20) {
-        alert("Username must be between 3 and 20 characters.");
+      if (newUsername.length < 3 || newUsername.length > 8) {
+        alert("Username must be between 3 and 8 characters.");
         return;
       }
 
@@ -265,10 +265,6 @@ export class ProfileView {
         
         popup.classList.add("hidden");
         popup.classList.remove("flex");
-        
-        // alert("Profile updated!");
-        // await this.loadFriends();
-        // await this.loadHistory(); 
 
       } catch (err) {
         console.error("Error updating profile:", err);
@@ -280,12 +276,6 @@ export class ProfileView {
   private async loadFriends() {
     const friendsContainer = document.getElementById("friendsContainer")!;
     const pendingRequestContainer = document.getElementById("pendingRequest")!;
-    // const noFriendsMessage = document.getElementById("noFriendsMessage")!;
-    // friendsContainer.innerHTML = ''; 
-    // if (!this.isMyProfile) {
-    //   noFriendsMessage.classList.remove("hidden");
-    //   return;
-    // }
     try {
       const response = await fetch("/api/v1/user/me/friends", { 
         method: "GET",
@@ -303,14 +293,6 @@ export class ProfileView {
 
       const friendsPending = resJson.data.pendingReceived;
       const friendsSent = resJson.data.pendingSent;
-
-      // console.log("Friends:", friends);
-      // if (!friends || friends.length === 0) {
-      //   //noFriendsMessage.classList.remove("hidden");
-      //   return;
-      // }
-
-    //  noFriendsMessage.classList.add("hidden");
      
      friendsPending.forEach((friend: any) => {
         const friendCard = document.createElement('div');
@@ -323,7 +305,7 @@ export class ProfileView {
           <div class="user-name">${friend.name}</div>
           <div class="user-actions">
             <button id="rejectBtn" data-i18n="Reject" class="btn-remove-friend">Reject</button>
-            <button  id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
+            <button id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
           </div>
         `;
         const rejectBtn = friendCard.querySelector('#rejectBtn') as HTMLButtonElement;
@@ -412,58 +394,6 @@ export class ProfileView {
     } catch (error: any) {
       console.error("Error loading friends:", error);
       friendsContainer.innerHTML = `<p class="text-red-500">Error loading friends: ${error.message || error}</p>`;
-      // noFriendsMessage.classList.remove("hidden");
-    }
-  }
-
-  private async loadHistory() {
-    const userId = this.isMyProfile ? 'me' : this.username;
-    const url = `/api/v1/user/${userId}/matches`;
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const resJson = await response.json();
-
-      const tbody = document.getElementById("historyTableBody")!;
-      const noHistoryMsg = document.getElementById("noHistoryMessage")!;
-
-      if (!response.ok || !resJson.success) {
-        throw new Error(resJson.message || "Failed to load match history");
-      }
-      const matches = resJson.data;
-
-      if (!matches || matches.length === 0) {
-        tbody.innerHTML = "";
-        noHistoryMsg.classList.remove("hidden");
-        return;
-      }
-
-      noHistoryMsg.classList.add("hidden");
-      tbody.innerHTML = "";
-      for (const match of matches) {
-        const playedAt = new Date(match.playedAt).toLocaleString();
-        const displayOpponent = this.isMyProfile ? (match.player1Id === undefined ? match.player2Name : match.player1Name) :
-                                (match.player1Name === this.username ? match.player2Name : match.player1Name);
-
-        //const score = `${match.score1} - ${match.score2}`;
-        const score = `${match.player1Score} - ${match.player2Score}`;
-        const status = match.status || "";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="px-4 py-2 text-center">${playedAt}</td>
-          <td class="px-4 py-2 text-center">${displayOpponent}</td>
-          <td class="px-4 py-2 text-center">${score}</td>
-          <td class="px-4 py-2 text-center">${status}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    } catch (error: any) {
-      console.error("Error loading match history:", error);
-      alert(`Error loading match history: ${error.message || error}`);
     }
   }
 

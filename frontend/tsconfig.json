@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "NodeNext",
+    "module": "esnext",
     "rootDir": "src/scripts",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "moduleResolution": "NodeNext"
   },
   "include": ["src/scripts/**/*.ts",  "src/**/*.ts"],
   "exclude": ["node_modules", 

@@ -1,9 +1,8 @@
-//backend/user-service/src/src/user.routes.ts
 import { FastifyInstance } from 'fastify';
 import { localOpponentQuery } from '../types/fastify.js';
 
-import { currentUser, /*userByEmail,*/ updateCurrentUserName,
-        onlineStatus, /*lastSeen,*/ uploadAvatar, addFriend, 
+import { currentUser, updateCurrentUserName,
+        onlineStatus, uploadAvatar, addFriend, 
         getFriendsList, recordMatch, getCurrentUserMatches,
         getUserMatchHistory, getLeaderboard,
         recordMatchServer
@@ -32,7 +31,6 @@ async function userRoutes(fastify: FastifyInstance) {
     fastify.post('/me/friends/accept', { preHandler: authorize }, acceptFriendRequest);
     fastify.get('/me/friends', { preHandler: authorize }, getFriendsList);
     fastify.post('/matches', { preHandler: authorize }, recordMatch);
-    //bince added this
     fastify.post('/matches/server',recordMatchServer);
     fastify.get('/me/matches', { preHandler: authorize }, getCurrentUserMatches);
     fastify.get('/:id/matches', { preHandler: authorize }, getUserMatchHistory);

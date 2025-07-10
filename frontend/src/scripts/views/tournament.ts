@@ -17,7 +17,7 @@ export class TournamentView {
         `;
     }
 
-    onMounted() {
+    async onMounted() {
 		const tournament: Tournament = new Tournament(tournamentNicknames);
 		tournament.startNextMatch();
     }

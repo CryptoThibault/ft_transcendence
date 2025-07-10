@@ -47,5 +47,10 @@
     "opponent": "Adversaire",
     "status": "Statut",
     "save": "Enregistrer",
-    "Reject": "Annuler"
+    "Reject": "Annuler",
+    "pending_request": "Demande en attente",
+    "friends": "Amis",
+    "delete_account": "Supprimer le compte",
+    "statistics": "Statistiques",
+    "choose_avatar": "Choisir l'avatar"
 }

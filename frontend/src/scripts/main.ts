@@ -23,16 +23,32 @@ declare global {
 }
 window.GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+declare global {
+	interface Window {
+		GOOGLE_CLIENT_ID: string;
+		google: any;
+        buildId: string;
+	}
+
+	interface ImportMeta {
+		env: any;
+	}
+
+}
+window.GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 type Route = {
 	path: string;
 	view: any;
 	protected?: boolean;
 };
 
-let currentLanguage = "en";
+export const setLanguage = (lang: string | null) => {
+    if (lang)
+	    localStorage.setItem("language", lang);
+    else
+	    localStorage.setItem("language", "en");
 
-export const setLanguage = (lang: string) => {
-	currentLanguage = lang;
 };
 
 const routes: Route[] = [
@@ -67,11 +83,10 @@ const router = async () => {
         }
         setupNavbar();
         setupLogoutHandler();
-        loadLanguage(currentLanguage);
+        loadLanguage(localStorage.getItem("language"));
         return;
     }
 
-    // Handle online game route with room parameter
     if (location.pathname.startsWith('/online-game/')) {
         const roomName = location.pathname.split('/')[2];
         const onlineGameView = new OnlineGameView(roomName);
@@ -81,7 +96,7 @@ const router = async () => {
         }
         setupNavbar();
         setupLogoutHandler();
-        loadLanguage(currentLanguage);
+        loadLanguage(localStorage.getItem("language"));
         return;
     }
     
@@ -113,7 +128,7 @@ const router = async () => {
     setupNavbar();
     setupLogoutHandler();
 
-    loadLanguage(currentLanguage);
+    loadLanguage(localStorage.getItem("language"));
 };
 
 const setupLogoutHandler = () => {
@@ -127,11 +142,40 @@ const setupLogoutHandler = () => {
     }
 };
 
+export async function getUserName(): Promise<string | undefined> {
+    try {
+        const response = await fetch("/api/v1/user/me", {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+            },
+        });
+        if (!response.ok) {
+            throw new Error("Failed to fetch your user");
+        }
+        const result = await response.json();
+        return result.data.user.name;
+    } catch (err) {
+        console.error("Error fetching user data:", err);
+        alert("Failed to fetch user data. Please try again later.");
+        return undefined;
+    }
+}
+
 window.addEventListener("popstate", router);
 (window as any).loadLanguage = loadLanguage;
 
 document.addEventListener("DOMContentLoaded", () => {
-	loadLanguage(currentLanguage);
+    const currentBuildId = window.buildId;
+    const savedBuildId = localStorage.getItem("buildId");
+    if (currentBuildId !== savedBuildId) {
+        localStorage.clear();
+        localStorage.setItem("buildId", currentBuildId);
+    }
+    if (!localStorage.getItem("language"))
+        localStorage.setItem("language", "en");
+	loadLanguage(localStorage.getItem("language"));
 	document.body.addEventListener("click", e => {
 
 		const target = e.target as HTMLElement;

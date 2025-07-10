@@ -21,4 +21,5 @@ chmod -R 755 /var/www/uploads
 
 # Start Nginx
 echo "All services are up. Starting Nginx..."
+echo "\nLocalhost -> https://localhost:8443"
 exec nginx -g "daemon off;"

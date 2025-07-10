@@ -1,4 +1,5 @@
 import { Match } from "../game/match.js";
+import { multiNicknames } from "./home.js";
 
 export class SinglePlayer {
     async getHtml() {
@@ -9,9 +10,11 @@ export class SinglePlayer {
         `;
     }
 
-    onMounted() {
-        const match: Match = new Match(0, "player", "ai");
+    async onMounted() {
+        let username: string = "Player";
+        if (localStorage.getItem("token"))
+            username = multiNicknames[0];
+        const match: Match = new Match(0, username, "AI");
         match.start();
     }
-
 }

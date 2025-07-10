@@ -1,14 +1,8 @@
-import { navigateTo } from "../main.js";
+import { getUserName, navigateTo } from "../main.js";
 
 declare const google: any;
 
 export class LoginView {
-  private googleClientId: string;
-
-  constructor(googleClientId: string) {
-    this.googleClientId = googleClientId;
-  }
-
   async getHtml() {
     return `
       <h2 class="header_custom mt-20 mb-20" data-i18n="login_pong_42">Login Pong 42</h2>
@@ -127,35 +121,23 @@ export class LoginView {
       }
     });
 
-    console.log("GOOGLE_CLIENT_ID:", window.GOOGLE_CLIENT_ID);
-    console.log("google object:", window.google);
-    console.log(import.meta.env);
-
     googleLoginBtn.addEventListener("click", () => {
       window.location.href = "/api/v1/auth/google/redirect";
       google.accounts.id.initialize({
-        client_id: this.googleClientId,
+        client_id: window.GOOGLE_CLIENT_ID,
         callback: async (response: any) => {
           try {
-            const result = await fetch("/api/v1/auth/google-auth", {
+            await fetch("/api/v1/auth/google-auth", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ idToken: response.credential }),
             });
-
-            const res = await result.json();
-
-            if (!result.ok) return this.showMessage(messageDiv, res.message || "Google login failed.");
-
-            localStorage.setItem("token", res.data.token);
-            navigateTo("/");
           } catch (error) {
             console.error("Google login error:", error);
             this.showMessage(messageDiv, "Google login failed.");
           }
         },
       });
-
       google.accounts.id.prompt();
     });
 
@@ -163,7 +145,32 @@ export class LoginView {
     const token = urlParams.get("token");
     if (token) {
       localStorage.setItem("token", token);
+      this.shortenName();
       navigateTo("/");
+    }
+  }
+
+  async shortenName() {
+    let username = await getUserName();
+    if (username && username.length > 8) {
+      try {
+        const response = await fetch("/api/v1/user/me", { 
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json", 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ name: username.slice(0, 8) }),
+            });
+
+            const res = await response.json();
+            if (!response.ok) {
+              throw new Error(res.message || "Failed to update profile");
+            }
+        } catch (err) {
+          console.error("Error updating profile:", err);
+          alert(`Error updating profile: ${err}`);
+        }
     }
   }
 

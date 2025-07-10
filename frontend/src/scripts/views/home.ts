@@ -1,9 +1,8 @@
-import { navigateTo } from "../main.js";
+import { getUserName, navigateTo } from "../main.js";
 import { LiveChatService } from "../services/liveChatService.js";
 
-export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
-
 export let multiNicknames: string[] = ["Player 1", "Player 2"];
+export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 export class HomeView {
 	async getHtml() {
@@ -12,7 +11,7 @@ export class HomeView {
 
 	  <div class="flex flex-col sm:flex-row gap-8">
 		<a href="/singleplayer" data-link class="btn-gamemode" data-i18n="singleplayer">
-			Single player
+			Singleplayer
 		</a>
 		<button id="multiPlayerBtn" class="btn-gamemode" data-i18n="multiplayer"">
 			Multiplayer
@@ -112,6 +111,17 @@ export class HomeView {
 		// Initialize panel position
 		liveChatPanel.style.transform = "translateX(-100%)";
 
+		let username: string | undefined = "Player 1";
+        if (localStorage.getItem("token")) {
+                username = await getUserName();
+            if (!username) {
+                localStorage.removeItem("token");
+            	navigateTo("/");
+                return;
+            }
+            multiNicknames[0] = username;
+			tournamentNicknames[0] = username;
+        }
 
 		//handle tournament popup
 		const tournamentBtn = document.getElementById("tournamentBtn")!;
@@ -135,6 +145,11 @@ export class HomeView {
 				input.type = "text";
 				input.id = `TournamentNickname${i}`;
 				input.className = "text-black p-2 border rounded mb-3 block w-full";
+		
+				if (localStorage.getItem("token") && i === 0) {
+					input.value = tournamentNicknames[0];
+					input.readOnly = true;
+				}
 
 				nicknameInputs.appendChild(label);
 				nicknameInputs.appendChild(input);
@@ -190,6 +205,11 @@ export class HomeView {
 				input.type = "text";
 				input.id = `multiNickname${i}`;
 				input.className = "text-black p-2 border rounded mb-3 block w-full";
+
+				if (localStorage.getItem("token") && i === 0) {
+					input.value = multiNicknames[0];
+					input.readOnly = true;
+				}
 
 				nicknameMultiInputs.appendChild(label);
 				nicknameMultiInputs.appendChild(input);

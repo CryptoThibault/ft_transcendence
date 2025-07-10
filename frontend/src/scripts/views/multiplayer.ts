@@ -15,7 +15,7 @@ export class Multiplayer {
         `;
     }
 
-    onMounted() {
+    async onMounted() {
         const match: Match = new Match(1, multiNicknames[0], multiNicknames[1]);;
         match.start();
     }

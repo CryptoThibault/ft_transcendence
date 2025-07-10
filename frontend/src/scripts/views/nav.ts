@@ -63,7 +63,7 @@ function attachLanguageDropdownEvents() {
 	});
 }
 
-export async function loadLanguage(lang: string) {
+export async function loadLanguage(lang: string | null) {
 	try {
 		const response = await fetch(`/langs/${lang}.json`);
 		if (!response.ok) {

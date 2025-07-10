@@ -1,8 +1,6 @@
-
 interface User {
   id: number;
   name: string;
-  // email: string;
   avatar: string;
   wins: number;
   losses: number;
@@ -15,22 +13,22 @@ export class SearchView {
     async getHtml() {
 		return `
       <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <!-- User List -->
-    <div class="col-span-1">
-      <!-- Search -->
-      <div class="flex items-center space-x-2 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 30" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2a7.5 7.5 0 010 15z" />
-        </svg>
-        <input id="searchInput" type="text" class=" text-black w-full px-3 py-1 rounded bg-gray-200 outline-none" />
-      </div>
+        <!-- User List -->
+        <div class="col-span-1">
+          <!-- Search -->
+          <div class="flex items-center space-x-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 30" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2a7.5 7.5 0 010 15z" />
+            </svg>
+            <input id="searchInput" type="text" class=" text-black w-full px-3 py-1 rounded bg-gray-200 outline-none" />
+          </div>
 
-      <!-- User Cards example -->
-      <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">      
-      </div>
-    </div>
+          <!-- User Cards example -->
+          <div id="userCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">      
+          </div>
+        </div>
 
-  </div>
+      </div>
     `;
 
 	}
@@ -38,9 +36,7 @@ export class SearchView {
   async onMounted() {
     try {
       const myID = await this.getMyID();
-      // console.log("My ID:", myID);
       const friendID = await this.getFriends();
-      // console.log("Friend IDs:", friendID);
       await this.getUserCard(friendID, myID);
     } catch (error) {
       console.error("Error during SearchView onMounted:", error);
@@ -113,9 +109,7 @@ export class SearchView {
       const users: User[] = result?.data?.users || [];
 
       users.forEach((user: User) => {
-        // console.log("All User:", user.id);
         if (user.id !== myID && friendID.indexOf(user.id) === -1) {
-          console.log("User to display:", user.id);
           const card = document.createElement("div");
           card.className = "user-card";
           card.setAttribute("data-username", user.name);
@@ -180,7 +174,6 @@ export class SearchView {
           userCards.appendChild(card);
         }
       });
-      ///search functionality
       const searchInput = document.getElementById("searchInput") as HTMLInputElement;
       searchInput.addEventListener("input", () => {
         const filter = searchInput.value.toLowerCase();
@@ -200,9 +193,6 @@ export class SearchView {
     }
   }
 }
-
-
-
 
 ////////////////////////
 // async onMounted() {

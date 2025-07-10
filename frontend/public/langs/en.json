@@ -47,5 +47,10 @@
     "opponent": "Opponent",
     "status": "Status",
     "save": "Save",
-    "Reject": "Reject"
+    "Reject": "Reject",
+    "pending_request": "Pending Request",
+    "friends": "Friends",
+    "delete_account": "Delete account",
+    "statistics": "Statistics",
+    "choose_avatar": "Choose Avatar"
 }
