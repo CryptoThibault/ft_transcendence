@@ -1,9 +1,6 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 
-//TO-DO delete
-sqlite3.verbose();
-
 export type Database = sqlite3.Database;
 
 const dbPath = path.resolve(__dirname, '../database/livechat.db.sqlite');
@@ -27,7 +24,7 @@ export const db = new sqlite3.Database(dbPath, (err) => {
   receiver_id TEXT NOT NULL,
   message TEXT NOT NULL,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-);`, (err) => {
+);`, (err: Error) => {
         if (err)
             console.log('Error creating blocked_user table')
         else

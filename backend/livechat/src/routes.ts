@@ -4,17 +4,21 @@ import { GetMessagesBody, getMessagesSchema } from "./schemas/createMessage.sche
 import { findAllDbAsync, getDbAsync, runDbAsync } from "./databaseServices";
 import { blockUser } from "./services/msgCmdServices";
 import { CommandResult } from "./interfaces/types";
+import { onlineUserSockets } from "./sockets";
 
 export async function registerRoutes(fastify: FastifyInstance)
 {
-    fastify.get("/", (req,res) => {
+    fastify.get("/api/",(req: FastifyRequest,res: FastifyReply) => {
         return ({message: "hello"})
     })
 
-fastify.get('/messages/:user1/:user2', async (req: FastifyRequest, reply: FastifyReply) => {
-  const { user1, user2 } = req.params as { user1: string; user2: string };
+
+fastify.get('/api/messages/:user2', {preValidation: fastify.authenticate} ,async (req: FastifyRequest, reply: FastifyReply) => {
+  const { user2 } = req.params as { user2: string };
+  const user = req.user as { userName: string };
+
   try {
-    const messages: Message[] = await findAllDbAsync(`SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? and receiver_id = ?)`, [user1,user2,user2,user1])
+    const messages: Message[] = await findAllDbAsync(`SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? and receiver_id = ?)`, [user.userName,user2,user2,user.userName])
     reply.send(messages);
   } catch (err) {
     console.error(err);
@@ -22,15 +26,17 @@ fastify.get('/messages/:user1/:user2', async (req: FastifyRequest, reply: Fastif
   }
 });
 
-fastify.get("/chat", (req, reply) => {
-  reply.type('text/html').sendFile('index.html')
-})
 
-fastify.post("/blockuser",{schema: blockUserSchema}, async (req: FastifyRequest,reply: FastifyReply) => {
-    const { user, blocked_user } = req.body as { user: string, blocked_user: string };
-    const blocker_user = user
+fastify.get('/api/getOnlineFriends', {preValidation: fastify.authenticate} ,async (req: FastifyRequest, reply: FastifyReply) => {
+  const onlineUsers = Array.from(onlineUserSockets.keys());
+  reply.send({ data: onlineUsers });
+});
+
+fastify.post("/blockuser",{schema: blockUserSchema, preValidation: fastify.authenticate}, async (req: FastifyRequest,reply: FastifyReply) => {
+    const { blocked_user } = req.body as { user: string, blocked_user: string };
+    const blocker_user = req.user as { userName: string };
     
-    const result: CommandResult = await blockUser(blocker_user,blocked_user)
+    const result: CommandResult = await blockUser(blocker_user.userName,blocked_user)
 
     if (result.error)
     {

@@ -10,7 +10,8 @@ export default defineConfig({
       usePolling: true
     },
     allowedHosts: [
-      'localhost'
+      'localhost',
+      'f2r10s17'
     ]
   },
   publicDir: 'public',

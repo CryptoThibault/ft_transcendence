@@ -69,31 +69,122 @@ export class Match {
     }
 
    async sendResult() {
-        let route: string;
-        if (this.gameMode === 0)
-            route = "/api/v1/user/singleplayer";
-        else if (this.gameMode === 1)
-            route = "/api/v1/user/multiplayer";
-        else if (this.gameMode === 2)
-            route = "/api/v1/user/tournament";
-        else
-            return console.log("gamemode do not exist");
+        const route = "/api/v1/user/matches";
+
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No authentication token found.");
+                throw new Error("Authentication token is missing."); 
+            }
+
+            // Decode JWT payload to get player1Id
+            const payloadBase64 = token.split(".")[1];
+            let player1Id: string | undefined;
+            try {
+                const payload = JSON.parse(atob(payloadBase64));
+                //console.log("JWT Payload:", payload); 
+                
+                player1Id = payload?.userId;
+                
+                if (!player1Id) {
+                    //console.error("Player1 ID not found in JWT payload. Payload:", payload);
+                    throw new Error("Player1 ID missing in token payload (expected 'userId').");
+                }
+            } catch (Err) {
+                //console.error("Failed to parse JWT payload:", jsonErr);
+                throw new Error("Invalid or malformed JWT token structure.");
+            }
+
+            let player2Id: string | null = null;
+            const originalPlayer2Name = this.player2; 
+
+            try {
+                const userRes = await fetch(`/api/v1/user/dummy?username=${encodeURIComponent(originalPlayer2Name)}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!userRes.ok) {
+                    throw new Error("Player2 not found in database.");
+                }
+                const userData = await userRes.json();
+                player2Id = userData?.data?.user?.id; 
+                if (!player2Id) {
+                    console.warn("Player2 found, but their ID is missing from user data. User data:", userData);
+                    throw new Error("Player2 ID missing from lookup response.");
+                }
+            } catch (err) {
+                // Player2 not found, create a dummy user
+                console.warn(`Player '${originalPlayer2Name}' not found — trying to create dummy.`);
+                const dummyRes = await fetch("/api/v1/user/dummy?username=${encodeURIComponent(originalPlayer2Name)}", {
+                    method: "GET",
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!dummyRes.ok) {
+                    const errorData = await dummyRes.json();
+                    console.error("Failed to create dummy user:", errorData);
+                    throw new Error(errorData.message || "Failed to create dummy user.");
+                }
+
+                const dummyData = await dummyRes.json();
+                player2Id = dummyData?.data?.user?.id; 
+
+                if (!player2Id) {
+                    console.error("Dummy user created, but their ID is missing from response. Dummy data:", dummyData);
+                    throw new Error("Dummy Player ID missing after creation.");
+                }
+                
+                // Update this.player2 name so winner check is correct if dummy wins
+                this.player2 = dummyData?.data?.user?.name || "DummyOpponent";
+            }
+
+            const player1Score = this.score[0];
+            const player2Score = this.score[1];
+
+            // Determine winnerId based on the winner name and the IDs
+            let winnerId: string | null = null;
+            if (this.winner === this.player1) {
+                winnerId = player1Id;
+            } else if (this.winner === originalPlayer2Name || this.winner === this.player2) {
+                winnerId = player2Id;
+            } else {
+                //console.warn(` Winner name '${this.winner}' does not match player1 ('${this.player1}') or player2 ('${this.player2}' / '${originalPlayer2Name}'). Winner ID will be null.`);
+                winnerId = null;
+            }
+
+            if (!player1Id || !player2Id || !winnerId || player1Score === undefined || player2Score === undefined) {
+                console.error("Missing essential match data before sending. Details:", {
+                    player1Id,
+                    player2Id,
+                    winnerId,
+                    player1Score,
+                    player2Score
+                });
+                return; 
+            }
             const response = await fetch(route, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    token: localStorage.getItem("token"),
-                    player2: this.player2,
-                    score1: this.score[1],
-                    score2: this.score[2],
-                    userWin: this.winner === this.player1 ? true : false
-                }),
+                    player1Id,
+                    player2Id,
+                    winnerId,
+                    score: `${player1Score}-${player2Score}`
+                })
             });
 
-            if (!response.ok) throw new Error("Failed to send match result");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to send match result due to server error.");
+            }
+            //console.log("Match result sent successfully!");
+
         } catch (err) {
-            console.error("Send error:", err);
+            console.error("Send result operation failed:", err);
         }
     }
 }

@@ -1,5 +1,6 @@
 import { getDbAsync, runDbAsync } from "../databaseServices";
 import { CommandResult } from "../interfaces/types";
+import { gameService } from "./gameService";
 
 export async function blockUser(blocker_user: string, blocked_user: string): Promise <CommandResult>
 {
@@ -7,7 +8,7 @@ export async function blockUser(blocker_user: string, blocked_user: string): Pro
     if (!blocked)
     {
         try {
-            await runDbAsync(`INSERT INTO blocked_users (blocked_id, blocker_id) VALUES (?,?)`, [blocker_user, blocked_user])
+            await runDbAsync(`INSERT INTO blocked_users (blocked_id, blocker_id) VALUES (?,?)`, [blocked_user, blocker_user])
             return ({error:null, replyMessage: "User is succesfully blocked.",  isCommand: true})
         } catch (error) {
             return ({error: error as Error, replyMessage: "Error occured while inserting blocked_users", isCommand: true})
@@ -39,6 +40,64 @@ export async function unblockUser(blocker_user: string, blocked_user: string): P
     }
 }
 
+export async function inviteToGame(from: string, to: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.createGameInvitation(from, to);
+        return {
+            error: null,
+            replyMessage: `Game invitation sent to ${to}. Room: ${invitation.roomName}`,
+            isCommand: true,
+            invitationId: invitation.id
+        };
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to send game invitation",
+            isCommand: true,
+        };
+    }
+}
+
+export async function acceptGameInvitation(invitationId: string, username: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.acceptInvitation(invitationId, username);
+        return {
+            error: null,
+            replyMessage: `Game invitation accepted! Room: ${invitation.roomName}`,
+            isCommand: true,
+            invitationId: invitation.id
+        };
+        
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to accept game invitation",
+            isCommand: true,
+        };
+    }
+}
+
+export async function declineGameInvitation(invitationId: string, username: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.declineInvitation(invitationId, username);
+        return {
+            error: null,
+            replyMessage: "Game invitation declined.",
+            isCommand: true,
+            invitationId: invitation.id
+        };
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to decline game invitation",
+            isCommand: true,
+        };
+    }
+}
+
 export async function createRoomInRoomService(): Promise<CommandResult> 
 {
     try {
@@ -48,7 +107,10 @@ export async function createRoomInRoomService(): Promise<CommandResult>
         "Content-Type": "application/json",
       },
     });
-    //TO-DO: if(!res.ok)
+    if(!res.ok)
+    {
+        throw Error;
+    }
     const data = await res.json();
     return {
       error: null,
@@ -58,7 +120,7 @@ export async function createRoomInRoomService(): Promise<CommandResult>
     } catch (error: any) {
         return {
       error: error,
-      replyMessage: "Error",
+      replyMessage: "Error creating room",
       isCommand: true,
     };
     }
@@ -66,23 +128,24 @@ export async function createRoomInRoomService(): Promise<CommandResult>
 
 export async function msgCmdCheck(msg: string, sender_id: string, receiver_id: string): Promise<CommandResult>
 {
+    console.log(`msgCmdCheck called with: msg="${msg}", sender_id="${sender_id}", receiver_id="${receiver_id}"`);
+    
     if (msg.startsWith('/block'))
     {
-        console.error("BLOCK TRIGERERERED")
         const result: CommandResult = await blockUser(sender_id, receiver_id)
         return result;
     }
     else if (msg.startsWith('/pardon'))
     {
         const result: CommandResult = await unblockUser(sender_id, receiver_id)
-        console.error("PARDON TRIGERERERED")
         result.isCommand = true;
         return result;
     }
     else if (msg.startsWith('/invite'))
     {
-        const result = createRoomInRoomService()
-        console.error("INVITE TRIGERERERED")
+        console.log(`Processing /invite command from ${sender_id} to ${receiver_id}`);
+        const result = await inviteToGame(sender_id, receiver_id)
+        console.log(`Invite result:`, result);
         return result;
     }
     else

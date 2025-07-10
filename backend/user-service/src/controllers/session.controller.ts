@@ -6,7 +6,7 @@ import { Match } from '../models/match.models.js';
 import { getDb } from '../plugins/sqlite.js';
 import fs from 'fs';
 import path from 'path';
-import { AcceptFriendshipRequestRoute } from '../types/fastify.js';
+import crypto from 'crypto';
 
 interface UpdateUserRequestBody {
   name: string;
@@ -38,6 +38,37 @@ export const currentUser = async (req: FastifyRequest, res: FastifyReply) => {
     }
 };
 
+
+export const addUserLocally = async (req: FastifyRequest<{ Body: UpdateUserRequestBody }>,
+  res: FastifyReply) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).send({ success: false, message: 'Unauthorized' });
+        }
+        const { name } = req.body;
+        const newLocalUserName = name || `LocalPlayer_${Math.random().toString(36).substring(7)}`;
+        const newLocalUser = {
+            name: newLocalUserName,
+            email: `local_${Date.now()}@example.invalid`,
+        };
+        const createdUser = await User.create(newLocalUser);
+        if (!createdUser)
+            return res.status(500).send({ success: false, message: 'Failed to create user' });
+        return res.status(201).send({
+            success: true,
+            message: 'Local user created successfully',
+            data: { user: createdUser },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+
+
 export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUserRequestBody }>,
   res: FastifyReply) => {
     try {
@@ -64,6 +95,78 @@ export const updateCurrentUserName = async (req: FastifyRequest<{ Body: UpdateUs
         });
     }
 };
+
+interface localOpponentQuery {
+    username: string;
+}
+
+export async function localOpponent(request: FastifyRequest<{ Querystring: localOpponentQuery }>, reply: FastifyReply) {
+    try {
+        const username = request.query.username as string;
+
+        if (!username) {
+            return reply.status(400).send({
+                success: false,
+                message: 'Username query parameter is required to get or create a dummy opponent.'
+            });
+        }
+
+        let user = await User.findByName(username);
+
+        if (user) {
+            console.log(`Backend: Found existing user (or dummy) '${username}'.`);
+            return reply.status(200).send({
+                success: true,
+                message: `User '${username}' found.`,
+                data: { user: User.sanitize(user) }
+            });
+        }
+
+        const uniqueEmail = `dummy_${username}_${crypto.randomBytes(4).toString('hex')}@example.com`; 
+        const newDummyData = {
+            name: username,
+            email: uniqueEmail,
+            avatar: 'default-dummy-avatar.png',
+            wins: 0,
+            losses: 0,
+            onlineStatus: false,
+            // isDummy: true
+        };
+
+        const createdDummy = await User.create(newDummyData);
+
+        if (createdDummy) {
+            console.log(`Backend: Created new dummy user '${username}' with ID ${createdDummy.id}.`);
+            return reply.status(201).send({
+                success: true,
+                message: `Dummy user '${username}' created successfully.`,
+                data: { user: User.sanitize(createdDummy) }
+            });
+        } else {
+            console.error(`Backend: Failed to create dummy user '${username}' in database.`);
+            return reply.status(500).send({
+                success: false,
+                message: 'Failed to create dummy user in database.'
+            });
+        }
+
+    } catch (error: unknown) {
+        console.error('Backend: Error in getOrCreateDummyOpponent:', error);
+
+        let errorMessage = 'An unknown error occurred.';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        }
+
+        reply.status(500).send({
+            success: false,
+            message: 'Internal server error during dummy user operation.',
+            error: errorMessage
+        });
+    }
+}
 
 export const getAllUsers = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
@@ -219,51 +322,24 @@ export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
     }
 };
 
-// Adding this
 export const acceptFriendRequest = async (req: FastifyRequest, res: FastifyReply) => {
     const db = getDb();
     await db.run('BEGIN TRANSACTION;');
     try {
         const userId = req.user?.id;
-        if (!userId)
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
-        const mainUser = await User.findById(userId);
-        if (!mainUser)
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        const friendships = await Friendship.findFriendsForUser(userId);
-        const friendIds: number[] = [];
-        friendships.forEach(f => {
-            //bince changed here if (f.status === 'accepted') 
-            if (f.status === 'accepted') {
-                if (f.userId === userId) {
-                    friendIds.push(f.friendId);
-                } else {
-                    friendIds.push(f.userId);
-                }
-            }
-        });
-        const friendsDetails = await Promise.all(
-            friendIds.map(id => User.findById(id))
-        );
-        const actualFriends = friendsDetails.filter(Boolean);
-        return res.status(200).send({
-            success: true,
-            message: 'Friends list retrieved successfully',
-            data: actualFriends,
-        });
-//         const { requesterId } = req.body as { requesterId: number };
-//         if (!userId || !requesterId) {
-//             await db.run('ROLLBACK;');
-//             return res.status(400).send({ success: false, message: 'Invalid user or requester ID.' });
-//         }
-//         const request = await Friendship.findByUserAndFriend(requesterId, userId);
-//         if (!request || request.status !== 'pending') {
-//             await db.run('ROLLBACK;');
-//             return res.status(404).send({ success: false, message: 'Friend request not found or already handled.' });
-//         }
-//         await Friendship.updateStatus(request.id!, 'accepted');
-//         await db.run('COMMIT;');
-//         return res.status(200).send({ success: true, message: 'Friend request accepted.' });
+        const { requesterId } = req.body as { requesterId: number };
+        if (!userId || !requesterId) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({ success: false, message: 'Invalid user or requester ID.' });
+        }
+        const request = await Friendship.findByUserAndFriend(requesterId, userId);
+        if (!request || request.status !== 'pending') {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({ success: false, message: 'Friend request not found or already handled.' });
+        }
+        await Friendship.updateStatus(request.id!, 'accepted');
+        await db.run('COMMIT;');
+        return res.status(200).send({ success: true, message: 'Friend request accepted.' });
     } catch (error) {
         await db.run('ROLLBACK;');
         console.error('Error accepting friend request:', error);
@@ -273,92 +349,6 @@ export const acceptFriendRequest = async (req: FastifyRequest, res: FastifyReply
         });
     }
 };
-
-//bince added this
-export const getFriendsPendingList = async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId)
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
-        const mainUser = await User.findById(userId);
-        if (!mainUser)
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        const friendships = await Friendship.findFriendsForUser(userId);
-        const friendIds: number[] = [];
-        friendships.forEach(f => {
-            if (f.status === 'pending') {
-                if (f.userId === userId) {
-                    friendIds.push(f.friendId);
-                } else {
-                    friendIds.push(f.userId);
-                }
-            }
-        });
-        const friendsDetails = await Promise.all(
-            friendIds.map(id => User.findById(id))
-        );
-        const actualFriends = friendsDetails.filter(Boolean);
-        return res.status(200).send({
-            success: true,
-            message: 'Friends list retrieved successfully',
-            data: actualFriends,
-        });
-    } catch (error) {
-        console.error('Error getting friends list:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
-};
-//bince added this
-export const acceptFriendshipRequest = async (req: FastifyRequest<AcceptFriendshipRequestRoute>, res: FastifyReply) =>
-{
-       const db = getDb();
-    await db.run('BEGIN TRANSACTION;');
-    try {
-        const userId = req.user?.id;
-        const senderId = req.body.senderId
-        if (!senderId)
-            throw Error('no sender id')
-        if (!userId)
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
-        const mainUser = await User.findById(userId);
-        if (!mainUser)
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        const friendship = await Friendship.findByUserAndFriend(userId, senderId);
-      await db.run('COMMIT;');
-        if (!friendship)
-        {
-            return res.status(404).send({
-            success: false,
-            message: 'No request found',
-        });
-        
-        }
-
-        if (typeof friendship.id !== 'number') {
-    return res.status(500).send({
-        success: false,
-        message: 'Invalid friendship record: Missing ID.',
-    });
-}
-        await Friendship.updateStatus(friendship.id, 'accepted');
-
-        return res.status(200).send({
-            success: true,
-            message: 'Friend request accepted successfully',
-        });
-    } catch (error) {
-        await db.run('ROLLBACK;');
-
-        console.error('Error getting friends list:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
-}
 
 export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
@@ -411,6 +401,43 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 	}
 };
 
+export const getFriendsPendingList = async (req: FastifyRequest, res: FastifyReply) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        const mainUser = await User.findById(userId);
+        if (!mainUser)
+            return res.status(404).send({ success: false, message: 'User not found.' });
+        const friendships = await Friendship.findFriendsForUser(userId);
+        const friendIds: number[] = [];
+        friendships.forEach(f => {
+            if (f.status === 'pending') {
+                if (f.userId === userId) {
+                    friendIds.push(f.friendId);
+                } else {
+                    friendIds.push(f.userId);
+                }
+            }
+        });
+        const friendsDetails = await Promise.all(
+            friendIds.map(id => User.findById(id))
+        );
+        const actualFriends = friendsDetails.filter(Boolean);
+        return res.status(200).send({
+            success: true,
+            message: 'Friends list retrieved successfully',
+            data: actualFriends,
+        });
+    } catch (error) {
+        console.error('Error getting friends list:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
     console.log('User service: Incoming request body for recordMatch:', req.body);
     const db = getDb();
@@ -426,6 +453,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             winnerId: number;
             score: string;
         };
+
         if (!player2Id || !winnerId || !score) {
             await db.run('ROLLBACK;');
             return res.status(400).send({
@@ -433,6 +461,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Missing match data: player2Id, winnerId, and score are required.',
             });
         }
+
         const scoreParts = score.split('-');
         if (scoreParts.length !== 2) {
             await db.run('ROLLBACK;');
@@ -441,6 +470,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Invalid score format. Use "number-number", e.g., "10-8"',
             });
         }
+
         const [player1Score, player2Score] = scoreParts.map(Number);
         if (isNaN(player1Score) || isNaN(player2Score)) {
             await db.run('ROLLBACK;');
@@ -449,6 +479,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Score must contain valid numbers.',
             });
         }
+
         if (![player1Id, player2Id].includes(winnerId)) {
             await db.run('ROLLBACK;');
             return res.status(400).send({
@@ -458,6 +489,9 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
         }
         const player1 = await User._findByIdRaw(player1Id);
         const player2 = await User._findByIdRaw(player2Id);
+        const player2Data = await User._findByIdRaw(player2Id);
+        const player2NameFromDb = player2Data?.name;
+
         if (!player1 || !player2) {
             await db.run('ROLLBACK;');
             return res.status(404).send({
@@ -465,7 +499,6 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'One or both players not found.',
             });
         }
-        // --- Create Match Record ---
         const match = await Match.create({
             player1Id,
             player2Id,
@@ -474,22 +507,24 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             player2Score,
             playedAt: new Date().toISOString(),
         });
+
         if (!match.id) {
-             await db.run('ROLLBACK;');
-             return res.status(500).send({
-                 success: false,
-                 message: 'Failed to record match due to database issue.',
-             });
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to record match due to database issue.',
+            });
         }
         // --- Update Player Stats ---
         let updatedPlayer1Wins = player1.wins ?? 0;
         let updatedPlayer1Losses = player1.losses ?? 0;
         let updatedPlayer2Wins = player2.wins ?? 0;
         let updatedPlayer2Losses = player2.losses ?? 0;
+
         if (winnerId === player1Id) {
             updatedPlayer1Wins += 1;
             updatedPlayer2Losses += 1;
-        } else { 
+        } else {
             updatedPlayer2Wins += 1;
             updatedPlayer1Losses += 1;
         }
@@ -497,10 +532,132 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             wins: updatedPlayer1Wins,
             losses: updatedPlayer1Losses,
         });
+
         const player2Updated = await User.update(player2Id, {
             wins: updatedPlayer2Wins,
             losses: updatedPlayer2Losses,
         });
+
+        if (!player1Updated || !player2Updated) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to update player stats.',
+            });
+        }
+        await db.run('COMMIT;');
+        return res.status(201).send({
+            success: true,
+            message: 'Match recorded successfully',
+            data: match,
+        });
+    } catch (error) {
+        await db.run('ROLLBACK;');
+        console.error('Error recording match:', error);
+        return res.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+};
+//bince added
+export const recordMatchServer = async (req: FastifyRequest, res: FastifyReply) => {
+    console.log('User service: Incoming request body for recordMatch:', req.body);
+    const db = getDb();
+    await db.run('BEGIN TRANSACTION;');
+    try {
+        const { player1Id, player2Id, winnerId, score } = req.body as {
+            player1Id: number
+            player2Id: number;
+            winnerId: number;
+            score: string;
+        };
+
+        if (!player2Id || !winnerId || !score) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Missing match data: player2Id, winnerId, and score are required.',
+            });
+        }
+
+        const scoreParts = score.split('-');
+        if (scoreParts.length !== 2) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Invalid score format. Use "number-number", e.g., "10-8"',
+            });
+        }
+
+        const [player1Score, player2Score] = scoreParts.map(Number);
+        if (isNaN(player1Score) || isNaN(player2Score)) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Score must contain valid numbers.',
+            });
+        }
+
+        if (![player1Id, player2Id].includes(winnerId)) {
+            await db.run('ROLLBACK;');
+            return res.status(400).send({
+                success: false,
+                message: 'Winner ID must match one of the players.',
+            });
+        }
+        const player1 = await User._findByIdRaw(player1Id);
+        const player2 = await User._findByIdRaw(player2Id);
+        const player2Data = await User._findByIdRaw(player2Id);
+        const player2NameFromDb = player2Data?.name;
+
+        if (!player1 || !player2) {
+            await db.run('ROLLBACK;');
+            return res.status(404).send({
+                success: false,
+                message: 'One or both players not found.',
+            });
+        }
+        const match = await Match.create({
+            player1Id,
+            player2Id,
+            winnerId,
+            player1Score,
+            player2Score,
+            playedAt: new Date().toISOString(),
+        });
+
+        if (!match.id) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to record match due to database issue.',
+            });
+        }
+        // --- Update Player Stats ---
+        let updatedPlayer1Wins = player1.wins ?? 0;
+        let updatedPlayer1Losses = player1.losses ?? 0;
+        let updatedPlayer2Wins = player2.wins ?? 0;
+        let updatedPlayer2Losses = player2.losses ?? 0;
+
+        if (winnerId === player1Id) {
+            updatedPlayer1Wins += 1;
+            updatedPlayer2Losses += 1;
+        } else {
+            updatedPlayer2Wins += 1;
+            updatedPlayer1Losses += 1;
+        }
+
+        const player1Updated = await User.update(player1Id, {
+            wins: updatedPlayer1Wins,
+            losses: updatedPlayer1Losses,
+        });
+
+        const player2Updated = await User.update(player2Id, {
+            wins: updatedPlayer2Wins,
+            losses: updatedPlayer2Losses,
+        });
+
         if (!player1Updated || !player2Updated) {
             await db.run('ROLLBACK;');
             return res.status(500).send({
@@ -526,15 +683,38 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
 
 export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyReply) => {
     try {
-        if (!req.user?.id)
+        if (!req.user?.id) {
             return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
+        }
         const userId = req.user.id;
-        const matches = await Match.findMatchesByPlayer(userId);
-        console.log("Retrieved Matches:", matches);
+        const rawMatches = await Match.findMatchesByPlayer(userId);
+        const enhancedMatches = await Promise.all(rawMatches.map(async (match) => {
+            let opponentId: number;
+            let opponentName: string = 'Unknown Player';
+
+            if (match.player1Id === userId) {
+                opponentId = match.player2Id;
+            } else {
+                opponentId = match.player1Id;
+            }
+            const opponentUser = await User._findByIdRaw(opponentId);
+            if (opponentUser) {
+                opponentName = opponentUser.name;
+            }
+            const isWinner = match.winnerId === userId;
+            return {
+                ...match,
+                opponentId,
+                opponentName,
+                isWinner,
+            };
+        }));
+
+        console.log("Retrieved Matches (Enhanced):", enhancedMatches);
         return res.status(200).send({
             success: true,
             message: 'Match history fetched successfully',
-            data: matches,
+            data: enhancedMatches,
         });
     } catch (error) {
         console.error('Error fetching current user matches:', error);
@@ -549,18 +729,42 @@ export const getUserMatchHistory = async (req: FastifyRequest, res: FastifyReply
     try {
         const { id } = req.params as { id: string };
         const userId = parseInt(id, 10);
+
         if (isNaN(userId)) {
             return res.status(400).send({
                 success: false,
                 message: 'Invalid user ID format.',
             });
         }
-        const matches = await Match.findMatchesByPlayer(userId);
+        const rawMatches = await Match.findMatchesByPlayer(userId);
+        const enhancedMatches = await Promise.all(rawMatches.map(async (match) => {
+            let opponentId: number;
+            let opponentName: string = 'Unknown Player';
+
+            if (match.player1Id === userId) {
+                opponentId = match.player2Id;
+            } else {
+                opponentId = match.player1Id;
+            }
+            const opponentUser = await User._findByIdRaw(opponentId);
+            if (opponentUser) {
+                opponentName = opponentUser.name;
+            }
+            const isWinner = match.winnerId === userId;
+            return {
+                ...match,
+                opponentId,
+                opponentName,
+                isWinner,
+            };
+        }));
+
         return res.status(200).send({
             success: true,
             message: 'Match history fetched successfully',
-            data: matches,
+            data: enhancedMatches,
         });
+
     } catch (error) {
         console.error('Error fetching user match history:', error);
         return res.status(500).send({
@@ -623,89 +827,39 @@ export const deleteCurrentUser = async (req: FastifyRequest, res: FastifyReply) 
     }
 };
 
-export const deleteAvatar = async (req: FastifyRequest, res: FastifyReply) => {
+export const deleteUserById = async (req: FastifyRequest, res: FastifyReply) => {
     const db = getDb();
     await db.run('BEGIN TRANSACTION;');
-
     try {
-        if (!req.user || !req.user.id) {
+        const { id } = req.params as { id: string };
+        const userIdToDelete = parseInt(id, 10);
+        if (isNaN(userIdToDelete)) {
             await db.run('ROLLBACK;');
-            return res.status(401).send({ success: false, message: 'Unauthorized' });
+            return res.status(400).send({ success: false, message: 'Invalid user ID format in request parameters.' });
         }
-
-        const userId = req.user.id;
-        const user = await User._findByIdRaw(userId);
-
-        if (!user || !user.avatar) {
+        const userExists = await User._findByIdRaw(userIdToDelete);
+        if (!userExists) {
             await db.run('ROLLBACK;');
-            return res.status(404).send({ success: false, message: 'Avatar not found.' });
+            return res.status(404).send({ success: false, message: 'User not found.' });
         }
-
-        const avatarPath = path.resolve('./uploads', user.avatar);
-        if (fs.existsSync(avatarPath)) {
-            fs.unlinkSync(avatarPath);
-        }
-
-        //const updated = await User.update(userId, { avatar: undefined });
-        const updated = await User.update(userId, { avatar: null });
-        console.log('User.update() result:', updated);
-
-        if (!updated) {
+        await Friendship.deleteFriendshipsByUser(userIdToDelete);
+        await Match.deleteMatchesByPlayer(userIdToDelete);
+        const userDeleted = await User.delete(userIdToDelete);
+        if (!userDeleted) {
             await db.run('ROLLBACK;');
-            return res.status(500).send({ success: false, message: 'Failed to remove avatar.' });
+            return res.status(500).send({ success: false, message: 'Failed to delete user account from database.' });
         }
-
         await db.run('COMMIT;');
-        return res.status(200).send({ success: true, message: 'Avatar removed successfully.' });
-
+        return res.status(200).send({
+            success: true,
+            message: `User account with ID ${userIdToDelete} deleted successfully`,
+        });
     } catch (error) {
         await db.run('ROLLBACK;');
-        console.error('Error removing avatar:', error);
+        console.error('Error deleting user by ID:', error);
         return res.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',
         });
     }
 };
-
-
-/*export const deleteAvatar = async (req: FastifyRequest, res: FastifyReply) => {
-    const db = getDb();
-    await db.run('BEGIN TRANSACTION;');
-    try {
-        if (!req.user || !req.user.id) {
-            await db.run('ROLLBACK;');
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available.' });
-        }
-        const userId = req.user.id;
-        const user = await User._findByIdRaw(userId);
-        if (!user) {
-            await db.run('ROLLBACK;');
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        }
-        if (user.avatar) {
-            const avatarPath = path.resolve('./uploads', user.avatar);
-            if (fs.existsSync(avatarPath)) {
-                fs.unlinkSync(avatarPath);
-            }
-        }
-        const updated = await User.update(userId, { avatar: undefined });
-        if (!updated) {
-            await db.run('ROLLBACK;');
-            return res.status(500).send({ success: false, message: 'Failed to remove avatar.' });
-        }
-        await db.run('COMMIT;');
-        return res.status(200).send({
-            success: true,
-            message: 'Avatar deleted successfully',
-        });
-    } catch (error) {
-        await db.run('ROLLBACK;');
-        console.error('Error deleting avatar:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
-};*/
-

@@ -86,8 +86,7 @@ export class ProfileView {
         </button>
         </div>
         <div>
-        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="username">Username</label>
-        <input type="text" id="editUsername" class="w-full border rounded p-2" required />
+        <label for="editUsername" class="text-left block font-semibold text-black mb-1" data-i18n="email">Username</label> <input type="text" id="editUsername" class="w-full border rounded p-2" required />
         </div>
         <div class="flex justify-end gap-2 mt-4">
         <button type="button" id="cancelEditBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" data-i18n="cancel">Cancel</button>
@@ -266,10 +265,6 @@ export class ProfileView {
         
         popup.classList.add("hidden");
         popup.classList.remove("flex");
-        
-        // alert("Profile updated!");
-        // await this.loadFriends();
-        // await this.loadHistory(); 
 
       } catch (err) {
         console.error("Error updating profile:", err);
@@ -281,12 +276,6 @@ export class ProfileView {
   private async loadFriends() {
     const friendsContainer = document.getElementById("friendsContainer")!;
     const pendingRequestContainer = document.getElementById("pendingRequest")!;
-    // const noFriendsMessage = document.getElementById("noFriendsMessage")!;
-    // friendsContainer.innerHTML = ''; 
-    // if (!this.isMyProfile) {
-    //   noFriendsMessage.classList.remove("hidden");
-    //   return;
-    // }
     try {
       const response = await fetch("/api/v1/user/me/friends", { 
         method: "GET",
@@ -304,14 +293,6 @@ export class ProfileView {
 
       const friendsPending = resJson.data.pendingReceived;
       const friendsSent = resJson.data.pendingSent;
-
-      // console.log("Friends:", friends);
-      // if (!friends || friends.length === 0) {
-      //   //noFriendsMessage.classList.remove("hidden");
-      //   return;
-      // }
-
-    //  noFriendsMessage.classList.add("hidden");
      
      friendsPending.forEach((friend: any) => {
         const friendCard = document.createElement('div');
@@ -337,7 +318,7 @@ export class ProfileView {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ senderId: friend.id }),
+              body: JSON.stringify({ requesterId: friend.id }),
             });
             const resJson = await response.json();
             if (!response.ok || !resJson.success) {
@@ -413,60 +394,57 @@ export class ProfileView {
     } catch (error: any) {
       console.error("Error loading friends:", error);
       friendsContainer.innerHTML = `<p class="text-red-500">Error loading friends: ${error.message || error}</p>`;
-      // noFriendsMessage.classList.remove("hidden");
     }
   }
 
   private async loadHistory() {
     const userId = this.isMyProfile ? 'me' : this.username;
     const url = `/api/v1/user/${userId}/matches`;
+
     try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const resJson = await response.json();
+        const response = await fetch(url, {
+            headers: {  
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        const resJson = await response.json();
+        const tbody = document.getElementById("historyTableBody")!;
+        const noHistoryMsg = document.getElementById("noHistoryMessage")!;
 
-      const tbody = document.getElementById("historyTableBody")!;
-      const noHistoryMsg = document.getElementById("noHistoryMessage")!;
+        if (!response.ok || !resJson.success) {
+            throw new Error(resJson.message || "Failed to load match history");
+        }
 
-      if (!response.ok || !resJson.success) {
-        throw new Error(resJson.message || "Failed to load match history");
-      }
-      const matches = resJson.data;
+        const matches = resJson.data;
+        if (!matches || matches.length === 0) {
+            tbody.innerHTML = "";
+            noHistoryMsg.classList.remove("hidden");
+            return;
+        }
 
-      if (!matches || matches.length === 0) {
+        noHistoryMsg.classList.add("hidden");
         tbody.innerHTML = "";
-        noHistoryMsg.classList.remove("hidden");
-        return;
-      }
 
-      noHistoryMsg.classList.add("hidden");
-      tbody.innerHTML = "";
-      for (const match of matches) {
-        const playedAt = new Date(match.playedAt).toLocaleString();
-        const displayOpponent = this.isMyProfile ? (match.player1Id === undefined ? match.player2Name : match.player1Name) :
-                                (match.player1Name === this.username ? match.player2Name : match.player1Name);
-
-        //const score = `${match.score1} - ${match.score2}`;
-        const score = `${match.player1Score} - ${match.player2Score}`;
-        const status = match.status || "";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="px-4 py-2 text-center">${playedAt}</td>
-          <td class="px-4 py-2 text-center">${displayOpponent}</td>
-          <td class="px-4 py-2 text-center">${score}</td>
-          <td class="px-4 py-2 text-center">${status}</td>
-        `;
-        tbody.appendChild(tr);
-      }
+        for (const match of matches) {
+            const playedAt = new Date(match.playedAt).toLocaleString();
+            const displayOpponent = match.opponentName;
+            const score = `${match.player1Score} - ${match.player2Score}`;
+            const status = match.isWinner ? "Win" : "Loss";
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="px-4 py-2 text-center">${playedAt}</td>
+                <td class="px-4 py-2 text-center">${displayOpponent}</td>
+                <td class="px-4 py-2 text-center">${score}</td>
+                <td class="px-4 py-2 text-center">${status}</td>
+            `;
+            tbody.appendChild(tr);
+        }
     } catch (error: any) {
-      console.error("Error loading match history:", error);
-      alert(`Error loading match history: ${error.message || error}`);
+        console.error("Error loading match history:", error);
+        alert(`Error loading match history: ${error.message || error}`);
     }
   }
+
 
   private async deleteUser() {
     const deleteAccountBtn = document.getElementById("deleteAccountBtn")!;

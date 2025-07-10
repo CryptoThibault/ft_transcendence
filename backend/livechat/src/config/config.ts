@@ -1,3 +1,7 @@
-import dotenv from 'dotenv';
-import path from 'path';
-dotenv.config(); 
+import { config } from 'dotenv';
+
+config({ path: `.env.development.local` });
+
+export const {
+    JWT_SECRET
+} = process.env;

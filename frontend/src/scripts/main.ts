@@ -9,6 +9,19 @@ import { SignupView } from "./views/signup.js";
 import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
+import { OnlineGameView } from "./views/onlineGame.js";
+
+declare global {
+	interface Window {
+		GOOGLE_CLIENT_ID: string;
+		google: any;
+	}
+
+	interface ImportMeta {
+		env: any;
+	}
+}
+window.GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 declare global {
 	interface Window {
@@ -41,12 +54,14 @@ export const setLanguage = (lang: string | null) => {
 const routes: Route[] = [
 	{ path: "/", view: HomeView },
 	{ path: "/login", view: LoginView },
+//	{ path: "/login", view: () => new LoginView(import.meta.env.VITE_GOOGLE_CLIENT_ID) },
 	{ path: "/signup", view: SignupView },
 	{ path: "/profile", view: ProfileView, protected: true },
 	{ path: "/search", view: SearchView, protected: true },
 	{path: "/singleplayer", view: SinglePlayer},
 	{path: "/multiplayer", view: Multiplayer},
 	{path: "/tournament", view: TournamentView},
+	{path: "/online-game", view: OnlineGameView},
 ];
 
 export const navigateTo = (url: string) => {
@@ -65,6 +80,19 @@ const router = async () => {
         document.querySelector("#mainContent")!.innerHTML = await profileView.getHtml();
         if (typeof profileView.onMounted === "function") {
             await profileView.onMounted();
+        }
+        setupNavbar();
+        setupLogoutHandler();
+        loadLanguage(localStorage.getItem("language"));
+        return;
+    }
+
+    if (location.pathname.startsWith('/online-game/')) {
+        const roomName = location.pathname.split('/')[2];
+        const onlineGameView = new OnlineGameView(roomName);
+        document.querySelector("#mainContent")!.innerHTML = await onlineGameView.getHtml();
+        if (typeof onlineGameView.onMounted === "function") {
+            await onlineGameView.onMounted();
         }
         setupNavbar();
         setupLogoutHandler();

@@ -127,12 +127,11 @@ export class LoginView {
         client_id: window.GOOGLE_CLIENT_ID,
         callback: async (response: any) => {
           try {
-            const result = await fetch("/api/v1/auth/google-auth", {
+            await fetch("/api/v1/auth/google-auth", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ idToken: response.credential }),
             });
-            
           } catch (error) {
             console.error("Google login error:", error);
             this.showMessage(messageDiv, "Google login failed.");

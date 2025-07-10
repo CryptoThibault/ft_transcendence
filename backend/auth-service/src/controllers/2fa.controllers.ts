@@ -8,8 +8,8 @@ import { findUserByIdWithSensitiveData, updateUserTwoFactor } from '../services/
 import { JWT_SECRET } from '../config/env.js';
 import { AuthUser, SafeAuthUser } from '../models/auth.models.js';
 import { getStoredOtp, storeOtp } from '../services/otp.service.js'; // adding this
-//import { sendOtpEmail } from '../utils/email.js';
-import { sendOtpEmail } from '../services/email.service.js';
+import { sendOtpEmail } from '../utils/email.js';
+//import { sendOtpEmail } from '../services/email.service.js';
 
 
 interface AuthenticatedRequest extends FastifyRequest {
@@ -126,7 +126,7 @@ export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
 		}
 	}
 	// Issue final session token
-	const finalToken = jwt.sign({ userId: user.id }, secret, { expiresIn: '1h' });
+	const finalToken = jwt.sign({ userId: user.id, userName: user.name }, secret, { expiresIn: '1h' });
 	const safeUser: SafeAuthUser = {
 		id: user.id,
 		name: user.name,
@@ -146,7 +146,7 @@ export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
 };
 
 // controllers/2fa-method.controller.ts
-/*export const sendOtpViaMethod = async (req: FastifyRequest, res: FastifyReply) => {
+export const sendOtpViaMethod = async (req: FastifyRequest, res: FastifyReply) => {
   const { method, destination } = req.body as { method: 'sms' | 'email'; destination: string };
 
   if (!method || !destination) {
@@ -158,7 +158,7 @@ export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
     success: true,
     message: `OTP sent via ${method} to ${destination}.`
   });
-};*/
+};
 
 /*export const sendOtpViaMethod = async (req: FastifyRequest, res: FastifyReply) => {
   const { method, destination } = req.body as { method: 'sms' | 'email'; destination: string };
@@ -317,8 +317,7 @@ export const verify2FA = async (req: FastifyRequest, res: FastifyReply) => {
 		}
 	}
 	const finalToken = jwt.sign(
-		//bince changed
-		{ userId: user.id, userName: user.name},
+		{ userId: user.id },
 		secret,
 		{ expiresIn: '1h' }
 	);

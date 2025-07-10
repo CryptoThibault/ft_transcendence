@@ -16,6 +16,7 @@
     "axios": "^1.6.0",
     "better-sqlite3": "^11.0.0",
     "@fastify/multipart": "^7.0.0",
+    "@fastify/cors": "^8.2.1",
     "bcrypt": "^5.1.0",
     "dotenv": "^16.3.0",
     "jsonwebtoken": "^9.0.0",

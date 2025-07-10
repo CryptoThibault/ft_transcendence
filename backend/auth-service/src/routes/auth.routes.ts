@@ -1,6 +1,6 @@
 //backend/auth-service/src/routes/auth.routes.ts
 import { FastifyInstance } from 'fastify';
-import { signUp, signIn/*, signOut*/ } from '../controllers/auth.controllers.js';
+import { signUp, signIn, /*signOut*/ } from '../controllers/auth.controllers.js';
 import { generate2FA, verify2FA } from '../controllers/2fa.controllers.js';
 import { authorizeSkip2FA } from '../middlewares/auth.middleware.js';
 import { googleAuth ,redirectToGoogle, handleGoogleCallback } from '../controllers/google-auth.controller.js';

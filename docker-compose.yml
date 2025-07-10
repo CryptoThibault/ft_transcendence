@@ -32,16 +32,6 @@ services:
       - auth-service
       - user-service
 
-  gameserver-service:
-    build:
-      context: ./backend/gameserver
-    container_name: gameserver-service
-    ports:
-      - "6001:6001"
-    depends_on:
-      - auth-service
-      - user-service
-
   livechat-service:
     build:
       context: ./backend/livechat

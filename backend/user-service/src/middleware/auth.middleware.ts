@@ -30,3 +30,13 @@ export const authorize = async (req: FastifyRequest, res: FastifyReply) => {
         });
     }
 };
+
+/*export const authorizeAdmin = async (req: FastifyRequest, res: FastifyReply) => {
+    if (!req.user)
+        return res.status(401).send({ message: 'Unauthorized: User not authenticated.' });
+    if (req.user.role === 'admin')
+        return;
+    else {
+        return res.status(403).send({ message: 'Forbidden: Admin access required.' });
+    }
+};*/

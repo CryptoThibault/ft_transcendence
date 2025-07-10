@@ -61,7 +61,7 @@ export const handleGoogleCallback = async (req: FastifyRequest, reply: FastifyRe
                 email: user?.email,
             });
         }
-        const token = jwt.sign({ userId: user?.id }, JWT_SECRET!, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user?.id, userName: user?.name }, JWT_SECRET!, { expiresIn: '1h' });
         return reply.redirect(`/login?token=${token}`);
     } catch (err: any) {
         console.error('OAuth2 callback error:', err);
@@ -115,7 +115,6 @@ export const googleAuth = async (req: FastifyRequest, res: FastifyReply) => {
         const signOptions: SignOptions = {
             expiresIn: '1h',//JWT_SECRET || '1h',
         };
-        //bince changed
         const token = jwt.sign({ userId: user.id, userName: user.name }, secret, signOptions);
         return res.send({
             success: true,
