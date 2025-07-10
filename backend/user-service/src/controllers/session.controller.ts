@@ -528,10 +528,6 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             updatedPlayer2Wins += 1;
             updatedPlayer1Losses += 1;
         }
-<<<<<<< HEAD
-
-=======
->>>>>>> main
         const player1Updated = await User.update(player1Id, {
             wins: updatedPlayer1Wins,
             losses: updatedPlayer1Losses,
