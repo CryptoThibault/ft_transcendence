@@ -1,5 +1,5 @@
 // backend/auth-service/src/services/email.service.ts
-import https from 'https';
+/*import https from 'https';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
@@ -61,7 +61,7 @@ export async function sendOtpEmail(toEmail: string, otpCode: string): Promise<bo
 	req.write(payload);
 	req.end();
 	});
-}
+}*/
 
 
 

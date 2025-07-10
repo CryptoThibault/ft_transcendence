@@ -139,6 +139,7 @@ export class GameLauncher {
         });
 
         this.socket.on('game-end', ({ winner, reason, message }: { winner: string; reason?: string; message?: string }) => {
+            
             if (reason === 'disconnection') {
                 this.endGameWithDisconnection(winner, message || `${winner} wins due to opponent disconnection!`);
             } else if (reason === 'player_left') {
@@ -212,8 +213,6 @@ export class GameLauncher {
     }
 
     private updateGameState(gameState: GameState) {
-        console.log('Received game state update:', gameState);
-        console.log(`Paddle positions - Left: ${gameState.leftPaddle.y}, Right: ${gameState.rightPaddle.y}`);
         this.lastGameState = gameState;
         
         ball.x = gameState.ball.x;
@@ -261,9 +260,10 @@ export class GameLauncher {
         setAnimationId(requestAnimationFrame(() => this.gameLoop()));
     }
 
-    private endGame(winner: string) {
+    private async endGame(winner: string) {
         gameStates.isRunning = false;
         gameStates.isEnd = true;
+
         this.cleanup();
         
         setTimeout(() => {

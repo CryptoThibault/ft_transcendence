@@ -6,7 +6,7 @@ import { acceptGameInvitation, declineGameInvitation } from "./services/msgCmdSe
 import { gameService } from "./services/gameService"
 import { runDbAsync } from "./databaseServices"
 
-export const onlineUserSockets = new Map<string, Socket>
+export const onlineUserSockets = new Map<string, { socket: Socket; userId: string }>
 
 export async function initSockets(fastify: FastifyInstance)
 {
@@ -27,7 +27,7 @@ export async function initSockets(fastify: FastifyInstance)
             const user: {userId: string, userName:string} = getUserFromToken(token);
             userId = user.userId
             userName = user.userName
-            onlineUserSockets.set(userName, socket)
+            onlineUserSockets.set(userName, {socket: socket, userId: userId})
             console.log(userName + ' (' + onlineUserSockets.get(userId) + ') ' + 'connected');
             socket.join(userName);
             socket.on('disconnect', () => 
@@ -60,7 +60,7 @@ export async function initSockets(fastify: FastifyInstance)
                     const invitation = gameService.getInvitation(invitationId);
                     if (invitation) {
                         const otherUser = invitation.from === userName ? invitation.to : invitation.from;
-                        const otherSocket = onlineUserSockets.get(otherUser);
+                        const otherSocket = onlineUserSockets.get(otherUser)!.socket;
                         
                         if (otherSocket) {
                             io.to(otherSocket.id).emit('game-invitation-response', {
@@ -97,7 +97,7 @@ export async function initSockets(fastify: FastifyInstance)
                     
                     const invitation = gameService.getInvitation(invitationId);
                     if (invitation) {
-                        const senderSocket = onlineUserSockets.get(invitation.from);
+                        const senderSocket = onlineUserSockets.get(invitation.from)!.socket;
                         if (senderSocket) {
                             io.to(senderSocket.id).emit('game-invitation-response', {
                                 from: userName,
@@ -184,8 +184,8 @@ export async function initSockets(fastify: FastifyInstance)
 
 async function startGame(roomName: string, player1: string, player2: string, io: Server) {
     try {
-        const player1Socket = onlineUserSockets.get(player1);
-        const player2Socket = onlineUserSockets.get(player2);
+        const player1Socket = onlineUserSockets.get(player1)!.socket;
+        const player2Socket = onlineUserSockets.get(player2)!.socket;
         
         if (player1Socket) {
             io.to(player1Socket.id).emit('game-start', {

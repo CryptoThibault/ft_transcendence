@@ -10,7 +10,7 @@ import { gameService } from "./gameService";
 export async function sendMessageToSocket(io: Server, userId: string, to: string, msg: string)
 {
     console.log(`sendMessageToSocket called: userId="${userId}", to="${to}", msg="${msg}"`);
-    const targetSocket: Socket | undefined = onlineUserSockets.get(to);
+    const targetSocket: Socket | undefined = onlineUserSockets.get(to)!.socket;
     const isBlock = await isBlocked(userId, to)
     console.log(`Target socket exists: ${!!targetSocket}, isBlocked: ${isBlock}`);
     
@@ -25,6 +25,12 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
         {
             console.error("there is an error");
             console.log(cmdResult.error);
+            const senderSocket = onlineUserSockets.get(userId)!.socket;
+            if (senderSocket) {
+                io.to(senderSocket.id).emit('invitation-error', {
+                message: cmdResult.replyMessage
+            });
+        }
             throw cmdResult.error;
         }
         if (!cmdResult.isCommand)
@@ -38,10 +44,9 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
         {
             console.log(`Processing command: ${msg}`);
             if (msg.startsWith('/invite')) {
-                console.log(`Handling /invite command`);
                 
                 if (cmdResult.error) {
-                    const senderSocket = onlineUserSockets.get(userId);
+                    const senderSocket = onlineUserSockets.get(userId)!.socket;
                     if (senderSocket) {
                         io.to(senderSocket.id).emit('invitation-error', {
                             message: cmdResult.replyMessage
@@ -55,7 +60,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                         roomName: cmdResult.replyMessage.split('Room: ')[1] || 'Unknown Room'
                     });
                     
-                    const senderSocket = onlineUserSockets.get(userId);
+                    const senderSocket = onlineUserSockets.get(userId)!.socket;
                     if (senderSocket) {
                         io.to(senderSocket.id).emit('get-chat-message', {
                             from: 'System',
@@ -69,8 +74,8 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                             gameService.removeInvitation(cmdResult.invitationId!);
                             console.log(`Auto-deleted invitation ${cmdResult.invitationId} after 5 seconds`);
                             
-                            const targetSocket = onlineUserSockets.get(to);
-                            const senderSocket = onlineUserSockets.get(userId);
+                            const targetSocket = onlineUserSockets.get(to)!.socket;
+                            const senderSocket = onlineUserSockets.get(userId)!.socket;
                             
                             if (targetSocket) {
                                 io.to(targetSocket.id).emit('invitation-expired', {
@@ -82,7 +87,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                             if (senderSocket) {
                                 io.to(senderSocket.id).emit('get-chat-message', {
                                     from: 'System',
-                                    msg: 'Game invitation expired after 5 seconds'
+                                    msg: 'invitation expired'
                                 });
                             }
                         }
@@ -90,11 +95,10 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                 }
             }
             else if (msg.startsWith('/accept') || msg.startsWith('/decline')) {
-                console.log(`Handling /accept or /decline command`);
                 const invitation = gameService.getInvitation(cmdResult.invitationId!);
                 if (invitation) {
                     const otherUser = invitation.from === userId ? invitation.to : invitation.from;
-                    const otherSocket = onlineUserSockets.get(otherUser);
+                    const otherSocket = onlineUserSockets.get(otherUser)!.socket;
                     
                     if (otherSocket) {
                         io.to(otherSocket.id).emit('game-invitation-response', {
@@ -106,7 +110,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                     }
                     
     
-                    const responderSocket = onlineUserSockets.get(userId);
+                    const responderSocket = onlineUserSockets.get(userId)!.socket;
                     if (responderSocket) {
                         io.to(responderSocket.id).emit('get-chat-message', {
                             from: 'System',
@@ -130,7 +134,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                 }
             }
             else {
-                const senderSocket = onlineUserSockets.get(userId);
+                const senderSocket = onlineUserSockets.get(userId)!.socket;
                 if (senderSocket) {
                     io.to(senderSocket.id).emit('get-chat-message', {
                         from: 'System',
@@ -152,8 +156,8 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
 
 async function startGame(roomName: string, player1: string, player2: string, io: Server) {
     try {
-        const player1Socket = onlineUserSockets.get(player1);
-        const player2Socket = onlineUserSockets.get(player2);
+        const player1Socket = onlineUserSockets.get(player1)!.socket;
+        const player2Socket = onlineUserSockets.get(player2)!.socket;
         
         if (player1Socket) {
             io.to(player1Socket.id).emit('game-start', {

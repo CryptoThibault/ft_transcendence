@@ -8,6 +8,7 @@ export interface CreateCasualMatchRoute extends RouteGenericInterface {
     Body: {
         player1_id: number;
         player2_id: number;
+        tournament_id?: number | null;
     };
 }
 // For /matches/:id/result
@@ -37,7 +38,7 @@ export interface CreateTournamentRoute extends RouteGenericInterface {
     };
 }
 
-export async function createCasualMatch(request: FastifyRequest<CreateCasualMatchRoute>,
+/*export async function createCasualMatch(request: FastifyRequest<CreateCasualMatchRoute>,
 reply: FastifyReply) {
     try {
         const match = await createMatch(request.body);
@@ -52,7 +53,38 @@ reply: FastifyReply) {
             message: (error as Error).message || 'Internal server error',
         });
     }
+}*/
+
+export async function createCasualMatch(
+  request: FastifyRequest<CreateCasualMatchRoute>,
+  reply: FastifyReply
+) {
+  try {
+    const { player1_id, player2_id } = request.body;
+
+    if (!player1_id || !player2_id) {
+      return reply.status(400).send({
+        success: false,
+        message: 'Both player1_id and player2_id are required.',
+      });
+    }
+
+    const match = await createMatch(request.body);
+
+    reply.status(201).send({
+      success: true,
+      message: 'Casual match created successfully',
+      data: match,
+    });
+  } catch (error) {
+    console.error('createCasualMatch error:', error);
+    reply.status(500).send({
+      success: false,
+      message: (error as Error).message || 'Internal server error',
+    });
+  }
 }
+
 
 export async function submitCasualMatchResult(req: FastifyRequest<SubmitCasualMatchResultRoute>,
     reply: FastifyReply) {
@@ -121,7 +153,7 @@ export async function startTournament(req: FastifyRequest<TournamentIdParamRoute
     }
 }
 
-export async function getTournamentBracket(req: FastifyRequest<TournamentIdParamRoute>,
+/*export async function getTournamentBracket(req: FastifyRequest<TournamentIdParamRoute>,
     reply: FastifyReply) {
     try {
         const bracket = await svc.getBracket(+req.params.id);
@@ -131,6 +163,25 @@ export async function getTournamentBracket(req: FastifyRequest<TournamentIdParam
             data: bracket,
         });
     } catch (error) {
+        reply.status(500).send({
+            success: false,
+            message: (error as Error).message || 'Internal server error',
+        });
+    }
+}*/
+
+export async function getTournamentBracket(req: FastifyRequest<TournamentIdParamRoute>,
+    reply: FastifyReply) {
+    try {
+        const bracketDataFromService = await svc.getBracket(+req.params.id);
+        console.log('[getTournamentBracket Controller] Data from service:', JSON.stringify(bracketDataFromService, null, 2)); // Log before wrapping in 'data'
+        reply.status(200).send({
+            success: true,
+            message: 'Tournament bracket retrieved successfully',
+            data: bracketDataFromService, // This is what the frontend receives as 'bracket.data'
+        });
+    } catch (error) {
+        console.error('[getTournamentBracket Controller] Error:', error);
         reply.status(500).send({
             success: false,
             message: (error as Error).message || 'Internal server error',

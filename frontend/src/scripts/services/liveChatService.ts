@@ -40,6 +40,10 @@ export class LiveChatService {
             }
         });
 
+         this.socket.on("invitation-error", ({ msg }: { from: string; msg: string }) => {
+                this.addMessageToChat("server", msg);
+        });
+
         this.socket.on("game-invitation-with-buttons", ({ from, invitationId, message, roomName }: { from: string; invitationId: string; message: string; roomName: string }) => {
             console.log("Received game invitation with buttons");
             
@@ -61,7 +65,6 @@ export class LiveChatService {
             this.createGameStartMessage(message);
             
             setTimeout(() => {
-                console.log(`Navigating to /online-game/${roomName}`);
                 navigateTo(`/online-game/${roomName}`);
             }, 2000);
         });
@@ -131,6 +134,7 @@ export class LiveChatService {
             cursor: pointer;
             font-weight: bold;
         `;
+        declineBtn.setAttribute("data-i18n", "Reject");
         
         acceptBtn.onclick = () => {
             console.log(`Accepting invitation ${invitationId}`);
@@ -276,6 +280,7 @@ export class LiveChatService {
     }
 
     async openChat(friend: Friend): Promise<void> {
+        console.log("tried to open chat")
         const friendsList = document.getElementById("friendsList");
         const chatContainer = document.getElementById("chatContainer");
         const chatMessages = document.getElementById("chatMessages");
@@ -286,7 +291,7 @@ export class LiveChatService {
         this.selectedFriend = friend.name;
         friendsList.style.display = "none";
         chatContainer.style.display = "flex";
-        chatMessages.innerHTML = `<div>Chatting with <b>${friend.name}</b></div>`;
+        chatMessages.innerHTML = `<b>${friend.name}</b>`;
         chatInput.value = "";
         chatInput.focus();
 
@@ -312,13 +317,9 @@ export class LiveChatService {
             
             try {
                 const parsedMsg = JSON.parse(oldMsg);
-                if (parsedMsg.type === 'accepted_game') {
-                    this.createAcceptedGameMessage(parsedMsg.roomName);
-                } else {
-                    const messageDiv = document.createElement("div");
-                    messageDiv.textContent = `${sender}: ${oldMsg}`;
-                    chatMessages.appendChild(messageDiv);
-                }
+                const messageDiv = document.createElement("div");
+                messageDiv.textContent = `${sender}: ${oldMsg}`;
+                chatMessages.appendChild(messageDiv);
             } catch (e) {
                 const messageDiv = document.createElement("div");
                 messageDiv.textContent = `${sender}: ${oldMsg}`;
@@ -326,49 +327,6 @@ export class LiveChatService {
             }
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
-    }
-
-    private createAcceptedGameMessage(roomName: string): void {
-        const chatMessages = document.getElementById("chatMessages");
-        if (!chatMessages) return;
-
-        const gameMessageDiv = document.createElement("div");
-        gameMessageDiv.style.cssText = `
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        `;
-        
-        const gameInfoDiv = document.createElement("div");
-        gameInfoDiv.textContent = `Game accepted! Room: ${roomName}`;
-        gameInfoDiv.style.marginBottom = "10px";
-        gameInfoDiv.style.fontWeight = "bold";
-        
-        const rejoinBtn = document.createElement("button");
-        rejoinBtn.textContent = "Rejoin Game";
-        rejoinBtn.style.cssText = `
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        `;
-        rejoinBtn.onmouseover = () => rejoinBtn.style.background = "#1976D2";
-        rejoinBtn.onmouseout = () => rejoinBtn.style.background = "#2196F3";
-        
-        rejoinBtn.onclick = () => {
-            console.log(`Rejoining game in room: ${roomName}`);
-            navigateTo(`/online-game/${roomName}`);
-        };
-        
-        gameMessageDiv.appendChild(gameInfoDiv);
-        gameMessageDiv.appendChild(rejoinBtn);
-        chatMessages.appendChild(gameMessageDiv);
     }
 
     private setupChatInputHandler(friendName: string): void {
@@ -381,7 +339,7 @@ export class LiveChatService {
                 const chatMessages = document.getElementById("chatMessages");
                 if (chatMessages) {
                     const messageDiv = document.createElement("div");
-                    messageDiv.textContent = `You: ${msg}`;
+                    messageDiv.textContent = `${msg}`;
                     chatMessages.appendChild(messageDiv);
                 }
                 

@@ -323,7 +323,7 @@ export class ProfileView {
           <div class="user-name">${friend.name}</div>
           <div class="user-actions">
             <button id="rejectBtn" data-i18n="Reject" class="btn-remove-friend">Reject</button>
-            <button id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
+            <button  id="acceptBtn" data-i18n="Accept" class="btn-send-message">Accept</button>
           </div>
         `;
         const rejectBtn = friendCard.querySelector('#rejectBtn') as HTMLButtonElement;
@@ -336,7 +336,7 @@ export class ProfileView {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ senderId: friend.id }),
+              body: JSON.stringify({ requesterId: friend.id }),
             });
             const resJson = await response.json();
             if (!response.ok || !resJson.success) {
@@ -466,6 +466,55 @@ export class ProfileView {
       alert(`Error loading match history: ${error.message || error}`);
     }
   }
+
+  private async loadHistory() {
+    const userId = this.isMyProfile ? 'me' : this.username;
+    const url = `/api/v1/user/${userId}/matches`;
+
+    try {
+        const response = await fetch(url, {
+            headers: {  
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        const resJson = await response.json();
+        const tbody = document.getElementById("historyTableBody")!;
+        const noHistoryMsg = document.getElementById("noHistoryMessage")!;
+
+        if (!response.ok || !resJson.success) {
+            throw new Error(resJson.message || "Failed to load match history");
+        }
+
+        const matches = resJson.data;
+        if (!matches || matches.length === 0) {
+            tbody.innerHTML = "";
+            noHistoryMsg.classList.remove("hidden");
+            return;
+        }
+
+        noHistoryMsg.classList.add("hidden");
+        tbody.innerHTML = "";
+
+        for (const match of matches) {
+            const playedAt = new Date(match.playedAt).toLocaleString();
+            const displayOpponent = match.opponentName;
+            const score = `${match.player1Score} - ${match.player2Score}`;
+            const status = match.isWinner ? "Win" : "Loss";
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="px-4 py-2 text-center">${playedAt}</td>
+                <td class="px-4 py-2 text-center">${displayOpponent}</td>
+                <td class="px-4 py-2 text-center">${score}</td>
+                <td class="px-4 py-2 text-center">${status}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    } catch (error: any) {
+        console.error("Error loading match history:", error);
+        alert(`Error loading match history: ${error.message || error}`);
+    }
+  }
+
 
   private async deleteUser() {
     const deleteAccountBtn = document.getElementById("deleteAccountBtn")!;

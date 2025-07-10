@@ -1,5 +1,4 @@
 //backend/user-service/src/types/fastify.d.ts
-import { RouteGenericInterface } from 'fastify';
 export interface AuthUserSanitizedPayload {
     id: number;
     email: string;
@@ -13,10 +12,6 @@ declare module 'fastify' {
     }
 }
 
-//bince added this
-interface AcceptFriendshipRequestRoute extends RouteGenericInterface {
-  Body: {
-    senderId: number;
-  };
+export interface localOpponentQuery {
+    username: string;
 }
-

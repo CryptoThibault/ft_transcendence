@@ -61,7 +61,7 @@ export const joinTournament = async (tournament_id: number, player_id: number): 
     return PlayerTournament.create({ tournamentId: tournament_id, playerId: player_id });
 };
 
-export const startTournament = async (tournament_id: number): Promise<TournamentMatchData[]> => {
+/*export const startTournament = async (tournament_id: number): Promise<TournamentMatchData[]> => {
     const players = await PlayerTournament.findByTournamentId(tournament_id);
     console.log('Players found for tournament', tournament_id, ':', players.map(p => p.playerId));
     if (players.length < 2)
@@ -100,9 +100,76 @@ export const startTournament = async (tournament_id: number): Promise<Tournament
         console.error('Error creating initial matches:', error);
         throw error;
     }
+};*/
+
+export const startTournament = async (tournament_id: number): Promise<TournamentMatchData[]> => {
+    const players = await PlayerTournament.findByTournamentId(tournament_id);
+    console.log('[startTournament Service] Players found for tournament', tournament_id, ':', players.map(p => p.playerId));
+
+    if (players.length < 2) {
+        throw new Error('Not enough players to start tournament (minimum 2 needed).');
+    }
+
+    const shuffled = players.sort(() => 0.5 - Math.random());
+    console.log('[startTournament Service] Shuffled players:', shuffled.map(p => p.playerId)); // Log shuffled players
+
+    const matchesToCreate: Omit<TournamentMatchData, 'id' | 'createdAt' | 'updatedAt'>[] = [];
+    for (let i = 0; i < shuffled.length; i += 2) {
+        const player1Id = shuffled[i]?.playerId;
+        const player2Id = shuffled[i + 1]?.playerId || null;
+
+        if (!player1Id) {
+            console.warn(`[startTournament Service] Skipping match creation due to missing player1Id at index ${i}. This should not happen.`);
+            continue;
+        }
+
+        console.log(`[startTournament Service] Preparing match ${Math.floor(i / 2) + 1}: Player1=${player1Id}, Player2=${player2Id}`); // Log players for each prospective match
+
+        matchesToCreate.push({
+            tournamentId: tournament_id,
+            roundNumber: 1,
+            matchNumberInRound: Math.floor(i / 2) + 1,
+            player1Id: player1Id,
+            player2Id: player2Id,
+            winnerId: null,
+            score: null,
+            state: TournamentMatchState.PENDING,
+        });
+    }
+
+    console.log('[startTournament Service] Matches to create before DB insertion:', JSON.stringify(matchesToCreate, null, 2));
+
+    try {
+        const createdMatches: TournamentMatchData[] = [];
+        for (const matchData of matchesToCreate) {
+            const newMatch = await TournamentMatch.create(matchData);
+            createdMatches.push(newMatch);
+        }
+        console.log('[startTournament Service] Successfully created matches:', JSON.stringify(createdMatches, null, 2)); // Log the actual created matches
+        return createdMatches;
+    } catch (error) {
+        console.error('[startTournament Service] Error creating initial matches:', error);
+        throw error;
+    }
 };
 
+// Also in tournaments.service.ts, in getBracket function
 export const getBracket = async (tournamentId: number) => {
+    const matches = await TournamentMatch.findByTournamentId(tournamentId);
+    console.log(`[getBracket Service] Found ${matches.length} matches for tournament ${tournamentId}:`, JSON.stringify(matches, null, 2)); // Log what's found
+    const rounds: Record<number, TournamentMatchData[]> = {};
+    matches.forEach((match) => {
+        if (!rounds[match.roundNumber]) rounds[match.roundNumber] = [];
+        rounds[match.roundNumber].push(match);
+    });
+    console.log(`[getBracket Service] Organized into rounds:`, JSON.stringify(rounds, null, 2)); // Log organized rounds
+    return Object.entries(rounds).map(([round, matches]) => ({
+        round: +round,
+        matches,
+    }));
+};
+
+/*export const getBracket = async (tournamentId: number) => {
     const matches = await TournamentMatch.findByTournamentId(tournamentId);
     const rounds: Record<number, TournamentMatchData[]> = {};
     matches.forEach((match) => {
@@ -113,7 +180,7 @@ export const getBracket = async (tournamentId: number) => {
         round: +round,
         matches,
     }));
-};
+};*/
 
 export const submitTournamentResult = async (matchId: number, { winner_id, score }: SubmitResultPayload, token: string) => {
     const match = await TournamentMatch.findById(matchId);

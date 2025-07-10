@@ -107,7 +107,10 @@ export async function createRoomInRoomService(): Promise<CommandResult>
         "Content-Type": "application/json",
       },
     });
-    //TO-DO: if(!res.ok)
+    if(!res.ok)
+    {
+        throw Error;
+    }
     const data = await res.json();
     return {
       error: null,
@@ -117,7 +120,7 @@ export async function createRoomInRoomService(): Promise<CommandResult>
     } catch (error: any) {
         return {
       error: error,
-      replyMessage: "Error",
+      replyMessage: "Error creating room",
       isCommand: true,
     };
     }

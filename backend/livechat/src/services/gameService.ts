@@ -45,27 +45,21 @@ class GameService {
     }
 
     async createGameInvitation(from: string, to: string): Promise<GameInvitation> {
-        console.log(`Creating game invitation from ${from} to ${to}`);
-        console.log(`Online users:`, Array.from(onlineUserSockets.keys()));
         
         if (!onlineUserSockets.has(to)) {
-            console.log(`User ${to} is not online`);
             throw new Error("User is not online");
         }
 
         if (this.isPlayerInGame(from)) {
-            console.log(`Player ${from} is already in a game`);
             throw new Error("You are already in a game. Please finish your current game before sending new invitations.");
         }
 
         if (this.isPlayerInGame(to)) {
-            console.log(`Player ${to} is already in a game`);
             throw new Error("The target player is already in a game. Please wait for them to finish.");
         }
 
         for (const invitation of this.invitations.values()) {
             if (invitation.from === from && invitation.to === to && invitation.status === 'pending') {
-                console.log(`Already have pending invitation from ${from} to ${to}`);
                 throw new Error("You already have a pending invitation with this user");
             }
         }
@@ -298,8 +292,8 @@ class GameService {
         
         const gameState = this.activeGames.get(roomName);
 
-        
         this.removeGameRoom(roomName);
+        
         console.log(`Room ${roomName} cleaned up after game end`);
     }
 

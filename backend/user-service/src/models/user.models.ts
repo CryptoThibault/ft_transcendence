@@ -9,6 +9,7 @@ export interface UserData {
 	wins?: number;
 	losses?: number;
 	onlineStatus?: boolean;
+	role?: 'user' | 'admin';
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -28,6 +29,7 @@ export class User {
 				wins INTEGER DEFAULT 0,
 				losses INTEGER DEFAULT 0,
 				onlineStatus BOOLEAN DEFAULT false,
+				role TEXT DEFAULT 'user',
 				createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
 				updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
 			);
@@ -87,12 +89,6 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE email = ?`, email);
 		return user ? (user as UserData) : null;
 	}
-	//bince added this
-	static async findByName(name: string): Promise<UserData | null> {
-		const db = await dbPromise;
-		const user = await db.get(`SELECT * FROM users WHERE name = ?`, name);
-		return user ? (user as UserData) : null;
-	}
 	/**
 	* Finds a user by their ID, returning full raw data including email.
 	* @param id The ID of the user to find.
@@ -103,17 +99,20 @@ export class User {
 		const user = await db.get(`SELECT * FROM users WHERE id = ?`, id);
 		return user ? (user as UserData) : null;
 	}
-	
+	static async findByName(name: string): Promise<UserData | null> {
+		const db = await dbPromise;
+		const user = await db.get(`SELECT * FROM users WHERE name = ?`, name);
+		return user ? (user as UserData) : null;
+	}
 	/**
-    * Retrieves all users from the database, excluding their email addresses.
-    * @returns An array of sanitized UserData objects.
-    */
-    static async findAll(): Promise<Omit<UserData, 'email'>[]> {
-        const db = await dbPromise;
-        const users = await db.all(`SELECT * FROM users`);
-        return users.map((user: UserData) => User.sanitize(user as UserData));
-    }
-
+	* Retrieves all users from the database, excluding their email addresses.
+	* @returns An array of sanitized UserData objects.
+	*/
+	static async findAll(): Promise<Omit<UserData, 'email'>[]> {
+		const db = await dbPromise;
+		const users = await db.all(`SELECT * FROM users`);
+		return users.map((user: UserData) => User.sanitize(user as UserData));
+	}
 	/**
 	* Updates a user record by ID with partial data.
 	* @param id The ID of the user to update.
@@ -132,6 +131,7 @@ export class User {
 		if (data.wins !== undefined) { updates.push('wins = ?'); values.push(data.wins); }
 		if (data.losses !== undefined) { updates.push('losses = ?'); values.push(data.losses); }
 		if (data.onlineStatus !== undefined) { updates.push('onlineStatus = ?'); values.push(data.onlineStatus); }
+		if (data.role !== undefined) { updates.push('role = ?'); values.push(data.role); }
 		if (updates.length === 0)
 			return false;
 		updates.push('updatedAt = ?');

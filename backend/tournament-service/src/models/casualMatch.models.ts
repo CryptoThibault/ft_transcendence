@@ -15,6 +15,7 @@ export interface CasualMatchData {
     state: CasualMatchState;
     winner_id?: number | null;
     score?: string | null;
+    tournament_id?: number | null;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -25,7 +26,7 @@ export class CasualMatch {
      */
     static async createTable() {
         const db = await dbPromise;
-        await db.run(`
+        /*await db.run(`
             CREATE TABLE IF NOT EXISTS casual_matches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 player1_id INTEGER NOT NULL,
@@ -33,6 +34,7 @@ export class CasualMatch {
                 state TEXT NOT NULL DEFAULT 'PENDING',
                 winner_id INTEGER,
                 score TEXT,
+                tournament_id INTEGER,
                 createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
                 updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
                 -- Foreign Key constraints (assuming 'users' table exists in a shared or accessible DB, if not, remove/adjust)
@@ -41,12 +43,33 @@ export class CasualMatch {
                 -- FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE RESTRICT,
                 CONSTRAINT check_casual_match_state CHECK (state IN ('${CasualMatchState.PENDING}', '${CasualMatchState.IN_PROGRESS}', '${CasualMatchState.COMPLETED}', '${CasualMatchState.CANCELLED}'))
             );
-        `);
-        // Add indexes for common lookup fields
-        await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_player1_id ON casual_matches (player1_id);`);
-        await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_player2_id ON casual_matches (player2_id);`);
-        await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_winner_id ON casual_matches (winner_id);`);
-        console.log('CasualMatch table created or already exists.');
+        `);*/
+        await db.run(`
+            CREATE TABLE IF NOT EXISTS casual_matches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player1_id INTEGER NOT NULL,
+                player2_id INTEGER NOT NULL,
+                state TEXT NOT NULL DEFAULT 'PENDING',
+                winner_id INTEGER,
+                score TEXT,
+                tournament_id INTEGER,
+                createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT check_casual_match_state CHECK (
+                state IN (
+                    '${CasualMatchState.PENDING}',
+                    '${CasualMatchState.IN_PROGRESS}',
+                    '${CasualMatchState.COMPLETED}',
+                    '${CasualMatchState.CANCELLED}'
+                )
+            )
+        );
+    `);
+    // Add indexes for common lookup fields
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_player1_id ON casual_matches (player1_id);`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_player2_id ON casual_matches (player2_id);`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_casual_matches_winner_id ON casual_matches (winner_id);`);
+    console.log('CasualMatch table created or already exists.');
     }
 
     /**
@@ -59,17 +82,17 @@ export class CasualMatch {
         const now = new Date().toISOString();
 
         const result = await db.run(
-            `INSERT INTO casual_matches (player1_id, player2_id, state, winner_id, score, createdAt, updatedAt)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO casual_matches (player1_id, player2_id, tournament_id, state, winner_id, score, createdAt, updatedAt)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             data.player1_id,
             data.player2_id,
+            data.tournament_id ?? null,
             data.state,
             data.winner_id ?? null,
             data.score ?? null,
             now,
             now
         );
-
         return { id: result.lastID, ...data, createdAt: now, updatedAt: now };
     }
 
@@ -102,6 +125,7 @@ export class CasualMatch {
         if (data.state !== undefined) { updates.push('state = ?'); values.push(data.state); }
         if (data.winner_id !== undefined) { updates.push('winner_id = ?'); values.push(data.winner_id); }
         if (data.score !== undefined) { updates.push('score = ?'); values.push(data.score); }
+        if (data.tournament_id !== undefined) { updates.push('tournament_id = ?'); values.push(data.tournament_id); }        
 
         if (updates.length === 0) {
             return false; // No data to update
@@ -126,5 +150,28 @@ export class CasualMatch {
         const db = await dbPromise;
         const result = await db.run(`DELETE FROM casual_matches WHERE id = ?`, id);
         return (result?.changes ?? 0) > 0;
+    }
+    //############################################## adding here
+    /**
+    * Returns all casual matches in the database.
+    */
+    static async findAll(): Promise<CasualMatchData[]> {
+        const db = await dbPromise;
+        const rows = await db.all(`SELECT * FROM casual_matches ORDER BY updatedAt DESC`);
+        return rows as CasualMatchData[];
+    }
+
+    /**
+    * Returns all casual matches involving a given player ID.
+    * @param playerId The player's user ID.
+    */
+    static async findByPlayerId(playerId: number): Promise<CasualMatchData[]> {
+        const db = await dbPromise;
+        const rows = await db.all(
+            `SELECT * FROM casual_matches WHERE player1_id = ? OR player2_id = ? ORDER BY updatedAt DESC`,
+            playerId,
+            playerId
+        );
+        return rows as CasualMatchData[];
     }
 }
