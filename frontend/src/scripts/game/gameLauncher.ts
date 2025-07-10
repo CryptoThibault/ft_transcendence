@@ -1,7 +1,7 @@
 import { initCanvas, setAnimationId, gameStates, keys, ball, leftPaddle, rightPaddle, animationId, match, setMatch } from "./state.js";
 import { renderGame } from "./render.js";
 import { navigateTo } from "../main.js";
-import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
+import { io, Socket } from "socket.io-client";
 import { Match } from "./match.js";
 
 export interface GameState {
@@ -292,14 +292,14 @@ export class GameLauncher {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
-        ctx.font = "48px Arial";
+        ctx.font = "48px 'Press Start 2P', cursive";
         ctx.textAlign = "center";
         ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2 - 50);
         
-        ctx.font = "24px Arial";
+        ctx.font = "24px 'Press Start 2P', cursive";
         ctx.fillText(`Winner: ${winner}`, canvas.width / 2, canvas.height / 2);
         
-        ctx.font = "18px Arial";
+        ctx.font = "18px 'Press Start 2P', cursive";
         ctx.fillText("Press ESC to return to menu", canvas.width / 2, canvas.height / 2 + 50);
     }
 
@@ -315,17 +315,17 @@ export class GameLauncher {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
-        ctx.font = "48px Arial";
+        ctx.font = "48px 'Press Start 2P', cursive";
         ctx.textAlign = "center";
         ctx.fillText("Game Ended", canvas.width / 2, canvas.height / 2 - 80);
         
-        ctx.font = "24px Arial";
+        ctx.font = "24px 'Press Start 2P', cursive";
         ctx.fillText(`Winner: ${winner}`, canvas.width / 2, canvas.height / 2 - 30);
         
-        ctx.font = "18px Arial";
+        ctx.font = "18px 'Press Start 2P', cursive";
         ctx.fillText(message, canvas.width / 2, canvas.height / 2 + 10);
         
-        ctx.font = "16px Arial";
+        ctx.font = "16px 'Press Start 2P', cursive";
         ctx.fillText("Press ESC to return to menu", canvas.width / 2, canvas.height / 2 + 50);
     }
 
