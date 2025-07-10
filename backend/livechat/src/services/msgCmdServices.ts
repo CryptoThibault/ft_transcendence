@@ -1,5 +1,6 @@
 import { getDbAsync, runDbAsync } from "../databaseServices";
 import { CommandResult } from "../interfaces/types";
+import { gameService } from "./gameService";
 
 export async function blockUser(blocker_user: string, blocked_user: string): Promise <CommandResult>
 {
@@ -39,6 +40,64 @@ export async function unblockUser(blocker_user: string, blocked_user: string): P
     }
 }
 
+export async function inviteToGame(from: string, to: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.createGameInvitation(from, to);
+        return {
+            error: null,
+            replyMessage: `Game invitation sent to ${to}. Room: ${invitation.roomName}`,
+            isCommand: true,
+            invitationId: invitation.id
+        };
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to send game invitation",
+            isCommand: true,
+        };
+    }
+}
+
+export async function acceptGameInvitation(invitationId: string, username: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.acceptInvitation(invitationId, username);
+        return {
+            error: null,
+            replyMessage: `Game invitation accepted! Room: ${invitation.roomName}`,
+            isCommand: true,
+            invitationId: invitation.id
+        };
+        
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to accept game invitation",
+            isCommand: true,
+        };
+    }
+}
+
+export async function declineGameInvitation(invitationId: string, username: string): Promise<CommandResult> 
+{
+    try {
+        const invitation = await gameService.declineInvitation(invitationId, username);
+        return {
+            error: null,
+            replyMessage: "Game invitation declined.",
+            isCommand: true,
+            invitationId: invitation.id
+        };
+    } catch (error: any) {
+        return {
+            error: error,
+            replyMessage: error.message || "Failed to decline game invitation",
+            isCommand: true,
+        };
+    }
+}
+
 export async function createRoomInRoomService(): Promise<CommandResult> 
 {
     try {
@@ -66,6 +125,8 @@ export async function createRoomInRoomService(): Promise<CommandResult>
 
 export async function msgCmdCheck(msg: string, sender_id: string, receiver_id: string): Promise<CommandResult>
 {
+    console.log(`msgCmdCheck called with: msg="${msg}", sender_id="${sender_id}", receiver_id="${receiver_id}"`);
+    
     if (msg.startsWith('/block'))
     {
         const result: CommandResult = await blockUser(sender_id, receiver_id)
@@ -79,7 +140,9 @@ export async function msgCmdCheck(msg: string, sender_id: string, receiver_id: s
     }
     else if (msg.startsWith('/invite'))
     {
-        const result = createRoomInRoomService()
+        console.log(`Processing /invite command from ${sender_id} to ${receiver_id}`);
+        const result = await inviteToGame(sender_id, receiver_id)
+        console.log(`Invite result:`, result);
         return result;
     }
     else

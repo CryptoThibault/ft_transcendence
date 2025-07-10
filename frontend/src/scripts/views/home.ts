@@ -1,5 +1,6 @@
 import { navigateTo } from "../main.js";
 import { io, Socket } from "../../../node_modules/socket.io-client/build/esm/index.js";
+
 export let tournamentNicknames: string[] = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 export let multiNicknames: string[] = ["Player 1", "Player 2"];
@@ -49,6 +50,8 @@ export class HomeView {
 			</div>
 		</div>
 	  </div>
+
+
     `;
 	}
 
@@ -73,7 +76,6 @@ export class HomeView {
   updateUIBasedOnToken()
   const token = localStorage.getItem("token"); 
 
-
   let socket: Socket
   if (token)
   {
@@ -83,19 +85,142 @@ export class HomeView {
 		},
 	  });
 	  console.log(socket.active)
-	  socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
-          console.log("I got a message")
+	          socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
 		
 		  if (from == selectedFriend)
 		  {
 			const item = document.createElement("li");
-          	item.textContent = `${from}: ${msg}`;
-          	chatMessages.appendChild(item);
-          	window.scrollTo(0, document.body.scrollHeight);
+			item.textContent = `${from}: ${msg}`;
+			chatMessages.appendChild(item);
+			window.scrollTo(0, document.body.scrollHeight);
 		  }
         });
 
+        socket.on("game-invitation-with-buttons", ({ from, invitationId, message, roomName }: { from: string; invitationId: string; message: string; roomName: string }) => {
+            console.log("Received game invitation with buttons");
+            
+            if (from === selectedFriend) {
+                const invitationDiv = document.createElement("div");
+                invitationDiv.className = "game-invitation";
+                invitationDiv.setAttribute("data-invitation-id", invitationId);
+                invitationDiv.style.cssText = `
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 15px;
+                    margin: 10px 0;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                `;
+                
+                const messageDiv = document.createElement("div");
+                messageDiv.textContent = message;
+                messageDiv.style.marginBottom = "10px";
+                messageDiv.style.fontWeight = "bold";
+                
+                const roomDiv = document.createElement("div");
+                roomDiv.textContent = `Room: ${roomName}`;
+                roomDiv.style.fontSize = "12px";
+                roomDiv.style.opacity = "0.8";
+                roomDiv.style.marginBottom = "10px";
+                
+                const buttonContainer = document.createElement("div");
+                buttonContainer.style.display = "flex";
+                buttonContainer.style.gap = "10px";
+                
+                const acceptBtn = document.createElement("button");
+                acceptBtn.textContent = "Accept";
+                acceptBtn.style.cssText = `
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                `;
+                
+                const declineBtn = document.createElement("button");
+                declineBtn.textContent = "Decline";
+                declineBtn.style.cssText = `
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                `;
+                
+                acceptBtn.onclick = () => {
+                    console.log(`Accepting invitation ${invitationId}`);
+                    socket.emit('accept-game-invitation', { invitationId });
+                    invitationDiv.remove();
+                };
+                
+                declineBtn.onclick = () => {
+                    console.log(`Declining invitation ${invitationId}`);
+                    socket.emit('decline-game-invitation', { invitationId });
+                    invitationDiv.remove();
+                };
+                
+                buttonContainer.appendChild(acceptBtn);
+                buttonContainer.appendChild(declineBtn);
+                
+                invitationDiv.appendChild(messageDiv);
+                invitationDiv.appendChild(roomDiv);
+                invitationDiv.appendChild(buttonContainer);
+                
+                chatMessages.appendChild(invitationDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+
+        socket.on("game-invitation-response", ({ from, accepted, message }: { from: string; accepted: boolean; message: string }) => {
+            console.log("Received game invitation response");
+            
+            const responseDiv = document.createElement("div");
+            responseDiv.style.cssText = `
+                background: ${accepted ? '#4CAF50' : '#f44336'};
+                color: white;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 5px;
+                text-align: center;
+                font-weight: bold;
+            `;
+            responseDiv.textContent = message;
+            
+            chatMessages.appendChild(responseDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        socket.on("game-start", ({ roomName, opponent, message }: { roomName: string; opponent: string; message: string }) => {
+            console.log("Game starting!");
+            console.log("Room name:", roomName);
+            console.log("Opponent:", opponent);
+            
+            const startDiv = document.createElement("div");
+            startDiv.style.cssText = `
+                background: #2196F3;
+                color: white;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 5px;
+                text-align: center;
+                font-weight: bold;
+            `;
+            startDiv.textContent = message;
+            
+            chatMessages.appendChild(startDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            setTimeout(() => {
+                console.log(`Navigating to /online-game/${roomName}`);
+                navigateTo(`/online-game/${roomName}`);
+            }, 2000);
+        });
   }
+
   async function getFriendsList() {
 		try {
 			if (!token)
@@ -206,12 +331,63 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 
 	const messages = await getMessageHistory(friend.name);
 	//TO-DO message type
-	messages.forEach(message  => {
+	messages.forEach((message: any) => {
 		const oldMsg = message.message
 		const sender = message.sender_id == friend.name ? friend.name : "You:"
-		const messageDiv = document.createElement("div");
-        messageDiv.textContent = `${sender}: ${oldMsg}`;
-		chatMessages.appendChild(messageDiv);
+		
+		try {
+			const parsedMsg = JSON.parse(oldMsg);
+			if (parsedMsg.type === 'accepted_game') {
+				// Create a special message for accepted games
+				const gameMessageDiv = document.createElement("div");
+				gameMessageDiv.style.cssText = `
+					background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+					color: white;
+					padding: 15px;
+					margin: 10px 0;
+					border-radius: 10px;
+					box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+				`;
+				
+				const gameInfoDiv = document.createElement("div");
+				gameInfoDiv.textContent = `Game accepted! Room: ${parsedMsg.roomName}`;
+				gameInfoDiv.style.marginBottom = "10px";
+				gameInfoDiv.style.fontWeight = "bold";
+				
+				const rejoinBtn = document.createElement("button");
+				rejoinBtn.textContent = "Rejoin Game";
+				rejoinBtn.style.cssText = `
+					background: #2196F3;
+					color: white;
+					border: none;
+					padding: 8px 16px;
+					border-radius: 5px;
+					cursor: pointer;
+					font-weight: bold;
+				`;
+				rejoinBtn.onmouseover = () => rejoinBtn.style.background = "#1976D2";
+				rejoinBtn.onmouseout = () => rejoinBtn.style.background = "#2196F3";
+				
+				rejoinBtn.onclick = () => {
+					console.log(`Rejoining game in room: ${parsedMsg.roomName}`);
+					navigateTo(`/online-game/${parsedMsg.roomName}`);
+				};
+				
+				gameMessageDiv.appendChild(gameInfoDiv);
+				gameMessageDiv.appendChild(rejoinBtn);
+				chatMessages.appendChild(gameMessageDiv);
+			} else {
+				// Regular message
+				const messageDiv = document.createElement("div");
+				messageDiv.textContent = `${sender}: ${oldMsg}`;
+				chatMessages.appendChild(messageDiv);
+			}
+		} catch (e) {
+			// Not a JSON message, treat as regular message
+			const messageDiv = document.createElement("div");
+			messageDiv.textContent = `${sender}: ${oldMsg}`;
+			chatMessages.appendChild(messageDiv);
+		}
 		chatMessages.scrollTop = chatMessages.scrollHeight;
 	});
     const onSend = (e: KeyboardEvent) => {
@@ -238,8 +414,10 @@ function renderFriends(friends: Array<{ id: number; name: string }>) {
 	selectedFriend = ""
   });
 
+
+
   //renderFriends(friends);
-  // Initially hide panel
+
   liveChatPanel.style.transform = "translateX(-100%)";
 
 

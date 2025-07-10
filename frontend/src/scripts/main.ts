@@ -9,6 +9,7 @@ import { SignupView } from "./views/signup.js";
 import { TournamentView } from "./views/tournament.js";
 import { SinglePlayer } from "./views/singleplayer.js";
 import { Multiplayer } from "./views/multiplayer.js";
+import { OnlineGameView } from "./views/onlineGame.js";
 
 declare global {
 	interface Window {
@@ -44,6 +45,7 @@ const routes: Route[] = [
 	{path: "/singleplayer", view: SinglePlayer},
 	{path: "/multiplayer", view: Multiplayer},
 	{path: "/tournament", view: TournamentView},
+	{path: "/online-game", view: OnlineGameView},
 ];
 
 export const navigateTo = (url: string) => {
@@ -62,6 +64,20 @@ const router = async () => {
         document.querySelector("#mainContent")!.innerHTML = await profileView.getHtml();
         if (typeof profileView.onMounted === "function") {
             await profileView.onMounted();
+        }
+        setupNavbar();
+        setupLogoutHandler();
+        loadLanguage(currentLanguage);
+        return;
+    }
+
+    // Handle online game route with room parameter
+    if (location.pathname.startsWith('/online-game/')) {
+        const roomName = location.pathname.split('/')[2];
+        const onlineGameView = new OnlineGameView(roomName);
+        document.querySelector("#mainContent")!.innerHTML = await onlineGameView.getHtml();
+        if (typeof onlineGameView.onMounted === "function") {
+            await onlineGameView.onMounted();
         }
         setupNavbar();
         setupLogoutHandler();
