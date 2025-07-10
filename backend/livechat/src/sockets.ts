@@ -48,7 +48,6 @@ export async function initSockets(fastify: FastifyInstance)
 
             });
 
-            // Handle game invitation responses via buttons
             socket.on('accept-game-invitation', async ({invitationId}: {invitationId: string}) => {
                 console.log(`${userName} accepting invitation ${invitationId}`);
                 try {
@@ -58,7 +57,6 @@ export async function initSockets(fastify: FastifyInstance)
                         return;
                     }
                     
-                    // Notify both users about the acceptance
                     const invitation = gameService.getInvitation(invitationId);
                     if (invitation) {
                         const otherUser = invitation.from === userName ? invitation.to : invitation.from;
@@ -77,11 +75,8 @@ export async function initSockets(fastify: FastifyInstance)
                             type: 'accepted_game',
                             roomName: invitation.roomName,
                         });
-                        // Store for both users in the conversation
                         await runDbAsync(`INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)`, 
-                            [userName, invitation.from, gameInfo]);
-                        await runDbAsync(`INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)`, 
-                            [invitation.from, userName, gameInfo]);
+                            [invitation.from, invitation.to,gameInfo]);
                         startGame(invitation.roomName, invitation.from, invitation.to, io);
                         // Start the multiplayer game
                         gameService.startGame(invitation.roomName, invitation.from, invitation.to, io);
@@ -100,7 +95,6 @@ export async function initSockets(fastify: FastifyInstance)
                         return;
                     }
                     
-                    // Notify the sender about the decline
                     const invitation = gameService.getInvitation(invitationId);
                     if (invitation) {
                         const senderSocket = onlineUserSockets.get(invitation.from);
@@ -118,11 +112,9 @@ export async function initSockets(fastify: FastifyInstance)
                 }
             });
 
-            // Multiplayer game events
             socket.on('join-game-room', ({ roomName }: { roomName: string }) => {
                 console.log(`${userName} attempting to join game room ${roomName}`);
                 
-                // Check if player is authorized to join this room
                 if (!gameService.isPlayerAuthorizedForRoom(userName, roomName)) {
                     console.log(`Unauthorized access attempt: ${userName} tried to join room ${roomName}`);
                     socket.emit('game-access-denied', {
@@ -134,7 +126,6 @@ export async function initSockets(fastify: FastifyInstance)
                 console.log(`${userName} authorized to join game room ${roomName}`);
                 socket.join(roomName);
                 
-                // Send current game state to the joining player
                 const gameState = gameService.getGameState(roomName);
                 if (gameState) {
                     socket.emit('game-state-update', gameState);
@@ -142,7 +133,6 @@ export async function initSockets(fastify: FastifyInstance)
             });
 
             socket.on('player-input', ({ roomName, key, pressed }: { roomName: string; key: string; pressed: boolean }) => {
-                // Check if player is authorized for this room
                 if (!gameService.isPlayerAuthorizedForRoom(userName, roomName)) {
                     console.log(`Unauthorized input attempt: ${userName} tried to send input to room ${roomName}`);
                     return;
@@ -154,7 +144,6 @@ export async function initSockets(fastify: FastifyInstance)
             });
 
             socket.on('request-game-state', ({ roomName }: { roomName: string }) => {
-                // Check if player is authorized for this room
                 if (!gameService.isPlayerAuthorizedForRoom(userName, roomName)) {
                     console.log(`Unauthorized state request: ${userName} tried to get state for room ${roomName}`);
                     return;
@@ -170,12 +159,10 @@ export async function initSockets(fastify: FastifyInstance)
                 console.log(`${userName} leaving game room ${roomName}`);
                 socket.leave(roomName);
                 
-                // Remove player from game room and handle game end if needed
                 gameService.removePlayerFromRoom(roomName, userName, io);
             });
 
             socket.on('request-player-position', ({ roomName }: { roomName: string }) => {
-                // Check if player is authorized for this room
                 if (!gameService.isPlayerAuthorizedForRoom(userName, roomName)) {
                     console.log(`Unauthorized position request: ${userName} tried to get position for room ${roomName}`);
                     return;
@@ -197,7 +184,6 @@ export async function initSockets(fastify: FastifyInstance)
 
 async function startGame(roomName: string, player1: string, player2: string, io: Server) {
     try {
-        // Notify both players that game is starting
         const player1Socket = onlineUserSockets.get(player1);
         const player2Socket = onlineUserSockets.get(player2);
         

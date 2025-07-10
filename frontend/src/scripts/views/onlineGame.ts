@@ -14,8 +14,6 @@ export class OnlineGameView {
                 <div class="text-center mb-8">
                     <h1 class="text-4xl font-bold text-white mb-4">Online Multiplayer Game</h1>
                     <p class="text-gray-300 mb-2">Room: ${this.roomName || 'Connecting...'}</p>
-                    <p class="text-gray-400 text-sm">Use W/S keys to move your paddle</p>
-                    <p class="text-gray-400 text-sm">Press ESC to return to menu</p>
                 </div>
                 
                 <div class="relative">
