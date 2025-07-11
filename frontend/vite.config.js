@@ -22,7 +22,7 @@ export default defineConfig({
     },
     allowedHosts: [
       'localhost',
-      'f2r10s17'
+      'f2r8s16'
     ]
   },
   publicDir: 'public',
