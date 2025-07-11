@@ -1,5 +1,6 @@
 import { getDbAsync, runDbAsync } from "../databaseServices";
 import { CommandResult } from "../interfaces/types";
+import { isBlocked } from "./databaseService";
 import { gameService } from "./gameService";
 
 export async function blockUser(blocker_user: string, blocked_user: string): Promise <CommandResult>
@@ -143,6 +144,9 @@ export async function msgCmdCheck(msg: string, sender_id: string, receiver_id: s
     }
     else if (msg.startsWith('/invite'))
     {
+        const isBlock = await isBlocked(sender_id,receiver_id)
+        if (isBlock)
+            return ({error:null,replyMessage: "User is blocked", isCommand: false})
         console.log(`Processing /invite command from ${sender_id} to ${receiver_id}`);
         const result = await inviteToGame(sender_id, receiver_id)
         console.log(`Invite result:`, result);

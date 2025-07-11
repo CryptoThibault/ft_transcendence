@@ -10,7 +10,7 @@ export class OnlineGameView {
 
     async getHtml() {
         return `
-            <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+                     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900">
                 <div class="text-center mb-8">
                     <h1 class="text-4xl font-bold text-white mb-4">Online Multiplayer Game</h1>
                     <p class="text-gray-300 mb-2">Room: ${this.roomName || 'Connecting...'}</p>
@@ -21,7 +21,6 @@ export class OnlineGameView {
                     
                     <div id="waitingMessage" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
                         <div class="text-white text-center">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
                             <p>Starting game...</p>
                         </div>
                     </div>

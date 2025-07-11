@@ -7,10 +7,10 @@ import { onlineUserSockets } from "../sockets";
 import { gameService } from "./gameService";
 
 
-export async function sendMessageToSocket(io: Server, userName: string, to: string, msg: string)
+export async function sendMessageToSocket(io: Server, userName: string, to: string, msg: string, fromId: string)
 {
     console.log(`sendMessageToSocket called: userName="${userName}", to="${to}", msg="${msg}"`);
-    const targetSocket: Socket | undefined = onlineUserSockets.get(to)!.socket;
+    const targetSocket: Socket | undefined = onlineUserSockets.get(to)?.socket;
     const isBlock = await isBlocked(userName, to)
     console.log(`Target socket exists: ${!!targetSocket}, isBlocked: ${isBlock}`);
     
@@ -37,8 +37,13 @@ export async function sendMessageToSocket(io: Server, userName: string, to: stri
         {
             io.to(targetSocket.id).emit('get-chat-message', {
             from: userName,
-            msg: msg
+            msg: msg,
+            fromId: fromId
             });
+
+            console.log(` from: ${userName},
+            msg: ${msg},
+            fromId: ${fromId}`)
         }
         else
         {
@@ -59,7 +64,8 @@ export async function sendMessageToSocket(io: Server, userName: string, to: stri
                         from: userName,
                         invitationId: cmdResult.invitationId,
                         message: `${userName} invited you to play a game!`,
-                        roomName: cmdResult.replyMessage.split('Room: ')[1] || 'Unknown Room'
+                        roomName: cmdResult.replyMessage.split('Room: ')[1] || 'Unknown Room',
+                        fromId: fromId
                     });
                     
                     const senderSocket = onlineUserSockets.get(userName)!.socket;
