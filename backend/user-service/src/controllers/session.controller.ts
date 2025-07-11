@@ -7,6 +7,9 @@ import { getDb } from '../plugins/sqlite.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import axios from 'axios';
+
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:5500/api/v1/auth';
 
 interface UpdateUserRequestBody {
   name: string;
@@ -130,9 +133,8 @@ export async function localOpponent(request: FastifyRequest<{ Querystring: local
             wins: 0,
             losses: 0,
             onlineStatus: false,
-            // isDummy: true
+            is_dummy: true
         };
-
         const createdDummy = await User.create(newDummyData);
 
         if (createdDummy) {
@@ -152,14 +154,12 @@ export async function localOpponent(request: FastifyRequest<{ Querystring: local
 
     } catch (error: unknown) {
         console.error('Backend: Error in getOrCreateDummyOpponent:', error);
-
         let errorMessage = 'An unknown error occurred.';
         if (error instanceof Error) {
             errorMessage = error.message;
         } else if (typeof error === 'string') {
             errorMessage = error;
         }
-
         reply.status(500).send({
             success: false,
             message: 'Internal server error during dummy user operation.',
@@ -179,7 +179,6 @@ export const getAllUsers = async (req: FastifyRequest, res: FastifyReply) => {
 				message: 'No users found',
 			});
 		}
-
 		return res.status(200).send({
 			success: true,
 			message: 'Users retrieved successfully',
@@ -244,7 +243,6 @@ export const uploadAvatar = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Invalid file type. Only JPG, PNG, and WEBP are allowed.',
             });
         }
-        //const fileName = `${Date.now()}-${data.filename}`;
         const sanitizedFilename = path.basename(data.filename).replace(/\s+/g, '-');
         const fileName = `${Date.now()}-${sanitizedFilename.slice(0, 100)}`;
         const uploadDir = path.resolve('./uploads');
@@ -305,7 +303,6 @@ export const addFriend = async (req: FastifyRequest, res: FastifyReply) => {
             return res.status(400).send({ success: false, message: 'Friendship already exists or is pending.' });
         }
         await Friendship.create({ userId: inviterId, friendId: friendId, status: 'pending' });
-        //await Friendship.create({ userId: friendId, friendId: inviterId, status: 'pending' });
         await db.run('COMMIT;');
         return res.status(200).send({
             success: true,
@@ -369,10 +366,8 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 				acceptedIds.add(otherId);
 			} else if (f.status === 'pending') {
 				if (f.userId === userId) {
-					// I sent the request
 					pendingSentIds.push(f.friendId);
 				} else if (f.friendId === userId) {
-					// I received the request
 					pendingReceivedIds.push(f.userId);
 				}
 			}
@@ -399,43 +394,6 @@ export const getFriendsList = async (req: FastifyRequest, res: FastifyReply) => 
 			message: (error as Error).message || 'Internal server error.',
 		});
 	}
-};
-
-export const getFriendsPendingList = async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId)
-            return res.status(401).send({ success: false, message: 'Unauthorized: User ID not available from token.' });
-        const mainUser = await User.findById(userId);
-        if (!mainUser)
-            return res.status(404).send({ success: false, message: 'User not found.' });
-        const friendships = await Friendship.findFriendsForUser(userId);
-        const friendIds: number[] = [];
-        friendships.forEach(f => {
-            if (f.status === 'pending') {
-                if (f.userId === userId) {
-                    friendIds.push(f.friendId);
-                } else {
-                    friendIds.push(f.userId);
-                }
-            }
-        });
-        const friendsDetails = await Promise.all(
-            friendIds.map(id => User.findById(id))
-        );
-        const actualFriends = friendsDetails.filter(Boolean);
-        return res.status(200).send({
-            success: true,
-            message: 'Friends list retrieved successfully',
-            data: actualFriends,
-        });
-    } catch (error) {
-        console.error('Error getting friends list:', error);
-        return res.status(500).send({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-        });
-    }
 };
 
 export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
@@ -515,7 +473,6 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Failed to record match due to database issue.',
             });
         }
-        // --- Update Player Stats ---
         let updatedPlayer1Wins = player1.wins ?? 0;
         let updatedPlayer1Losses = player1.losses ?? 0;
         let updatedPlayer2Wins = player2.wins ?? 0;
@@ -528,6 +485,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
             updatedPlayer2Wins += 1;
             updatedPlayer1Losses += 1;
         }
+
         const player1Updated = await User.update(player1Id, {
             wins: updatedPlayer1Wins,
             losses: updatedPlayer1Losses,
@@ -545,6 +503,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
                 message: 'Failed to update player stats.',
             });
         }
+        
         await db.run('COMMIT;');
         return res.status(201).send({
             success: true,
@@ -560,7 +519,7 @@ export const recordMatch = async (req: FastifyRequest, res: FastifyReply) => {
         });
     }
 };
-//bince added
+
 export const recordMatchServer = async (req: FastifyRequest, res: FastifyReply) => {
     console.log('User service: Incoming request body for recordMatch:', req.body);
     const db = getDb();
@@ -608,8 +567,6 @@ export const recordMatchServer = async (req: FastifyRequest, res: FastifyReply) 
         }
         const player1 = await User._findByIdRaw(player1Id);
         const player2 = await User._findByIdRaw(player2Id);
-        const player2Data = await User._findByIdRaw(player2Id);
-        const player2NameFromDb = player2Data?.name;
 
         if (!player1 || !player2) {
             await db.run('ROLLBACK;');
@@ -634,7 +591,7 @@ export const recordMatchServer = async (req: FastifyRequest, res: FastifyReply) 
                 message: 'Failed to record match due to database issue.',
             });
         }
-        // --- Update Player Stats ---
+
         let updatedPlayer1Wins = player1.wins ?? 0;
         let updatedPlayer1Losses = player1.losses ?? 0;
         let updatedPlayer2Wins = player2.wins ?? 0;
@@ -689,7 +646,7 @@ export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyRep
         const userId = req.user.id;
         const rawMatches = await Match.findMatchesByPlayer(userId);
         const enhancedMatches = await Promise.all(rawMatches.map(async (match) => {
-            let opponentId: number;
+            let opponentId: number | null;
             let opponentName: string = 'Unknown Player';
 
             if (match.player1Id === userId) {
@@ -697,16 +654,26 @@ export const getCurrentUserMatches = async (req: FastifyRequest, res: FastifyRep
             } else {
                 opponentId = match.player1Id;
             }
-            const opponentUser = await User._findByIdRaw(opponentId);
-            if (opponentUser) {
-                opponentName = opponentUser.name;
+            
+            if (opponentId !== null) {
+                const opponentUser = await User._findByIdRaw(opponentId);
+                if (opponentUser) {
+                    opponentName = opponentUser.name;
+                } else {
+                    opponentName = 'Deleted User';
+                }
+            } else {
+                opponentName = 'Former Dummy Opponent';
             }
+
             const isWinner = match.winnerId === userId;
+            const actualWinnerName = match.winnerId === userId ? (await User._findByIdRaw(userId))?.name : (opponentId === null ? 'Former Dummy Winner' : opponentName);
             return {
                 ...match,
                 opponentId,
                 opponentName,
                 isWinner,
+                actualWinnerName,
             };
         }));
 
@@ -738,7 +705,7 @@ export const getUserMatchHistory = async (req: FastifyRequest, res: FastifyReply
         }
         const rawMatches = await Match.findMatchesByPlayer(userId);
         const enhancedMatches = await Promise.all(rawMatches.map(async (match) => {
-            let opponentId: number;
+            let opponentId: number | null;
             let opponentName: string = 'Unknown Player';
 
             if (match.player1Id === userId) {
@@ -746,16 +713,25 @@ export const getUserMatchHistory = async (req: FastifyRequest, res: FastifyReply
             } else {
                 opponentId = match.player1Id;
             }
-            const opponentUser = await User._findByIdRaw(opponentId);
-            if (opponentUser) {
-                opponentName = opponentUser.name;
+            if (opponentId !== null) {
+                const opponentUser = await User._findByIdRaw(opponentId);
+                if (opponentUser) {
+                    opponentName = opponentUser.name;
+                } else {
+                    opponentName = 'Deleted User';
+                }
+            } else {
+                opponentName = 'Former Dummy Opponent';
             }
+
             const isWinner = match.winnerId === userId;
+            const actualWinnerName = match.winnerId === userId ? (await User._findByIdRaw(userId))?.name : (opponentId === null ? 'Former Dummy Winner' : opponentName);
             return {
                 ...match,
                 opponentId,
                 opponentName,
                 isWinner,
+                actualWinnerName,
             };
         }));
 
@@ -803,26 +779,32 @@ export const deleteCurrentUser = async (req: FastifyRequest, res: FastifyReply) 
         const userExists = await User._findByIdRaw(userId);
         if (!userExists) {
             await db.run('ROLLBACK;');
-            return res.status(404).send({ success: false, message: 'User not found.' });
+            return res.status(404).send({ success: false, message: 'User not found in User Service DB.' });
         }
         await Friendship.deleteFriendshipsByUser(userId);
         await Match.deleteMatchesByPlayer(userId);
-        const userDeleted = await User.delete(userId);
-        if (!userDeleted) {
+        const userDeletedFromUserService = await User.delete(userId);
+        if (!userDeletedFromUserService) {
             await db.run('ROLLBACK;');
-            return res.status(500).send({ success: false, message: 'Failed to delete user account.' });
+            return res.status(500).send({ success: false, message: 'Failed to delete user account from User Service DB.' });
+        }
+        try {
+            await axios.delete(`${AUTH_SERVICE_URL}/internal/auth-user/${userId}`, {});
+            console.log(`Successfully requested auth user deletion for ID: ${userId}`);
+        } catch (authServiceError: any) {
+            console.error(`Error communicating with Auth Service to delete user ${userId}:`, authServiceError.message);
         }
         await db.run('COMMIT;');
         return res.status(200).send({
             success: true,
-            message: 'User account deleted successfully',
+            message: 'User account and associated data deleted successfully across services.',
         });
-    } catch (error) {
+    } catch (error: any) {
         await db.run('ROLLBACK;');
         console.error('Error deleting current user:', error);
-        return res.status(500).send({
+        return res.status(error.statusCode || 500).send({
             success: false,
-            message: (error as Error).message || 'Internal server error',
+            message: error.message || 'Internal server error',
         });
     }
 };
@@ -830,36 +812,51 @@ export const deleteCurrentUser = async (req: FastifyRequest, res: FastifyReply) 
 export const deleteUserById = async (req: FastifyRequest, res: FastifyReply) => {
     const db = getDb();
     await db.run('BEGIN TRANSACTION;');
+
     try {
         const { id } = req.params as { id: string };
-        const userIdToDelete = parseInt(id, 10);
-        if (isNaN(userIdToDelete)) {
+        const userId = parseInt(id, 10);
+
+        if (isNaN(userId)) {
             await db.run('ROLLBACK;');
-            return res.status(400).send({ success: false, message: 'Invalid user ID format in request parameters.' });
+            return res.status(400).send({ success: false, message: 'Invalid user ID format.' });
         }
-        const userExists = await User._findByIdRaw(userIdToDelete);
-        if (!userExists) {
+
+        const user = await User._findByIdRaw(userId);
+        if (!user) {
             await db.run('ROLLBACK;');
             return res.status(404).send({ success: false, message: 'User not found.' });
         }
-        await Friendship.deleteFriendshipsByUser(userIdToDelete);
-        await Match.deleteMatchesByPlayer(userIdToDelete);
-        const userDeleted = await User.delete(userIdToDelete);
-        if (!userDeleted) {
-            await db.run('ROLLBACK;');
-            return res.status(500).send({ success: false, message: 'Failed to delete user account from database.' });
+
+        await Friendship.deleteFriendshipsByUser(userId);
+        console.log(`[UserService] Deleted friendships for user ID ${userId}.`);
+
+        if (user.is_dummy) {
+            console.log(`[UserService] User ID ${userId} is a dummy. Matches handled via DB constraints.`);
+        } else {
+            await Match.deleteMatchesByPlayer(userId);
+            console.log(`[UserService] Deleted matches for user ID ${userId}.`);
         }
+
+        const deleted = await User.delete(userId);
+        if (!deleted) {
+            await db.run('ROLLBACK;');
+            return res.status(500).send({ success: false, message: 'Failed to delete user from database.' });
+        }
+
         await db.run('COMMIT;');
+        console.log(`[UserService] Successfully deleted user ID ${userId}.`);
         return res.status(200).send({
             success: true,
-            message: `User account with ID ${userIdToDelete} deleted successfully`,
+            message: `User ${userId} deleted successfully.`,
         });
-    } catch (error) {
+
+    } catch (error: any) {
         await db.run('ROLLBACK;');
-        console.error('Error deleting user by ID:', error);
+        console.error(`[UserService] Error deleting user ID:`, error);
         return res.status(500).send({
             success: false,
-            message: (error as Error).message || 'Internal server error',
+            message: error.message || 'Internal server error',
         });
     }
 };

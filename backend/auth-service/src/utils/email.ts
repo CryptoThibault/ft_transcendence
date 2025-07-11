@@ -32,7 +32,7 @@ const USER_FROM = process.env.MAIL_USER || "noreply@invalidMailNoSet.fr";
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,
-  secure: true, //false, // true for 465, false for other ports
+  secure: true,
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
@@ -55,7 +55,7 @@ export const sendOtpEmail = async (to:string,code:string) => {
 	}
 	catch (err) {
 		console.log(err);
-		//throw new ServiceUnavailableError("Error sending email");
+
 	}
 }
 

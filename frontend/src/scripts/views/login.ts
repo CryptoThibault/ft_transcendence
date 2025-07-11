@@ -113,7 +113,7 @@ export class LoginView {
 
         if (!response.ok) return this.showMessage(messageDiv, res.message || "OTP verification failed.");
 
-        localStorage.setItem("token", res.res.token);
+        localStorage.setItem("token", res.data.token);
         navigateTo("/");
       } catch (err) {
         console.error("OTP verification failed:", err);
@@ -145,7 +145,7 @@ export class LoginView {
     const token = urlParams.get("token");
     if (token) {
       localStorage.setItem("token", token);
-      this.shortenName();
+      await this.shortenName();
       navigateTo("/");
     }
   }

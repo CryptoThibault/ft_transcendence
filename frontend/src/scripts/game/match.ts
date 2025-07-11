@@ -49,7 +49,7 @@ export class Match {
                 renderEndMenu();
             }, 50);
         
-        if (!!localStorage.getItem("token"))
+        if (!!localStorage.getItem("token") && this.gameMode !== 2)
             this.sendResult();
     
         if (this.onEnd) this.onEnd();
@@ -68,7 +68,7 @@ export class Match {
             this.end();
     }
 
-   async sendResult() {
+    async sendResult() {
         const route = "/api/v1/user/matches";
 
         try {
@@ -77,22 +77,15 @@ export class Match {
                 console.error("No authentication token found.");
                 throw new Error("Authentication token is missing."); 
             }
-
-            // Decode JWT payload to get player1Id
             const payloadBase64 = token.split(".")[1];
             let player1Id: string | undefined;
             try {
                 const payload = JSON.parse(atob(payloadBase64));
-                //console.log("JWT Payload:", payload); 
-                
-                player1Id = payload?.userId;
-                
+                player1Id = payload?.userId;                
                 if (!player1Id) {
-                    //console.error("Player1 ID not found in JWT payload. Payload:", payload);
                     throw new Error("Player1 ID missing in token payload (expected 'userId').");
                 }
             } catch (Err) {
-                //console.error("Failed to parse JWT payload:", jsonErr);
                 throw new Error("Invalid or malformed JWT token structure.");
             }
 
@@ -114,7 +107,6 @@ export class Match {
                     throw new Error("Player2 ID missing from lookup response.");
                 }
             } catch (err) {
-                // Player2 not found, create a dummy user
                 console.warn(`Player '${originalPlayer2Name}' not found — trying to create dummy.`);
                 const dummyRes = await fetch("/api/v1/user/dummy?username=${encodeURIComponent(originalPlayer2Name)}", {
                     method: "GET",
@@ -126,30 +118,22 @@ export class Match {
                     console.error("Failed to create dummy user:", errorData);
                     throw new Error(errorData.message || "Failed to create dummy user.");
                 }
-
                 const dummyData = await dummyRes.json();
                 player2Id = dummyData?.data?.user?.id; 
-
                 if (!player2Id) {
                     console.error("Dummy user created, but their ID is missing from response. Dummy data:", dummyData);
                     throw new Error("Dummy Player ID missing after creation.");
-                }
-                
-                // Update this.player2 name so winner check is correct if dummy wins
+                }                
                 this.player2 = dummyData?.data?.user?.name || "DummyOpponent";
             }
-
             const player1Score = this.score[0];
             const player2Score = this.score[1];
-
-            // Determine winnerId based on the winner name and the IDs
             let winnerId: string | null = null;
             if (this.winner === this.player1) {
                 winnerId = player1Id;
             } else if (this.winner === originalPlayer2Name || this.winner === this.player2) {
                 winnerId = player2Id;
             } else {
-                //console.warn(` Winner name '${this.winner}' does not match player1 ('${this.player1}') or player2 ('${this.player2}' / '${originalPlayer2Name}'). Winner ID will be null.`);
                 winnerId = null;
             }
 
@@ -163,6 +147,7 @@ export class Match {
                 });
                 return; 
             }
+
             const response = await fetch(route, {
                 method: "POST",
                 headers: {
@@ -176,13 +161,10 @@ export class Match {
                     score: `${player1Score}-${player2Score}`
                 })
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to send match result due to server error.");
             }
-            //console.log("Match result sent successfully!");
-
         } catch (err) {
             console.error("Send result operation failed:", err);
         }

@@ -22,7 +22,6 @@ export const {
     SMTP_HOST,
     SMTP_PORT,
     SMTP_USER,
-    SMTP_PASS,
-    SENDGRID_API_KEY,
-    SENDGRID_FROM_EMAIL,
+    SMTP_PASS
+    
 } = process.env;

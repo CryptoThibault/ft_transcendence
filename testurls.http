@@ -123,8 +123,10 @@ GET http://localhost:5600/api/v1/player/tournament/1/bracket
 ### submitTournamentResult
 POST http://localhost:5600/api/v1/player/tournament/matches/456/result
 {
+  "player1_id": 1,
+  "player2_id: 0,
   "winner_id": 1,
-  "score": "21-17"
+  "score": "5-3"
 }
 
 ## matches history
