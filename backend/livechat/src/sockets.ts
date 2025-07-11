@@ -33,15 +33,23 @@ export async function initSockets(fastify: FastifyInstance)
             socket.on('disconnect', () => 
             {
                 console.log(userName + ' (' + onlineUserSockets.get(userName) + ') ' + 'disconnected');
-                onlineUserSockets.delete(userId)
+                onlineUserSockets.delete(userName)
                 
-                // Handle game disconnection - declare the other player as winner
                 gameService.handlePlayerDisconnection(userName, io);
             })
-            socket.on('emit-chat-message', async ({to, msg}: {to: string, msg: string}) => {
+            socket.on('emit-chat-message', async ({to, msg,toId}: {to: string, msg: string, toId: string}) => {
+                let newTo = ""
+                console.log(`TO ID: ${toId}`)
+                for (const [key, { userId: existingUserId}] of onlineUserSockets.entries()) {
+                    if (toId == existingUserId) {
+                        console.log(`new to ${key}`)
+                       newTo = key
+                    }
+                }
+
                 console.log(userName + " " + to + " " + msg);
                 try {
-                    await sendMessageToSocket(io,userName,to,msg)
+                    await sendMessageToSocket(io,userName,newTo,msg,userId)
                 } catch (error) {
                     console.log(error)
                 }

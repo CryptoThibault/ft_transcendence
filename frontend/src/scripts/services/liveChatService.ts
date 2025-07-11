@@ -15,7 +15,7 @@ export interface Message {
 export class LiveChatService {
     private socket: Socket | null = null;
     private selectedFriend: string = "";
-
+    private selectedFriendId: string = "";
     connect(token: string): void {
         if (!token) {
             console.warn("No token provided for livechat connection");
@@ -34,8 +34,9 @@ export class LiveChatService {
     private setupSocketListeners(): void {
         if (!this.socket) return;
 
-        this.socket.on("get-chat-message", ({ from, msg }: { from: string; msg: string }) => {
-            if (from === this.selectedFriend) {
+        this.socket.on("get-chat-message", ({ from, msg, fromId }: { from: string; msg: string, fromId: string}) => {
+           // alert(this.selectedFriendId)
+            if (fromId == this.selectedFriendId) {
                 this.addMessageToChat(from, msg);
             }
         });
@@ -44,10 +45,10 @@ export class LiveChatService {
                 this.addMessageToChat("server", msg);
         });
 
-        this.socket.on("game-invitation-with-buttons", ({ from, invitationId, message, roomName }: { from: string; invitationId: string; message: string; roomName: string }) => {
+        this.socket.on("game-invitation-with-buttons", ({ from, invitationId, message, roomName, fromId }: { from: string; invitationId: string; message: string; roomName: string, fromId: string }) => {
             console.log("Received game invitation with buttons");
             
-            if (from === this.selectedFriend) {
+            if (fromId == this.selectedFriendId) {
                 this.createGameInvitationUI(invitationId, message, roomName);
             }
         });
@@ -75,7 +76,7 @@ export class LiveChatService {
         if (!chatMessages) return;
 
         const item = document.createElement("li");
-        item.textContent = `${from}: ${msg}`;
+        item.textContent = `${msg}`;
         chatMessages.appendChild(item);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -250,7 +251,24 @@ export class LiveChatService {
         }
     }
 
-    renderFriends(friends: Friend[]): void {
+    async renderFriends(friends: Friend[]): Promise<void> {
+    let onlineUserIds: number[]
+    try {
+    const res = await fetch("/livechat/api/getOnlineFriends", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch online friends");
+
+    const json = await res.json();
+    onlineUserIds = json.data;
+    } catch (err) {
+    console.error("Error fetching or parsing online friends:", err);
+    }
+
+
         const friendsList = document.getElementById("friendsList");
         if (!friendsList) return;
 
@@ -262,10 +280,13 @@ export class LiveChatService {
             li.style.cursor = "pointer";
             li.style.borderBottom = "1px solid #eee";
 
+            if (onlineUserIds && onlineUserIds.includes(friend.id))
+            {
+                li.style.color = "green";
+            }
             li.addEventListener("click", () => {
                 this.openChat(friend);
             });
-
             friendsList.appendChild(li);
         });
     }
@@ -289,9 +310,19 @@ export class LiveChatService {
         if (!friendsList || !chatContainer || !chatMessages || !chatInput) return;
 
         this.selectedFriend = friend.name;
+        this.selectedFriendId = friend.id.toString();
         friendsList.style.display = "none";
         chatContainer.style.display = "flex";
-        chatMessages.innerHTML = `<b>${friend.name}</b>`;
+        // Create clickable friend name that navigates to profile
+        const friendNameElement = document.createElement("b");
+        friendNameElement.textContent = friend.name;
+        friendNameElement.style.cursor = "pointer";
+        friendNameElement.addEventListener("click", () => {
+            navigateTo(`/profile/${friend.id}`);
+        });
+        
+        chatMessages.innerHTML = "";
+        chatMessages.appendChild(friendNameElement);
         chatInput.value = "";
         chatInput.focus();
 
@@ -299,35 +330,13 @@ export class LiveChatService {
         if (!token) return;
 
         try {
-            const messages = await this.getMessageHistory(token, friend.name);
-            this.renderMessageHistory(messages, friend.name);
-            this.setupChatInputHandler(friend.name);
+            this.setupChatInputHandler(friend.name, friend.id.toString());
         } catch (error) {
             console.error("Failed to load message history:", error);
         }
     }
 
-    private renderMessageHistory(messages: Message[], friendName: string): void {
-        const chatMessages = document.getElementById("chatMessages");
-        if (!chatMessages) return;
-
-        messages.forEach((message: Message) => {
-            const oldMsg = message.message;
-            const sender = message.sender_id === friendName ? friendName : "You:";
-            
-            try {
-                const parsedMsg = JSON.parse(oldMsg);
-                const messageDiv = document.createElement("div");
-            } catch (e) {
-                const messageDiv = document.createElement("div");
-                messageDiv.textContent = `${sender}: ${oldMsg}`;
-                chatMessages.appendChild(messageDiv);
-            }
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
-    }
-
-    private setupChatInputHandler(friendName: string): void {
+    private setupChatInputHandler(friendName: string, friendId: string): void {
         const chatInput = document.getElementById("chatInput") as HTMLInputElement;
         if (!chatInput) return;
 
@@ -343,7 +352,8 @@ export class LiveChatService {
                 
                 this.socket?.emit("emit-chat-message", {
                     to: friendName,
-                    msg: chatInput.value
+                    msg: chatInput.value,
+                    toId: friendId
                 });
                 
                 chatInput.value = "";

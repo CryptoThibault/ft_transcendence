@@ -27,9 +27,9 @@ fastify.get('/api/messages/:user2', {preValidation: fastify.authenticate} ,async
 });
 
 
-fastify.get('/api/getOnlineFriends', {preValidation: fastify.authenticate} ,async (req: FastifyRequest, reply: FastifyReply) => {
-  const onlineUsers = Array.from(onlineUserSockets.keys());
-  reply.send({ data: onlineUsers });
+fastify.get('/api/getOnlineFriends', { preValidation: fastify.authenticate }, async (req: FastifyRequest, reply: FastifyReply) => {
+  const onlineUserIds = Array.from(onlineUserSockets.values()).map(entry => entry.userId);
+  reply.type('application/json').send({ data: onlineUserIds });
 });
 
 fastify.post("/blockuser",{schema: blockUserSchema, preValidation: fastify.authenticate}, async (req: FastifyRequest,reply: FastifyReply) => {
