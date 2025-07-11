@@ -7,16 +7,16 @@ import { onlineUserSockets } from "../sockets";
 import { gameService } from "./gameService";
 
 
-export async function sendMessageToSocket(io: Server, userId: string, to: string, msg: string)
+export async function sendMessageToSocket(io: Server, userName: string, to: string, msg: string)
 {
-    console.log(`sendMessageToSocket called: userId="${userId}", to="${to}", msg="${msg}"`);
+    console.log(`sendMessageToSocket called: userName="${userName}", to="${to}", msg="${msg}"`);
     const targetSocket: Socket | undefined = onlineUserSockets.get(to)!.socket;
-    const isBlock = await isBlocked(userId, to)
+    const isBlock = await isBlocked(userName, to)
     console.log(`Target socket exists: ${!!targetSocket}, isBlocked: ${isBlock}`);
     
     if (targetSocket)
     {
-        const cmdResult: CommandResult = await msgCmdCheck(msg,userId,to)
+        const cmdResult: CommandResult = await msgCmdCheck(msg,userName,to)
         console.log(`Command result:`, cmdResult);
         
         if (isBlock)
@@ -25,7 +25,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
         {
             console.error("there is an error");
             console.log(cmdResult.error);
-            const senderSocket = onlineUserSockets.get(userId)!.socket;
+            const senderSocket = onlineUserSockets.get(userName)!.socket;
             if (senderSocket) {
                 io.to(senderSocket.id).emit('invitation-error', {
                 message: cmdResult.replyMessage
@@ -36,7 +36,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
         if (!cmdResult.isCommand)
         {
             io.to(targetSocket.id).emit('get-chat-message', {
-            from: userId,
+            from: userName,
             msg: msg
             });
         }
@@ -44,9 +44,11 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
         {
             console.log(`Processing command: ${msg}`);
             if (msg.startsWith('/invite')) {
-                
+                const isBlock = await isBlocked(userName, to)
+                if (isBlock)
+                    return
                 if (cmdResult.error) {
-                    const senderSocket = onlineUserSockets.get(userId)!.socket;
+                    const senderSocket = onlineUserSockets.get(userName)!.socket;
                     if (senderSocket) {
                         io.to(senderSocket.id).emit('invitation-error', {
                             message: cmdResult.replyMessage
@@ -54,13 +56,13 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                     }
                 } else {
                     io.to(targetSocket.id).emit('game-invitation-with-buttons', {
-                        from: userId,
+                        from: userName,
                         invitationId: cmdResult.invitationId,
-                        message: `${userId} invited you to play a game!`,
+                        message: `${userName} invited you to play a game!`,
                         roomName: cmdResult.replyMessage.split('Room: ')[1] || 'Unknown Room'
                     });
                     
-                    const senderSocket = onlineUserSockets.get(userId)!.socket;
+                    const senderSocket = onlineUserSockets.get(userName)!.socket;
                     if (senderSocket) {
                         io.to(senderSocket.id).emit('get-chat-message', {
                             from: 'System',
@@ -75,7 +77,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                             console.log(`Auto-deleted invitation ${cmdResult.invitationId} after 5 seconds`);
                             
                             const targetSocket = onlineUserSockets.get(to)!.socket;
-                            const senderSocket = onlineUserSockets.get(userId)!.socket;
+                            const senderSocket = onlineUserSockets.get(userName)!.socket;
                             
                             if (targetSocket) {
                                 io.to(targetSocket.id).emit('invitation-expired', {
@@ -94,47 +96,8 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
                     }, 5000);
                 }
             }
-            else if (msg.startsWith('/accept') || msg.startsWith('/decline')) {
-                const invitation = gameService.getInvitation(cmdResult.invitationId!);
-                if (invitation) {
-                    const otherUser = invitation.from === userId ? invitation.to : invitation.from;
-                    const otherSocket = onlineUserSockets.get(otherUser)!.socket;
-                    
-                    if (otherSocket) {
-                        io.to(otherSocket.id).emit('game-invitation-response', {
-                            from: userId,
-                            invitationId: cmdResult.invitationId,
-                            accepted: msg.startsWith('/accept'),
-                            message: cmdResult.replyMessage
-                        });
-                    }
-                    
-    
-                    const responderSocket = onlineUserSockets.get(userId)!.socket;
-                    if (responderSocket) {
-                        io.to(responderSocket.id).emit('get-chat-message', {
-                            from: 'System',
-                            msg: cmdResult.replyMessage
-                        });
-                    }
-                    if (msg.startsWith('/accept')) {
-                        const gameInfo = JSON.stringify({
-                            type: 'accepted_game',
-                            roomName: invitation.roomName,
-                            player1: invitation.from,
-                            player2: invitation.to,
-                            acceptedBy: userId,
-                            timestamp: new Date().toISOString()
-                        });
-                        
-                        await runDbAsync(`INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)`, 
-                            [invitation.to, invitation.from, gameInfo]);
-                        startGame(invitation.roomName, invitation.from, invitation.to, io);
-                    }
-                }
-            }
             else {
-                const senderSocket = onlineUserSockets.get(userId)!.socket;
+                const senderSocket = onlineUserSockets.get(userName)!.socket;
                 if (senderSocket) {
                     io.to(senderSocket.id).emit('get-chat-message', {
                         from: 'System',
@@ -146,7 +109,7 @@ export async function sendMessageToSocket(io: Server, userId: string, to: string
     }
         try {
         await runDbAsync(`INSERT INTO messages (sender_id, receiver_id, message)
-                        VALUES (?, ?, ?)`,[userId,to,msg]);
+                        VALUES (?, ?, ?)`,[userName,to,msg]);
         console.log("Message stored in DB");
         }   catch (err) {
         console.error("Failed to insert message:", err);

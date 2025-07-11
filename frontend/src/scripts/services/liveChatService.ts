@@ -291,7 +291,16 @@ export class LiveChatService {
         this.selectedFriend = friend.name;
         friendsList.style.display = "none";
         chatContainer.style.display = "flex";
-        chatMessages.innerHTML = `<b>${friend.name}</b>`;
+        // Create clickable friend name that navigates to profile
+        const friendNameElement = document.createElement("b");
+        friendNameElement.textContent = friend.name;
+        friendNameElement.style.cursor = "pointer";
+        friendNameElement.addEventListener("click", () => {
+            navigateTo(`/profile/${friend.id}`);
+        });
+        
+        chatMessages.innerHTML = "";
+        chatMessages.appendChild(friendNameElement);
         chatInput.value = "";
         chatInput.focus();
 

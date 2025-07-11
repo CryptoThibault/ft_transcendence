@@ -73,7 +73,12 @@ export class HomeView {
 			liveChatService.connect(token);
 		}
 
-		liveChatToggleBtn.addEventListener("click", async () => {
+		const newLiveChatToggleBtn = liveChatToggleBtn.cloneNode(true);
+		liveChatToggleBtn.parentNode?.replaceChild(newLiveChatToggleBtn, liveChatToggleBtn);
+
+		const updatedLiveChatToggleBtn = document.getElementById("liveChatToggleBtn")!;
+		
+		updatedLiveChatToggleBtn.addEventListener("click", async () => {
 			if (!token)
 				return;
 			if (liveChatPanel.style.transform === "translateX(0%)") {

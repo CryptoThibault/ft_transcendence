@@ -33,9 +33,8 @@ export async function initSockets(fastify: FastifyInstance)
             socket.on('disconnect', () => 
             {
                 console.log(userName + ' (' + onlineUserSockets.get(userName) + ') ' + 'disconnected');
-                onlineUserSockets.delete(userId)
+                onlineUserSockets.delete(userName)
                 
-                // Handle game disconnection - declare the other player as winner
                 gameService.handlePlayerDisconnection(userName, io);
             })
             socket.on('emit-chat-message', async ({to, msg}: {to: string, msg: string}) => {

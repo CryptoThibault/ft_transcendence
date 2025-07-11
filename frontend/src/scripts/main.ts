@@ -79,6 +79,17 @@ const router = async () => {
         if (typeof profileView.onMounted === "function") {
             await profileView.onMounted();
         }
+        
+        // Hide livechat button on profile pages
+        const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
+        const liveChatPanel = document.getElementById("liveChatPanel");
+        if (liveChatToggleBtn) {
+            liveChatToggleBtn.style.display = "none";
+        }
+        if (liveChatPanel) {
+            liveChatPanel.style.transform = "translateX(-100%)";
+        }
+        
         setupNavbar();
         setupLogoutHandler();
         loadLanguage(localStorage.getItem("language"));
@@ -92,6 +103,17 @@ const router = async () => {
         if (typeof onlineGameView.onMounted === "function") {
             await onlineGameView.onMounted();
         }
+        
+        // Hide livechat button on online game pages
+        const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
+        const liveChatPanel = document.getElementById("liveChatPanel");
+        if (liveChatToggleBtn) {
+            liveChatToggleBtn.style.display = "none";
+        }
+        if (liveChatPanel) {
+            liveChatPanel.style.transform = "translateX(-100%)";
+        }
+        
         setupNavbar();
         setupLogoutHandler();
         loadLanguage(localStorage.getItem("language"));
@@ -121,6 +143,18 @@ const router = async () => {
 
     if (typeof view.onMounted === "function") {
         await view.onMounted();
+    }
+
+    // Hide livechat button on all pages except home
+    if (location.pathname !== "/") {
+        const liveChatToggleBtn = document.getElementById("liveChatToggleBtn");
+        const liveChatPanel = document.getElementById("liveChatPanel");
+        if (liveChatToggleBtn) {
+            liveChatToggleBtn.style.display = "none";
+        }
+        if (liveChatPanel) {
+            liveChatPanel.style.transform = "translateX(-100%)";
+        }
     }
 
     setupNavbar();
