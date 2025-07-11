@@ -251,7 +251,24 @@ export class LiveChatService {
         }
     }
 
-    renderFriends(friends: Friend[]): void {
+    async renderFriends(friends: Friend[]): Promise<void> {
+    let onlineUserIds: number[]
+    try {
+    const res = await fetch("/livechat/api/getOnlineFriends", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch online friends");
+
+    const json = await res.json();
+    onlineUserIds = json.data;
+    } catch (err) {
+    console.error("Error fetching or parsing online friends:", err);
+    }
+
+
         const friendsList = document.getElementById("friendsList");
         if (!friendsList) return;
 
@@ -263,10 +280,13 @@ export class LiveChatService {
             li.style.cursor = "pointer";
             li.style.borderBottom = "1px solid #eee";
 
+            if (onlineUserIds && onlineUserIds.includes(friend.id))
+            {
+                li.style.color = "green";
+            }
             li.addEventListener("click", () => {
                 this.openChat(friend);
             });
-
             friendsList.appendChild(li);
         });
     }
