@@ -33,7 +33,7 @@ Built with modern web technologies, containerized for easy deployment.
 git clone https://github.com/CryptoThibault/ft_transcendence.git
 cd ft_transcendence
 make all
-
+```
 
 <img width="1848" height="839" alt="OTP" src="https://github.com/user-attachments/assets/bf93ec6a-4072-4b9c-93cd-e488bcf3fee3" />
 <img width="1896" height="894" alt="matchsingle" src="https://github.com/user-attachments/assets/be6d8a2f-0f34-4b7f-92cc-f38dbdf662a7" />
